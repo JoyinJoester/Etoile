@@ -312,7 +312,6 @@
     <string name="otp_type">Тип OTP</string>
     <string name="otp_type_totp">По времени (TOTP)</string>
     <string name="otp_type_hotp">По счётчику (HOTP)</string>
-    <string name="otp_type_steam">Steam Guard</string>
     <string name="otp_type_yandex">Яндекс</string>
     <string name="otp_type_motp">Mobile-OTP</string>
     <string name="initial_counter">Начальный счётчик</string>
@@ -326,7 +325,6 @@
     <string name="motp_pin_hint">4-значный PIN для шифрования Mobile-OTP</string>
     <string name="otp_type_description_totp">Стандартные коды по времени, обновляются каждые 30 секунд</string>
     <string name="otp_type_description_hotp">Коды по счётчику, новый код генерируется каждый раз</string>
-    <string name="otp_type_description_steam">5-символьные коды Steam Guard</string>
     <string name="otp_type_description_yandex">Коды аутентификации Яндекс</string>
     <string name="otp_type_description_motp">Mobile-OTP с защитой PIN-кодом</string>
 
@@ -486,8 +484,6 @@
     <string name="export_option_zip_desc">Экспорт всего, включая пароли, заметки и изображения. Работает на Windows и Android.</string>
     <string name="export_option_kdbx">Формат KeePass (KDBX)</string>
     <string name="export_option_kdbx_desc">Экспорт паролей и аутентификаторов в формате KeePass для KeePass, KeePassXC и др.</string>
-    <string name="export_option_steam_mafile">Steam maFile</string>
-    <string name="export_option_steam_mafile_desc">Экспорт выбранных локальных аутентификаторов Steam в открытые maFile для переноса в другие клиенты.</string>
     <string name="kdbx_password_title">Задайте пароль KDBX</string>
     <string name="kdbx_password_hint">Этот пароль зашифрует файл KDBX. Он понадобится при импорте.</string>
     <string name="kdbx_import_password_title">Введите пароль KDBX</string>
@@ -2914,27 +2910,6 @@
     <string name="import_type_stratum_title">Stratum Auth</string>
     <string name="import_type_stratum_desc">Импорт Stratum/AuthPro (.stratum/.txt/.html)</string>
     <string name="import_type_stratum_file_hint">Выберите .stratum / .txt / .html</string>
-    <string name="import_type_steam_title">Steam Guard</string>
-    <string name="import_type_steam_desc">Импорт токена Steam из maFile</string>
-    <string name="import_type_steam_file_hint">Выберите .maFile</string>
-    <string name="import_type_steam_mode_title">Способ импорта Steam</string>
-    <string name="import_type_steam_mode_mafile">maFile</string>
-    <string name="import_type_steam_mode_coexist">Совместно с приложением Steam</string>
-    <string name="import_type_steam_mode_login">Вход в Steam</string>
-    <string name="import_type_steam_coexist_desc">Вставьте ID устройства и JSON SteamGuard для совместного импорта.</string>
-    <string name="import_type_steam_login_desc">Войдите в аккаунт Steam, затем введите код подтверждения.</string>
-    <string name="import_type_steam_login_username_label">Аккаунт Steam</string>
-    <string name="import_type_steam_login_password_label">Пароль Steam</string>
-    <string name="import_type_steam_login_code_label">Код подтверждения</string>
-    <string name="import_type_steam_login_code_hint">Введите код из email/приложения</string>
-    <string name="import_type_steam_login_challenge_required">Требуется подтверждение, введите код.</string>
-    <string name="import_type_steam_login_submit_code">Отправить код</string>
-    <string name="import_type_steam_device_id_label">ID устройства</string>
-    <string name="import_type_steam_device_id_hint">android:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx или XML с uuidKey</string>
-    <string name="import_type_steam_guard_json_label">SteamGuard JSON</string>
-    <string name="import_type_steam_guard_json_hint">Вставьте полный JSON с shared_secret и serial_number</string>
-    <string name="import_type_steam_custom_name_label">Отображаемое имя (необязательно)</string>
-    <string name="import_type_steam_custom_name_hint">Оставьте пустым для account_name из JSON</string>
     <string name="import_type_csv_monica_title">CSV Monica</string>
     <string name="import_type_csv_monica_desc">Импорт CSV из Monica</string>
     <string name="import_type_csv_monica_file_hint">Выберите .csv файл Monica</string>
@@ -2970,7 +2945,6 @@
     <string name="import_data_password_incorrect_retry">Неверный пароль, попробуйте снова</string>
     <string name="import_data_failed_with_reason">Ошибка импорта: %1$s</string>
     <string name="import_data_kdbx_import_success_count">Импортировано %1$d записей</string>
-    <string name="import_data_steam_import_success">Steam Guard успешно импортирован</string>
     <string name="webdav_image_optimization_title">Оптимизация изображений</string>
     <string name="webdav_image_stats_total">%1$d изображений, общий размер %2$s</string>
     <string name="webdav_image_stats_optimizable">%1$d больших изображений можно оптимизировать (%2$d оптимизировано)</string>
@@ -3495,5 +3469,4 @@
     <string name="security_score_good">Хорошая защита</string>
     <string name="security_score_fair">Можно улучшить</string>
     <string name="security_score_needs_attention">Требует внимания</string>
-    <string name="extensions_steam_settings">Steam</string>
 </resources>

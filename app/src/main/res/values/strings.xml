@@ -432,7 +432,6 @@
     <string name="otp_type">OTP Type</string>
     <string name="otp_type_totp">Time-based (TOTP)</string>
     <string name="otp_type_hotp">Counter-based (HOTP)</string>
-    <string name="otp_type_steam">Steam Guard</string>
     <string name="otp_type_yandex">Yandex</string>
     <string name="otp_type_motp">Mobile-OTP</string>
     <string name="initial_counter">Initial Counter</string>
@@ -446,7 +445,6 @@
     <string name="motp_pin_hint">4-digit PIN code for Mobile-OTP encryption</string>
     <string name="otp_type_description_totp">Standard time-based codes, refreshes every 30 seconds</string>
     <string name="otp_type_description_hotp">Counter-based codes, generates new code each time</string>
-    <string name="otp_type_description_steam">Steam Guard 5-character codes</string>
     <string name="otp_type_description_yandex">Yandex authentication codes</string>
     <string name="otp_type_description_motp">Mobile-OTP with PIN code protection</string>
     
@@ -635,8 +633,6 @@
     <string name="export_option_zip_desc">Exports everything, including passwords, notes, and images. Works on Windows and Android.</string>
     <string name="export_option_kdbx">KeePass Format (KDBX)</string>
     <string name="export_option_kdbx_desc">Export passwords and authenticators in KeePass-compatible format for KeePass, KeePassXC, etc.</string>
-    <string name="export_option_steam_mafile">Steam maFile</string>
-    <string name="export_option_steam_mafile_desc">Export selected local Steam authenticators as plain maFile files for migration to other clients.</string>
     <string name="kdbx_password_title">Set KDBX Password</string>
     <string name="kdbx_password_hint">This password will encrypt the KDBX file. You\'ll need it when importing.</string>
     <string name="kdbx_import_password_title">Enter KDBX Password</string>
@@ -841,7 +837,6 @@
     <string name="nav_generator">Generator</string>  <!-- 添加生成器导航标签 -->
     <string name="nav_timeline">Timeline</string>
     <string name="nav_passkey">Passkey</string>
-    <string name="nav_steam">Steam</string>
     <string name="nav_settings">Settings</string>
     <string name="trash_bin">Recycle Bin</string>
     <string name="trash_settings">Recycle Bin Settings</string>
@@ -858,10 +853,8 @@
     <string name="nav_generator_short">Gen</string>  <!-- 添加生成器导航短标签 -->
     <string name="nav_timeline_short">History</string>
     <string name="nav_passkey_short">Pass</string>
-    <string name="nav_steam_short">Steam</string>
     <string name="nav_settings_short">Set</string>
 
-    <!-- Steam local guard -->
     
     <!-- V2 Multi-Source Vault Navigation -->
     <string name="nav_v2_vault">Vault (Test Feature)</string>
@@ -1450,7 +1443,6 @@
     <!-- WebDAV Encryption -->
     <string name="webdav_enable_encryption">Enable Encryption</string>
     <string name="webdav_encryption_description">Encrypt backups with AES-256</string>
-    <string name="webdav_steam_mafile_encryption_required">Steam maFile cloud backups always use AES-256 encryption. Set a password of at least 8 characters and keep it safe for restores on another device.</string>
     <string name="webdav_encryption_password">Encryption Password</string>
     <string name="webdav_encryption_password_hint">Enter encryption password</string>
     <string name="webdav_encryption_password_confirm">Confirm Password</string>
@@ -3245,27 +3237,6 @@
     <string name="import_type_stratum_title">Stratum Auth</string>
     <string name="import_type_stratum_desc">Import Stratum/AuthPro backup (.stratum/.txt/.html)</string>
     <string name="import_type_stratum_file_hint">Select .stratum / .txt / .html file</string>
-    <string name="import_type_steam_title">Steam Guard</string>
-    <string name="import_type_steam_desc">Import Steam token from maFile</string>
-    <string name="import_type_steam_file_hint">Select .maFile file</string>
-    <string name="import_type_steam_mode_title">Steam import method</string>
-    <string name="import_type_steam_mode_mafile">maFile</string>
-    <string name="import_type_steam_mode_coexist">Steam app coexist</string>
-    <string name="import_type_steam_mode_login">Steam login</string>
-    <string name="import_type_steam_coexist_desc">Paste your device ID and SteamGuard JSON for coexist import.</string>
-    <string name="import_type_steam_login_desc">Sign in with your Steam account, then complete verification code when prompted.</string>
-    <string name="import_type_steam_login_username_label">Steam account</string>
-    <string name="import_type_steam_login_password_label">Steam password</string>
-    <string name="import_type_steam_login_code_label">Verification code</string>
-    <string name="import_type_steam_login_code_hint">Enter email/app code</string>
-    <string name="import_type_steam_login_challenge_required">Verification required, please enter the code.</string>
-    <string name="import_type_steam_login_submit_code">Submit code</string>
-    <string name="import_type_steam_device_id_label">Device ID</string>
-    <string name="import_type_steam_device_id_hint">android:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx or XML containing uuidKey</string>
-    <string name="import_type_steam_guard_json_label">SteamGuard JSON</string>
-    <string name="import_type_steam_guard_json_hint">Paste full JSON containing shared_secret and serial_number</string>
-    <string name="import_type_steam_custom_name_label">Display name (optional)</string>
-    <string name="import_type_steam_custom_name_hint">Leave empty to use account_name from JSON</string>
     <string name="import_type_csv_monica_title">Monica CSV</string>
     <string name="import_type_csv_monica_desc">Import CSV exported by Monica</string>
     <string name="import_type_csv_monica_file_hint">Select Monica .csv file</string>
@@ -3304,7 +3275,6 @@
     <string name="import_data_password_incorrect_retry">Incorrect password, please try again</string>
     <string name="import_data_failed_with_reason">Import failed: %1$s</string>
     <string name="import_data_kdbx_import_success_count">Imported %1$d records</string>
-    <string name="import_data_steam_import_success">Steam Guard authenticator imported successfully</string>
     <string name="webdav_image_optimization_title">Image Optimization</string>
     <string name="webdav_image_stats_total">%1$d images, total size %2$s</string>
     <string name="webdav_image_stats_optimizable">%1$d large images can be optimized (%2$d optimized)</string>
@@ -3881,7 +3851,6 @@
     <string name="security_score_good">Good protection</string>
     <string name="security_score_fair">Can be improved</string>
     <string name="security_score_needs_attention">Needs attention</string>
-    <string name="extensions_steam_settings">Steam</string>
     <string name="continue_text">Continue</string>
     <string name="incorrect_master_password">Incorrect master password.</string>
     <string name="interface_scale_title">Interface scale</string>
@@ -3891,49 +3860,7 @@
     <string name="settings_data_management_entry_title">Data &amp; backup</string>
     <string name="settings_data_management_entry_description">Manage maFile transfer, WebDAV backup, and MDBX databases.</string>
     <string name="settings_appearance_entry_title">Appearance &amp; display</string>
-    <string name="settings_appearance_entry_description">Theme, colors, interface scale, avatars, Steam Guard code layout, and progress style.</string>
-    <string name="itad_settings_section">Price data</string>
-    <string name="itad_settings_title">Historical-low prices</string>
-    <string name="itad_settings_description">Connect IsThereAnyDeal to show historical-low prices on store game details</string>
-    <string name="itad_api_key_section">API access</string>
-    <string name="itad_api_key_label">IsThereAnyDeal API key</string>
-    <string name="itad_key_configured">API key saved</string>
-    <string name="itad_key_not_configured">API key required</string>
-    <string name="itad_key_help">The key is encrypted on this device and sent only in the ITAD-API-Key request header.</string>
-    <string name="itad_show_key">Show API key</string>
-    <string name="itad_hide_key">Hide API key</string>
-    <string name="itad_save_key">Save</string>
-    <string name="itad_clear_key">Clear</string>
-    <string name="itad_key_saved">API key saved</string>
-    <string name="itad_key_cleared">API key cleared</string>
-    <string name="itad_key_error_empty">Enter an API key</string>
-    <string name="itad_key_error_too_long">The API key is too long</string>
-    <string name="itad_key_error_control_character">The API key contains an unsupported control character</string>
-    <string name="itad_storage_error">Secure credential storage is unavailable</string>
-    <string name="itad_source_section">IsThereAnyDeal</string>
-    <string name="itad_get_key_title">Create an API key</string>
-    <string name="itad_get_key_description">Open the official IsThereAnyDeal application page</string>
-    <string name="itad_attribution_notice">Historical-low data is provided by IsThereAnyDeal. Etoile is not affiliated with IsThereAnyDeal.</string>
-    <string name="itad_open_link_failed">No application can open this link</string>
-    <string name="itad_history_low_title">All-store historical low</string>
-    <string name="itad_history_low_description">Lowest recorded authorized-store price for the selected region</string>
-    <string name="itad_history_low_loading">Loading historical-low data…</string>
-    <string name="itad_history_low_date">Recorded on %1$s</string>
-    <string name="itad_history_low_source">Data provided by IsThereAnyDeal</string>
-    <string name="itad_history_low_cached">Cached</string>
-    <string name="itad_history_low_stale_cache">Offline cache</string>
-    <string name="itad_history_low_key_missing">Add an IsThereAnyDeal API key to view historical-low prices.</string>
-    <string name="itad_history_low_credential_error">Secure API-key storage is unavailable.</string>
-    <string name="itad_history_low_unauthorized">The IsThereAnyDeal API key is invalid or lacks access.</string>
-    <string name="itad_history_low_not_found">IsThereAnyDeal has no historical-low record for this item.</string>
-    <string name="itad_history_low_rate_limited">The IsThereAnyDeal request limit has been reached.</string>
-    <string name="itad_history_low_retry_after">Available again after %1$s</string>
-    <string name="itad_history_low_network_error">Historical-low data is temporarily unavailable because of a network error.</string>
-    <string name="itad_history_low_service_error">IsThereAnyDeal returned an unavailable or unsupported response.</string>
-    <string name="itad_history_low_open_settings">Configure API key</string>
-    <string name="itad_history_low_retry">Retry</string>
-    <string name="itad_history_low_region_mismatch">IsThereAnyDeal has no historical-low record matching this Steam region.</string>
-    <string name="itad_history_low_current_price_is_lower">The current Steam price is lower than the historical low recorded by IsThereAnyDeal. The recorded value is hidden until the data is updated.</string>
+    <string name="settings_appearance_entry_description">Theme, colors, interface scale, avatars, and progress style.</string>
     <string name="mdbx_create_location">Create in %1$s</string>
     <string name="mdbx_quick_snapshot_name">Quick snapshot · %1$s</string>
     <string name="mdbx_snapshot_always_create_full">Always create full snapshot</string>

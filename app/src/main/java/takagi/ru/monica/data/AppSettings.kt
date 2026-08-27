@@ -63,8 +63,7 @@ enum class BottomNavContentTab {
     GENERATOR,
     NOTES,
     SEND,         // 发送（安全分享）
-    PASSKEY,  // 通行密钥
-    STEAM;    // Steam local guard
+    PASSKEY;  // 通行密钥
 
     companion object {
         val DEFAULT_ORDER: List<BottomNavContentTab> = listOf(
@@ -74,8 +73,7 @@ enum class BottomNavContentTab {
             CARD_WALLET,
             PASSKEY,
             NOTES,
-            SEND,
-            STEAM
+            SEND
         )
 
         fun sanitizeOrder(order: List<BottomNavContentTab>): List<BottomNavContentTab> {
@@ -105,7 +103,6 @@ data class BottomNavVisibility(
     val notes: Boolean = true,        // 笔记功能默认开启
     val send: Boolean = false,        // 发送功能默认关闭
     val passkey: Boolean = true,      // 通行密钥功能默认开启
-    val steam: Boolean = false        // Steam 功能默认隐藏
 ) {
     fun isVisible(tab: BottomNavContentTab): Boolean = when (tab) {
         BottomNavContentTab.VAULT_V2 -> vaultV2
@@ -117,7 +114,6 @@ data class BottomNavVisibility(
         BottomNavContentTab.NOTES -> notes
         BottomNavContentTab.SEND -> send
         BottomNavContentTab.PASSKEY -> passkey
-        BottomNavContentTab.STEAM -> steam
     }
 
     fun visibleCount(): Int = listOf(
@@ -128,8 +124,7 @@ data class BottomNavVisibility(
         generator,
         notes,
         send,
-        passkey,
-        steam
+        passkey
     ).count { it }
 }
 
@@ -511,7 +506,6 @@ data class AppSettings(
     val useDraggableBottomNav: Boolean = false, // 使用可拖拽底部导航栏
     val autoHideBottomNavWhenSingleTab: Boolean = false, // 仅启用一个底栏项时自动隐藏导航栏
     val disablePasswordVerification: Boolean = false, // 启动时跳过主密码验证
-    val steamLockTokenPageOnly: Boolean = false, // Etoile 仅在进入令牌页面时验证
     val passkeyHyperOsBiometricBypassEnabled: Boolean = false, // 开发者选项：HyperOS Passkey 生物识别兼容旁路
     val bitwardenSyncForensicsEnabled: Boolean = false, // 开发者选项：Bitwarden 同步脱敏取证
     val bitwardenSyncForensicsDirectoryUri: String? = null, // 取证日志外部镜像目录（SAF tree uri）
@@ -519,12 +513,10 @@ data class AppSettings(
     val validatorProgressBarStyle: ProgressBarStyle = ProgressBarStyle.WAVE, // 验证器进度条样式（波浪形）
     val validatorUnifiedProgressBar: UnifiedProgressBarMode = UnifiedProgressBarMode.ENABLED, // 统一进度条模式
     val validatorSmoothProgress: Boolean = true, // 平滑进度条（无停顿感）
-    val steamGuardCodeGroupingEnabled: Boolean = true, // Steam Guard 五位验证码分段显示
     val validatorVibrationEnabled: Boolean = true, // 验证器震动提醒
     val hideFabOnScroll: Boolean = false, // 滚动时隐藏悬浮按钮
     val securityAnalysisAutoEnabled: Boolean = false, // 安全分析自动分析
     val passwordDetailSecurityAnalysisEnabled: Boolean = true,
-    val steamMiniProfileBackgroundEnabled: Boolean = false,
     val bitwardenBottomStatusBarEnabled: Boolean = false, // Bitwarden 底部状态栏（实验）
     val copyNextCodeWhenExpiring: Boolean = true, // 倒计时<=5秒时复制下一个验证码（默认开启）
     val notificationValidatorEnabled: Boolean = false, // 通知栏验证器开关

@@ -328,12 +328,6 @@ configurations.configureEach {
     )
 }
 
-// Legacy tests are compiled as one source set even when only Steam tests run.
-// Make removed feature APIs visible to the test compiler without packaging them.
-configurations.named('testCompileOnly') {
-    extendsFrom configurations.compileOnly
-}
-
 dependencies {
 
     constraints {
@@ -365,8 +359,7 @@ dependencies {
     
     // Navigation
     implementation libs.androidx.navigation.compose
-    
-    
+
     // Biometric
     implementation libs.androidx.biometric
     
@@ -387,24 +380,16 @@ dependencies {
     implementation libs.androidx.fragment.ktx
     implementation libs.material
 
-    
     // DataStore
     implementation libs.androidx.datastore.preferences
 
-    
     // Kotlinx Serialization
     implementation libs.kotlinx.serialization.json
 
-    
     // OkHttp for networking
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
-    compileOnly 'com.squareup.okhttp3:logging-interceptor:4.12.0'
-    implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0'
 
-
-    // Native Argon2 backend for Bitwarden Argon2id KDF. This keeps high-memory
-    // KDF work off the Android JVM heap.
-
+    
     
     // Testing
     testImplementation libs.junit

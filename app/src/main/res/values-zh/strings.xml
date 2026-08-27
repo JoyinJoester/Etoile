@@ -449,7 +449,6 @@
     <string name="otp_type">OTP类型</string>
     <string name="otp_type_totp">基于时间 (TOTP)</string>
     <string name="otp_type_hotp">基于计数器 (HOTP)</string>
-    <string name="otp_type_steam">Steam Guard</string>
     <string name="otp_type_yandex">Yandex</string>
     <string name="otp_type_motp">Mobile-OTP</string>
     <string name="initial_counter">初始计数器</string>
@@ -463,7 +462,6 @@
     <string name="motp_pin_hint">4位数字PIN码，用于Mobile-OTP加密</string>
     <string name="otp_type_description_totp">标准的基于时间验证码，每30秒刷新一次</string>
     <string name="otp_type_description_hotp">基于计数器的验证码，每次手动生成新验证码</string>
-    <string name="otp_type_description_steam">Steam Guard使用的5位字符验证码</string>
     <string name="otp_type_description_yandex">Yandex身份验证码</string>
     <string name="otp_type_description_motp">带PIN码保护的Mobile-OTP验证码</string>
     
@@ -652,8 +650,6 @@
     <string name="export_option_zip_desc">包含所有数据（密码、笔记、图片等），兼容 Windows 和 Android 版本。推荐使用。</string>
     <string name="export_option_kdbx">KeePass 格式 (KDBX)</string>
     <string name="export_option_kdbx_desc">以 KeePass 兼容格式导出密码和验证器，可用于 KeePass、KeePassXC 等应用</string>
-    <string name="export_option_steam_mafile">Steam maFile</string>
-    <string name="export_option_steam_mafile_desc">将选中的本地 Steam 验证器导出为明文 maFile，方便迁移到其他客户端。</string>
     <string name="kdbx_password_title">设置 KDBX 密码</string>
     <string name="kdbx_password_hint">此密码用于加密 KDBX 文件，请牢记密码。导入时需要输入此密码。</string>
     <string name="kdbx_import_password_title">输入 KDBX 密码</string>
@@ -834,7 +830,6 @@
     <string name="nav_generator">生成器</string>  <!-- 添加生成器导航标签 -->
     <string name="nav_timeline">时间线</string>
     <string name="nav_passkey">通行密钥</string>
-    <string name="nav_steam">Steam</string>
     <string name="nav_settings">设置</string>
     <string name="trash_bin">回收站</string>
     <string name="trash_settings">回收站设置</string>
@@ -851,10 +846,8 @@
     <string name="nav_generator_short">生成</string>  <!-- 添加生成器导航短标签 -->
     <string name="nav_timeline_short">历史</string>
     <string name="nav_passkey_short">通行</string>
-    <string name="nav_steam_short">Steam</string>
     <string name="nav_settings_short">设置</string>
 
-    <!-- Steam 本地令牌 -->
     
     <!-- V2 多源密码库导航 -->
     <string name="nav_v2_vault">密码库（测试功能）</string>
@@ -1410,7 +1403,6 @@
     <!-- WebDAV Encryption -->
     <string name="webdav_enable_encryption">启用加密</string>
     <string name="webdav_encryption_description">使用 AES-256 加密备份</string>
-    <string name="webdav_steam_mafile_encryption_required">Steam maFile 云备份始终使用 AES-256 加密。请设置至少 8 个字符的密码并妥善保存，换设备恢复时仍需使用。</string>
     <string name="webdav_encryption_password">加密密码</string>
     <string name="webdav_encryption_password_hint">输入加密密码</string>
     <string name="webdav_encryption_password_confirm">确认密码</string>
@@ -3060,27 +3052,6 @@
     <string name="import_type_stratum_title">Stratum Auth</string>
     <string name="import_type_stratum_desc">导入 Stratum/AuthPro 备份（.stratum/.txt/.html）</string>
     <string name="import_type_stratum_file_hint">选择 .stratum / .txt / .html 文件</string>
-    <string name="import_type_steam_title">Steam Guard</string>
-    <string name="import_type_steam_desc">导入 Steam 令牌的 maFile 文件</string>
-    <string name="import_type_steam_file_hint">选择 .maFile 文件</string>
-    <string name="import_type_steam_mode_title">Steam 导入方式</string>
-    <string name="import_type_steam_mode_mafile">maFile 文件</string>
-    <string name="import_type_steam_mode_coexist">Steam 共存导入</string>
-    <string name="import_type_steam_mode_login">Steam 账号登录</string>
-    <string name="import_type_steam_coexist_desc">粘贴设备ID与 SteamGuard JSON，按共存方式导入。</string>
-    <string name="import_type_steam_login_desc">使用 Steam 账号登录，按提示输入验证代码后完成导入。</string>
-    <string name="import_type_steam_login_username_label">Steam 账号</string>
-    <string name="import_type_steam_login_password_label">Steam 密码</string>
-    <string name="import_type_steam_login_code_label">验证码</string>
-    <string name="import_type_steam_login_code_hint">输入邮箱码或令牌码</string>
-    <string name="import_type_steam_login_challenge_required">需要验证，请输入验证码。</string>
-    <string name="import_type_steam_login_submit_code">提交验证码</string>
-    <string name="import_type_steam_device_id_label">设备ID</string>
-    <string name="import_type_steam_device_id_hint">android:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx 或包含 uuidKey 的 XML</string>
-    <string name="import_type_steam_guard_json_label">SteamGuard JSON</string>
-    <string name="import_type_steam_guard_json_hint">粘贴包含 shared_secret 与 serial_number 的完整 JSON</string>
-    <string name="import_type_steam_custom_name_label">显示名称（可选）</string>
-    <string name="import_type_steam_custom_name_hint">留空则使用 JSON 中的 account_name</string>
     <string name="import_type_csv_monica_title">Monica CSV</string>
     <string name="import_type_csv_monica_desc">导入 Monica 应用导出的 CSV 文件</string>
     <string name="import_type_csv_monica_file_hint">选择 Monica .csv 文件</string>
@@ -3119,7 +3090,6 @@
     <string name="import_data_password_incorrect_retry">密码错误，请重试</string>
     <string name="import_data_failed_with_reason">导入失败：%1$s</string>
     <string name="import_data_kdbx_import_success_count">成功导入 %1$d 条记录</string>
-    <string name="import_data_steam_import_success">成功导入 Steam Guard 验证器</string>
     <string name="webdav_image_optimization_title">图片优化</string>
     <string name="webdav_image_stats_total">共 %1$d 张图片，总大小 %2$s</string>
     <string name="webdav_image_stats_optimizable">有 %1$d 张大图片可优化（已优化 %2$d 张）</string>
@@ -3711,7 +3681,6 @@
     <string name="security_score_good">防护良好</string>
     <string name="security_score_fair">仍可改进</string>
     <string name="security_score_needs_attention">需要处理</string>
-    <string name="extensions_steam_settings">Steam</string>
     <string name="continue_text">继续</string>
     <string name="incorrect_master_password">主密码错误。</string>
     <string name="interface_scale_title">界面缩放</string>
@@ -3722,48 +3691,6 @@
     <string name="settings_data_management_entry_description">管理 maFile 导入导出、WebDAV 备份和 MDBX 数据库。</string>
     <string name="settings_appearance_entry_title">外观与显示</string>
     <string name="settings_appearance_entry_description">管理主题、配色、界面缩放、头像、验证码布局和进度条样式。</string>
-    <string name="itad_settings_section">价格数据</string>
-    <string name="itad_settings_title">史低价格</string>
-    <string name="itad_settings_description">连接 IsThereAnyDeal，在商店游戏详情中显示史低价格</string>
-    <string name="itad_api_key_section">API 访问</string>
-    <string name="itad_api_key_label">IsThereAnyDeal API Key</string>
-    <string name="itad_key_configured">API Key 已保存</string>
-    <string name="itad_key_not_configured">需要 API Key</string>
-    <string name="itad_key_help">密钥经过本机加密保存，仅通过 ITAD-API-Key 请求头发送。</string>
-    <string name="itad_show_key">显示 API Key</string>
-    <string name="itad_hide_key">隐藏 API Key</string>
-    <string name="itad_save_key">保存</string>
-    <string name="itad_clear_key">清除</string>
-    <string name="itad_key_saved">API Key 已保存</string>
-    <string name="itad_key_cleared">API Key 已清除</string>
-    <string name="itad_key_error_empty">请输入 API Key</string>
-    <string name="itad_key_error_too_long">API Key 长度过长</string>
-    <string name="itad_key_error_control_character">API Key 含有不支持的控制字符</string>
-    <string name="itad_storage_error">安全凭据存储暂时不可用</string>
-    <string name="itad_source_section">IsThereAnyDeal</string>
-    <string name="itad_get_key_title">申请 API Key</string>
-    <string name="itad_get_key_description">打开 IsThereAnyDeal 官方应用管理页面</string>
-    <string name="itad_attribution_notice">史低数据由 IsThereAnyDeal 提供。Etoile 与 IsThereAnyDeal 无隶属关系。</string>
-    <string name="itad_open_link_failed">没有可打开此链接的应用</string>
-    <string name="itad_history_low_title">全平台历史最低价</string>
-    <string name="itad_history_low_description">所选区服在授权商店中记录到的最低价格</string>
-    <string name="itad_history_low_loading">正在加载史低数据…</string>
-    <string name="itad_history_low_date">记录日期：%1$s</string>
-    <string name="itad_history_low_source">数据由 IsThereAnyDeal 提供</string>
-    <string name="itad_history_low_cached">缓存</string>
-    <string name="itad_history_low_stale_cache">离线缓存</string>
-    <string name="itad_history_low_key_missing">配置 IsThereAnyDeal API Key 后即可查看史低价格。</string>
-    <string name="itad_history_low_credential_error">安全 API Key 存储暂时不可用。</string>
-    <string name="itad_history_low_unauthorized">IsThereAnyDeal API Key 无效或缺少访问权限。</string>
-    <string name="itad_history_low_not_found">IsThereAnyDeal 暂无此商品的史低记录。</string>
-    <string name="itad_history_low_rate_limited">IsThereAnyDeal 请求次数已达到限制。</string>
-    <string name="itad_history_low_retry_after">预计可在 %1$s 后重试</string>
-    <string name="itad_history_low_network_error">网络异常，史低数据暂时不可用。</string>
-    <string name="itad_history_low_service_error">IsThereAnyDeal 返回了暂不可用或无法识别的数据。</string>
-    <string name="itad_history_low_open_settings">配置 API Key</string>
-    <string name="itad_history_low_retry">重试</string>
-    <string name="itad_history_low_region_mismatch">IsThereAnyDeal 暂无与该 Steam 区服匹配的史低记录。</string>
-    <string name="itad_history_low_current_price_is_lower">当前 Steam 价格低于 IsThereAnyDeal 已记录史低，数据更新前不显示该记录。</string>
     <string name="mdbx_create_location">将创建到 %1$s</string>
     <string name="mdbx_quick_snapshot_name">快速快照 · %1$s</string>
     <string name="mdbx_snapshot_always_create_full">始终创建完整快照</string>

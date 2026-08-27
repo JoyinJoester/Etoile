@@ -173,7 +173,6 @@
     <string name="otp_type">Loại OTP</string>
     <string name="otp_type_totp">Dựa trên thời gian (TOTP)</string>
     <string name="otp_type_hotp">Dựa trên bộ đếm (HOTP)</string>
-    <string name="otp_type_steam">Steam Guard</string>
     <string name="otp_type_yandex">Yandex</string>
     <string name="otp_type_motp">Mobile-OTP</string>
     <string name="initial_counter">Bộ đếm ban đầu</string>
@@ -187,7 +186,6 @@
     <string name="motp_pin_hint">Mã PIN 4 chữ số để mã hóa Mobile-OTP</string>
     <string name="otp_type_description_totp">Mã xác thực dựa trên thời gian, làm mới mỗi 30 giây</string>
     <string name="otp_type_description_hotp">Mã xác thực dựa trên bộ đếm, tạo mã mới mỗi lần</string>
-    <string name="otp_type_description_steam">Mã xác thực Steam Guard 5 ký tự</string>
     <string name="otp_type_description_yandex">Mã xác thực Yandex</string>
     <string name="otp_type_description_motp">Mobile-OTP với bảo vệ mã PIN</string>
     
@@ -1735,9 +1733,6 @@
     <string name="import_type_stratum_title">Stratum Auth</string>
     <string name="import_type_stratum_desc">Nhap ban sao luu Stratum/AuthPro (.stratum/.txt/.html)</string>
     <string name="import_type_stratum_file_hint">Chon tep .stratum / .txt / .html</string>
-    <string name="import_type_steam_title">Steam Guard</string>
-    <string name="import_type_steam_desc">Nhap token Steam tu tep maFile</string>
-    <string name="import_type_steam_file_hint">Chon tep .maFile</string>
     <string name="import_type_csv_monica_title">Monica CSV</string>
     <string name="import_type_csv_monica_desc">Nhap CSV duoc xuat boi Monica</string>
     <string name="import_type_csv_monica_file_hint">Chon tep Monica .csv</string>
@@ -1763,7 +1758,6 @@
     <string name="import_data_password_incorrect_retry">Mat khau sai, vui long thu lai</string>
     <string name="import_data_failed_with_reason">Nhap that bai: %1$s</string>
     <string name="import_data_kdbx_import_success_count">Da nhap %1$d ban ghi</string>
-    <string name="import_data_steam_import_success">Da nhap trinh xac thuc Steam Guard thanh cong</string>
     <string name="webdav_image_optimization_title">Toi uu hinh anh</string>
     <string name="webdav_image_stats_total">Co %1$d anh, tong dung luong %2$s</string>
     <string name="webdav_image_stats_optimizable">Co %1$d anh lon co the toi uu (da toi uu %2$d anh)</string>
@@ -2180,8 +2174,6 @@
     <string name="export_option_zip_desc">Xuất mọi thứ, bao gồm mật khẩu, ghi chú và hình ảnh. Hoạt động trên Windows và Android.</string>
     <string name="export_option_kdbx">Định dạng KeePass (KDBX)</string>
     <string name="export_option_kdbx_desc">Xuất mật khẩu và trình xác thực ở định dạng tương thích KeePass cho KeePass, KeePassXC, v.v.</string>
-    <string name="export_option_steam_mafile">Steam maFile</string>
-    <string name="export_option_steam_mafile_desc">Xuất trình xác thực Steam cục bộ đã chọn dưới dạng maFile văn bản thuần để chuyển sang ứng dụng khác.</string>
     <string name="kdbx_password_title">Đặt mật khẩu KDBX</string>
     <string name="kdbx_password_hint">Mật khẩu này sẽ mã hóa tệp KDBX. Bạn sẽ cần nó khi nhập.</string>
     <string name="kdbx_import_password_title">Nhập mật khẩu KDBX</string>
@@ -3103,24 +3095,6 @@ Làm mới hoặc đồng bộ hóa cơ sở dữ liệu KeePass này, sau đó 
     <string name="import_data_keepass_tip_kdf_memory">Bộ nhớ KDF quá cao đối với thiết bị này. Giảm bộ nhớ/song song Argon2 và thử lại.</string>
     <string name="import_data_keepass_tip_format_unsupported">Định dạng/mật mã không được hỗ trợ hoặc tệp bị hỏng. Kiểm tra nó trong KeePassDX/KeePassXC.</string>
     <string name="import_data_keepass_tip_io_failed">I/O không thành công khi đọc tệp. Hãy kiểm tra tính toàn vẹn của tệp và tính khả dụng của bộ nhớ, sau đó thử lại.</string>
-    <string name="import_type_steam_mode_title">Phương pháp nhập khẩu hơi nước</string>
-    <string name="import_type_steam_mode_mafile">maFile</string>
-    <string name="import_type_steam_mode_coexist">Ứng dụng Steam cùng tồn tại</string>
-    <string name="import_type_steam_mode_login">Đăng nhập hơi nước</string>
-    <string name="import_type_steam_coexist_desc">Dán ID thiết bị của bạn và SteamGuard JSON để nhập cùng tồn tại.</string>
-    <string name="import_type_steam_login_desc">Đăng nhập bằng tài khoản Steam của bạn, sau đó hoàn tất mã xác minh khi được nhắc.</string>
-    <string name="import_type_steam_login_username_label">Tài khoản hơi nước</string>
-    <string name="import_type_steam_login_password_label">Mật khẩu hơi nước</string>
-    <string name="import_type_steam_login_code_label">Mã xác minh</string>
-    <string name="import_type_steam_login_code_hint">Nhập email/mã ứng dụng</string>
-    <string name="import_type_steam_login_challenge_required">Cần xác minh, vui lòng nhập mã.</string>
-    <string name="import_type_steam_login_submit_code">Gửi mã</string>
-    <string name="import_type_steam_device_id_label">ID thiết bị</string>
-    <string name="import_type_steam_device_id_hint">android:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx hoặc XML chứa uuidKey</string>
-    <string name="import_type_steam_guard_json_label">SteamGuard JSON</string>
-    <string name="import_type_steam_guard_json_hint">Dán JSON đầy đủ chứa Shared_secret và serial_number</string>
-    <string name="import_type_steam_custom_name_label">Tên hiển thị (tùy chọn)</string>
-    <string name="import_type_steam_custom_name_hint">Để trống để sử dụng account_name từ JSON</string>
     <string name="import_type_csv_chrome_title">Chrome CSV</string>
     <string name="import_type_csv_chrome_desc">Nhập CSV do Google Chrome xuất</string>
     <string name="import_type_csv_chrome_file_hint">Chọn tệp .csv Chrome</string>
@@ -3412,5 +3386,4 @@ Làm mới hoặc đồng bộ hóa cơ sở dữ liệu KeePass này, sau đó 
     <string name="security_score_good">Bảo vệ tốt</string>
     <string name="security_score_fair">Có thể cải thiện</string>
     <string name="security_score_needs_attention">Cần chú ý</string>
-    <string name="extensions_steam_settings">Steam</string>
 </resources>

@@ -2,7 +2,7 @@
 <!--
    Defense in depth for Android 11 and older. AndroidManifest.xml disables
    backup globally, while these exclusions ensure that an OEM manifest merge
-   or future configuration change still cannot copy device-bound Steam data.
+   or future configuration change still cannot copy device-bound credentials.
 -->
 <full-backup-content>
     <exclude domain="root" path="." />

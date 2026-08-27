@@ -1717,9 +1717,6 @@
     <string name="import_type_stratum_title">Stratum Auth</string>
     <string name="import_type_stratum_desc">Stratum/AuthPro バックアップ（.stratum/.txt/.html）をインポート</string>
     <string name="import_type_stratum_file_hint">.stratum / .txt / .html ファイルを選択</string>
-    <string name="import_type_steam_title">Steam Guard</string>
-    <string name="import_type_steam_desc">maFile から Steam トークンをインポート</string>
-    <string name="import_type_steam_file_hint">.maFile ファイルを選択</string>
     <string name="import_type_csv_monica_title">Monica CSV</string>
     <string name="import_type_csv_monica_desc">Monica から出力した CSV をインポート</string>
     <string name="import_type_csv_monica_file_hint">Monica .csv ファイルを選択</string>
@@ -1745,7 +1742,6 @@
     <string name="import_data_password_incorrect_retry">パスワードが正しくありません。再試行してください</string>
     <string name="import_data_failed_with_reason">インポート失敗: %1$s</string>
     <string name="import_data_kdbx_import_success_count">%1$d 件のレコードをインポートしました</string>
-    <string name="import_data_steam_import_success">Steam Guard 認証器をインポートしました</string>
     <string name="webdav_image_optimization_title">画像最適化</string>
     <string name="webdav_image_stats_total">画像 %1$d 枚、合計サイズ %2$s</string>
     <string name="webdav_image_stats_optimizable">最適化可能な大きい画像 %1$d 枚（最適化済み %2$d 枚）</string>
@@ -2153,7 +2149,6 @@
     <string name="otp_type">OTPタイプ</string>
     <string name="otp_type_totp">時間ベース (TOTP)</string>
     <string name="otp_type_hotp">カウンターベース (HOTP)</string>
-    <string name="otp_type_steam">スチームガード</string>
     <string name="otp_type_yandex">ヤンデックス</string>
     <string name="otp_type_motp">モバイルOTP</string>
     <string name="initial_counter">初期カウンター</string>
@@ -2167,7 +2162,6 @@
     <string name="motp_pin_hint">モバイル OTP 暗号化用の 4 桁の PIN コード</string>
     <string name="otp_type_description_totp">標準の時間ベースのコード、30 秒ごとに更新</string>
     <string name="otp_type_description_hotp">カウンターベースのコード、毎回新しいコードを生成</string>
-    <string name="otp_type_description_steam">Steam ガードの 5 文字コード</string>
     <string name="otp_type_description_yandex">Yandex 認証コード</string>
     <string name="otp_type_description_motp">PIN コード保護を備えたモバイル OTP</string>
     <string name="bottom_nav_auto_hide_single_tab_title">タブが 1 つだけ残っている場合はナビゲーションを非表示にする</string>
@@ -2178,8 +2172,6 @@
     <string name="export_option_zip_desc">パスワード、メモ、画像を含むすべてをエクスポートします。 WindowsおよびAndroidで動作します。</string>
     <string name="export_option_kdbx">KeePass形式(KDBX)</string>
     <string name="export_option_kdbx_desc">KeePass、KeePassXC などの KeePass 互換形式でパスワードと認証子をエクスポートします。</string>
-    <string name="export_option_steam_mafile">Steam maFile</string>
-    <string name="export_option_steam_mafile_desc">選択したローカル Steam 認証子を、他のクライアントへ移行しやすい平文 maFile としてエクスポートします。</string>
     <string name="kdbx_password_title">KDBXパスワードの設定</string>
     <string name="kdbx_password_hint">このパスワードは KDBX ファイルを暗号化します。インポート時に必要になります。</string>
     <string name="kdbx_import_password_title">KDBXパスワードを入力してください</string>
@@ -3090,24 +3082,6 @@
     <string name="import_data_keepass_tip_kdf_memory">KDF メモリはこのデバイスには多すぎます。 Argon2 のメモリ/並列性を下げて再試行します。</string>
     <string name="import_data_keepass_tip_format_unsupported">サポートされていない形式/暗号、またはファイルが破損しています。 KeePassDX/KeePassXCでご確認ください。</string>
     <string name="import_data_keepass_tip_io_failed">ファイルの読み取り中に I/O が失敗しました。ファイルの整合性とストレージの可用性を確認して、再試行してください。</string>
-    <string name="import_type_steam_mode_title">Steamインポート方法</string>
-    <string name="import_type_steam_mode_mafile">maファイル</string>
-    <string name="import_type_steam_mode_coexist">Steamアプリの共存</string>
-    <string name="import_type_steam_mode_login">Steam ログイン</string>
-    <string name="import_type_steam_coexist_desc">デバイス ID と SteamGuard JSON を貼り付けて、共存インポートします。</string>
-    <string name="import_type_steam_login_desc">Steam アカウントでサインインし、プロンプトが表示されたら確認コードを入力します。</string>
-    <string name="import_type_steam_login_username_label">Steamアカウント</string>
-    <string name="import_type_steam_login_password_label">Steamのパスワード</string>
-    <string name="import_type_steam_login_code_label">検証コード</string>
-    <string name="import_type_steam_login_code_hint">メールアドレス/アプリコードを入力してください</string>
-    <string name="import_type_steam_login_challenge_required">確認が必要です。コードを入力してください。</string>
-    <string name="import_type_steam_login_submit_code">コードを送信する</string>
-    <string name="import_type_steam_device_id_label">デバイスID</string>
-    <string name="import_type_steam_device_id_hint">android:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx または uuidKey を含む XML</string>
-    <string name="import_type_steam_guard_json_label">スチームガード JSON</string>
-    <string name="import_type_steam_guard_json_hint">共有シークレットとシリアル番号を含む完全な JSON を貼り付けます</string>
-    <string name="import_type_steam_custom_name_label">表示名 (オプション)</string>
-    <string name="import_type_steam_custom_name_hint">JSON の account_name を使用するには、空のままにしておきます</string>
     <string name="import_type_csv_chrome_title">Chrome CSV</string>
     <string name="import_type_csv_chrome_desc">Google Chrome によってエクスポートされた CSV をインポート</string>
     <string name="import_type_csv_chrome_file_hint">Chrome .csv ファイルを選択します</string>
@@ -3399,5 +3373,4 @@
     <string name="security_score_good">良好な保護</string>
     <string name="security_score_fair">改善できます</string>
     <string name="security_score_needs_attention">対応が必要です</string>
-    <string name="extensions_steam_settings">Steam</string>
 </resources>
