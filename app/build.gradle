@@ -180,10 +180,6 @@ android {
         // exposed by Etoile instead of every translation from libraries.
         resourceConfigurations += ['en', 'zh', 'ja', 'ru', 'vi']
 
-        def cfLicenseBaseUrl = project.findProperty('cfLicenseBaseUrl')?.toString()?.trim() ?: 'https://license.609780.xyz'
-        def cfLicenseVerifyIntervalSeconds =
-                project.findProperty('cfLicenseVerifyIntervalSeconds')?.toString()?.trim() ?: '21600'
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary true
@@ -197,9 +193,6 @@ android {
         buildConfigField 'String', 'BUILD_TIME', "\"${new Date().format('yyyy-MM-dd HH:mm:ss z')}\""
         buildConfigField 'String', 'FULL_VERSION_NAME', "\"${fullVersionName}\""
         buildConfigField 'String', 'BUILD_DETAIL_TAG', "\"${buildDateTag}${buildVersionTag}-${buildDailySeq}\""
-        buildConfigField 'int', 'BW_DIAG_SCHEMA', '1'
-        buildConfigField 'String', 'CF_LICENSE_BASE_URL', "\"${escapeForBuildConfig(cfLicenseBaseUrl)}\""
-        buildConfigField 'long', 'CF_LICENSE_VERIFY_INTERVAL_SECONDS', "${cfLicenseVerifyIntervalSeconds}L"
         buildConfigField 'String', 'GITHUB_OAUTH_CLIENT_ID', "\"${escapeForBuildConfig(githubOAuthClientId)}\""
         
     }
