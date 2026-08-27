@@ -47,10 +47,6 @@ import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubSession
 
-data class ProfileLinks(
-    val organizations: String = "https://github.com/settings/organizations"
-)
-
 @Composable
 fun ProfileScreen(
     settings: AppSettings,
@@ -63,11 +59,10 @@ fun ProfileScreen(
     onOpenSettings: () -> Unit,
     onOpenRepositories: () -> Unit,
     onOpenStarred: () -> Unit,
+    onOpenOrganizations: () -> Unit,
     onOpenFollowers: () -> Unit,
     onOpenFollowing: () -> Unit,
-    onOpenUrl: (String) -> Unit,
-    modifier: Modifier = Modifier,
-    links: ProfileLinks = ProfileLinks()
+    modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier,
@@ -141,7 +136,7 @@ fun ProfileScreen(
                             Icons.Default.Public,
                             stringResource(R.string.github_organizations),
                             stringResource(R.string.github_open),
-                            onClick = { onOpenUrl(links.organizations) }
+                            onClick = onOpenOrganizations
                         )
                         GithubPreferenceGroupDivider()
                         GithubPreferenceRow(

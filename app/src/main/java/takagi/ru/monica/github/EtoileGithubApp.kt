@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -72,6 +74,7 @@ import takagi.ru.monica.github.feature.actions.ActionsWorkflowsScreen
 import takagi.ru.monica.github.feature.actions.ActionsWorkflowsViewModel
 import takagi.ru.monica.github.feature.actions.WorkflowRunsScreen
 import takagi.ru.monica.github.feature.actions.WorkflowRunsViewModel
+import takagi.ru.monica.github.feature.copilot.CopilotPlaceholderScreen
 import takagi.ru.monica.github.feature.explore.ExploreAction
 import takagi.ru.monica.github.feature.explore.ExploreScreen
 import takagi.ru.monica.github.feature.explore.ExploreUiState
@@ -84,6 +87,7 @@ import takagi.ru.monica.github.feature.commits.CommitDetailScreen
 import takagi.ru.monica.github.feature.commits.CommitDetailViewModel
 import takagi.ru.monica.github.feature.commits.CommitsScreen
 import takagi.ru.monica.github.feature.commits.CommitsViewModel
+import takagi.ru.monica.github.feature.home.HomeScreen
 import takagi.ru.monica.github.feature.inbox.InboxAction
 import takagi.ru.monica.github.feature.inbox.InboxScreen
 import takagi.ru.monica.github.feature.inbox.InboxUiState
@@ -94,6 +98,11 @@ import takagi.ru.monica.github.feature.issues.CreateIssueScreen
 import takagi.ru.monica.github.feature.issues.CreateIssueViewModel
 import takagi.ru.monica.github.feature.issues.IssuesScreen
 import takagi.ru.monica.github.feature.issues.IssuesViewModel
+import takagi.ru.monica.github.feature.mywork.MyConversationsKind
+import takagi.ru.monica.github.feature.mywork.MyConversationsScreen
+import takagi.ru.monica.github.feature.mywork.MyConversationsViewModel
+import takagi.ru.monica.github.feature.organizations.OrganizationsScreen
+import takagi.ru.monica.github.feature.organizations.OrganizationsViewModel
 import takagi.ru.monica.github.feature.profile.ProfileScreen
 import takagi.ru.monica.github.feature.profile.UserRepositoriesScreen
 import takagi.ru.monica.github.feature.profile.UserRepositoriesViewModel
@@ -123,7 +132,9 @@ import takagi.ru.monica.github.feature.releases.ReleaseReference
 import takagi.ru.monica.github.feature.releases.ReleasesScreen
 import takagi.ru.monica.github.feature.releases.ReleasesViewModel
 import takagi.ru.monica.github.feature.starred.StarredCollectionsSheet
+import takagi.ru.monica.github.feature.starred.StarredUiState
 import takagi.ru.monica.github.feature.starred.StarredViewModel
+import takagi.ru.monica.github.component.GithubAvatar
 import takagi.ru.monica.github.component.GithubServiceStatusProvider
 import takagi.ru.monica.github.component.GithubServiceStatusNotices
 import takagi.ru.monica.github.component.LocalGithubUserNavigator
@@ -139,6 +150,8 @@ import takagi.ru.monica.github.navigation.GithubDestination
 import takagi.ru.monica.github.navigation.GithubActionsJobRoute
 import takagi.ru.monica.github.navigation.GithubActionsRunRoute
 import takagi.ru.monica.github.navigation.GithubHomeRoute
+import takagi.ru.monica.github.navigation.GithubMyConversationsRoute
+import takagi.ru.monica.github.navigation.GithubOrganizationsRoute
 import takagi.ru.monica.github.navigation.GithubUserRepositoriesRoute
 import takagi.ru.monica.github.navigation.GithubUserProfileRoute
 import takagi.ru.monica.github.navigation.GithubUserFollowersRoute
@@ -173,7 +186,7 @@ fun EtoileGithubApp(
     initialGithubUrl: String? = null,
     onGithubUrlConsumed: (String) -> Unit = {}
 ) {
-    var destination by rememberSaveable { mutableStateOf(GithubDestination.INBOX) }
+    var destination by rememberSaveable { mutableStateOf(GithubDestination.HOME) }
     var settingsVisible by rememberSaveable { mutableStateOf(false) }
     var starredVisible by rememberSaveable { mutableStateOf(false) }
     var signInVisible by rememberSaveable { mutableStateOf(false) }
@@ -310,6 +323,7 @@ fun EtoileGithubApp(
         composable<GithubHomeRoute> {
             GithubAdaptiveScaffold(
                 destination = destination,
+                session = sessionState.session,
                 onDestinationSelected = { destination = it },
                 onOpenSettings = { settingsVisible = true }
             ) { contentModifier ->
@@ -317,6 +331,7 @@ fun EtoileGithubApp(
                     destination = destination,
                     inboxState = inboxState,
                     exploreState = exploreState,
+                    starredState = starredState,
                     session = sessionState.session,
                     savedAccountCount = sessionState.accounts.size,
                     settings = settings,
@@ -334,6 +349,16 @@ fun EtoileGithubApp(
                         }
                     },
                     onOpenStarred = { starredVisible = true },
+                    onOpenOrganizations = {
+                        navController.navigate(GithubOrganizationsRoute) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onOpenMyConversations = { kind ->
+                        navController.navigate(GithubMyConversationsRoute(kind)) {
+                            launchSingleTop = true
+                        }
+                    },
                     onOpenFollowers = {
                         (sessionState.session as? GithubSession.SignedIn)?.account?.login?.let { login ->
                             navController.navigate(GithubUserFollowersRoute(login)) {
@@ -407,6 +432,74 @@ fun EtoileGithubApp(
             } else {
                 Box(modifier = Modifier.fillMaxSize())
             }
+        }
+        composable<GithubOrganizationsRoute> {
+            val account = (sessionState.session as? GithubSession.SignedIn)?.account
+            LaunchedEffect(account) {
+                if (account == null) navController.popBackStack()
+            }
+            if (account != null) {
+                val factory = remember(dependencies) {
+                    OrganizationsViewModel.Factory(dependencies.organizationsRepository)
+                }
+                val organizationsViewModel: OrganizationsViewModel = viewModel(
+                    key = "organizations",
+                    factory = factory
+                )
+                val organizationsState by organizationsViewModel.state.collectAsStateWithLifecycle()
+                OrganizationsScreen(
+                    state = organizationsState,
+                    onAction = organizationsViewModel::onAction,
+                    onBack = { navController.popBackStack() },
+                    onOpenOrganization = { organization ->
+                        navController.navigate(GithubUserProfileRoute(organization.login)) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onOpenExternal = openUrl,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                Box(modifier = Modifier.fillMaxSize())
+            }
+        }
+        composable<GithubMyConversationsRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<GithubMyConversationsRoute>()
+            val kind = route.conversationsKind
+            val factory = remember(kind, dependencies) {
+                MyConversationsViewModel.Factory(dependencies.repositorySearchRepository, kind)
+            }
+            val myConversationsViewModel: MyConversationsViewModel = viewModel(
+                key = "my-conversations:$kind",
+                factory = factory
+            )
+            val myConversationsState by myConversationsViewModel.state.collectAsStateWithLifecycle()
+            LaunchedEffect(sessionState.session, myConversationsViewModel) {
+                myConversationsViewModel.onSessionChanged(sessionState.session)
+            }
+            MyConversationsScreen(
+                kind = kind,
+                state = myConversationsState,
+                session = sessionState.session,
+                onAction = myConversationsViewModel::onAction,
+                onBack = { navController.popBackStack() },
+                onOpenConversation = { result ->
+                    when (result.type) {
+                        GithubIssueSearchType.ISSUE -> navController.navigate(
+                            GithubIssueRoute(result.repositoryFullName, result.number)
+                        ) {
+                            launchSingleTop = true
+                        }
+                        GithubIssueSearchType.PULL_REQUEST -> navController.navigate(
+                            GithubPullRequestRoute(result.repositoryFullName, result.number)
+                        ) {
+                            launchSingleTop = true
+                        }
+                    }
+                },
+                onSignIn = { signInVisible = true },
+                modifier = Modifier.fillMaxSize()
+            )
         }
         composable<GithubUserProfileRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubUserProfileRoute>()
@@ -1242,6 +1335,7 @@ private fun GithubReleaseDetailDestination(
 @Composable
 private fun GithubAdaptiveScaffold(
     destination: GithubDestination,
+    session: GithubSession,
     onDestinationSelected: (GithubDestination) -> Unit,
     onOpenSettings: () -> Unit,
     content: @Composable (Modifier) -> Unit
@@ -1253,6 +1347,7 @@ private fun GithubAdaptiveScaffold(
                 GithubNavigationRail(destination, onDestinationSelected)
                 GithubScaffold(
                     destination = destination,
+                    session = session,
                     showBottomNavigation = false,
                     onDestinationSelected = onDestinationSelected,
                     onOpenSettings = onOpenSettings,
@@ -1264,6 +1359,7 @@ private fun GithubAdaptiveScaffold(
         } else {
             GithubScaffold(
                 destination = destination,
+                session = session,
                 showBottomNavigation = true,
                 onDestinationSelected = onDestinationSelected,
                 onOpenSettings = onOpenSettings,
@@ -1279,6 +1375,7 @@ private fun GithubAdaptiveScaffold(
 @Composable
 private fun GithubScaffold(
     destination: GithubDestination,
+    session: GithubSession,
     showBottomNavigation: Boolean,
     onDestinationSelected: (GithubDestination) -> Unit,
     onOpenSettings: () -> Unit,
@@ -1291,7 +1388,10 @@ private fun GithubScaffold(
         topBar = {
             GithubTopAppBar(
                 destination = destination,
+                session = session,
                 onOpenInbox = { onDestinationSelected(GithubDestination.INBOX) },
+                onOpenExplore = { onDestinationSelected(GithubDestination.EXPLORE) },
+                onOpenProfile = { onDestinationSelected(GithubDestination.PROFILE) },
                 onOpenSettings = onOpenSettings
             )
         },
@@ -1310,7 +1410,10 @@ private fun GithubScaffold(
 @Composable
 private fun GithubTopAppBar(
     destination: GithubDestination,
+    session: GithubSession,
     onOpenInbox: () -> Unit,
+    onOpenExplore: () -> Unit,
+    onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit
 ) {
     val title = destinationLabel(destination)
@@ -1324,6 +1427,29 @@ private fun GithubTopAppBar(
         },
         actions = {
             when (destination) {
+                GithubDestination.HOME -> {
+                    IconButton(onClick = onOpenExplore) {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = stringResource(R.string.github_explore)
+                        )
+                    }
+                    val account = (session as? GithubSession.SignedIn)?.account
+                    IconButton(onClick = onOpenProfile) {
+                        if (account != null) {
+                            GithubAvatar(
+                                login = account.login,
+                                avatarUrl = account.avatarUrl,
+                                size = 30.dp
+                            )
+                        } else {
+                            Icon(
+                                Icons.Default.Person,
+                                contentDescription = stringResource(R.string.github_profile)
+                            )
+                        }
+                    }
+                }
                 GithubDestination.EXPLORE -> IconButton(onClick = onOpenInbox) {
                     Icon(
                         Icons.Default.Notifications,
@@ -1337,6 +1463,7 @@ private fun GithubTopAppBar(
                     )
                 }
                 GithubDestination.INBOX -> Unit
+                GithubDestination.COPILOT -> Unit
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -1382,6 +1509,7 @@ private fun GithubDestinationContent(
     destination: GithubDestination,
     inboxState: InboxUiState,
     exploreState: ExploreUiState,
+    starredState: StarredUiState,
     session: GithubSession,
     savedAccountCount: Int,
     settings: AppSettings,
@@ -1395,6 +1523,8 @@ private fun GithubDestinationContent(
     onManageAccounts: () -> Unit,
     onOpenRepositories: () -> Unit,
     onOpenStarred: () -> Unit,
+    onOpenOrganizations: () -> Unit,
+    onOpenMyConversations: (MyConversationsKind) -> Unit,
     onOpenFollowers: () -> Unit,
     onOpenFollowing: () -> Unit,
     onOpenRepository: (takagi.ru.monica.github.domain.GithubRepository) -> Unit,
@@ -1417,6 +1547,18 @@ private fun GithubDestinationContent(
             label = "githubDestination"
         ) { target ->
             when (target) {
+                GithubDestination.HOME -> HomeScreen(
+                    session = session,
+                    starredState = starredState,
+                    onSignIn = onSignIn,
+                    onRetrySession = onRetrySession,
+                    onOpenStarred = onOpenStarred,
+                    onOpenRepositories = onOpenRepositories,
+                    onOpenOrganizations = onOpenOrganizations,
+                    onOpenMyConversations = onOpenMyConversations,
+                    onOpenRepository = onOpenRepository,
+                    modifier = Modifier.fillMaxSize()
+                )
                 GithubDestination.INBOX -> InboxScreen(
                     state = inboxState,
                     onAction = onInboxAction,
@@ -1431,6 +1573,9 @@ private fun GithubDestinationContent(
                     onOpenConversation = onOpenConversation,
                     onOpenExternal = onOpenUrl
                 )
+                GithubDestination.COPILOT -> CopilotPlaceholderScreen(
+                    modifier = Modifier.fillMaxSize()
+                )
                 GithubDestination.PROFILE -> ProfileScreen(
                     settings = settings,
                     session = session,
@@ -1442,9 +1587,9 @@ private fun GithubDestinationContent(
                     onOpenSettings = onOpenSettings,
                     onOpenRepositories = onOpenRepositories,
                     onOpenStarred = onOpenStarred,
+                    onOpenOrganizations = onOpenOrganizations,
                     onOpenFollowers = onOpenFollowers,
-                    onOpenFollowing = onOpenFollowing,
-                    onOpenUrl = onOpenUrl
+                    onOpenFollowing = onOpenFollowing
                 )
             }
         }
@@ -1454,14 +1599,18 @@ private fun GithubDestinationContent(
 private data class NavigationItem(val destination: GithubDestination, val icon: ImageVector)
 
 private val githubNavigationItems = listOf(
+    NavigationItem(GithubDestination.HOME, Icons.Default.Home),
     NavigationItem(GithubDestination.INBOX, Icons.Default.Inbox),
     NavigationItem(GithubDestination.EXPLORE, Icons.Default.Search),
+    NavigationItem(GithubDestination.COPILOT, Icons.Default.SmartToy),
     NavigationItem(GithubDestination.PROFILE, Icons.Default.Person)
 )
 
 @Composable
 private fun destinationLabel(destination: GithubDestination): String = when (destination) {
+    GithubDestination.HOME -> stringResource(R.string.github_home)
     GithubDestination.INBOX -> stringResource(R.string.github_inbox)
     GithubDestination.EXPLORE -> stringResource(R.string.github_explore)
+    GithubDestination.COPILOT -> stringResource(R.string.github_copilot)
     GithubDestination.PROFILE -> stringResource(R.string.github_profile)
 }

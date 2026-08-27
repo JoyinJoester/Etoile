@@ -18,6 +18,7 @@ import takagi.ru.monica.github.data.GithubNetwork
 import takagi.ru.monica.github.data.GithubIssuesRepositoryImpl
 import takagi.ru.monica.github.data.GithubNotificationsRepositoryImpl
 import takagi.ru.monica.github.data.GithubOAuthDeviceAuthRepository
+import takagi.ru.monica.github.data.GithubOrganizationsRepositoryImpl
 import takagi.ru.monica.github.data.GithubPreferencesStarCategoryStore
 import takagi.ru.monica.github.data.GithubPullRequestsRepositoryImpl
 import takagi.ru.monica.github.data.GithubPublicUserRepositoryImpl
@@ -36,6 +37,7 @@ import takagi.ru.monica.github.domain.GithubCommitsRepository
 import takagi.ru.monica.github.domain.GithubDeviceAuthRepository
 import takagi.ru.monica.github.domain.GithubIssuesRepository
 import takagi.ru.monica.github.domain.GithubNotificationsRepository
+import takagi.ru.monica.github.domain.GithubOrganizationsRepository
 import takagi.ru.monica.github.domain.GithubRepositorySearchRepository
 import takagi.ru.monica.github.domain.GithubRepositoryActionsRepository
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
@@ -162,6 +164,12 @@ class GithubAppDependencies(
             cacheStatusReporter = cacheFallbackStore
         )
     val publicUserRepository: GithubPublicUserRepository = GithubPublicUserRepositoryImpl(
+        requests = authenticatedRequests,
+        client = client,
+        cacheStore = cacheStore,
+        cacheStatusReporter = cacheFallbackStore
+    )
+    val organizationsRepository: GithubOrganizationsRepository = GithubOrganizationsRepositoryImpl(
         requests = authenticatedRequests,
         client = client,
         cacheStore = cacheStore,

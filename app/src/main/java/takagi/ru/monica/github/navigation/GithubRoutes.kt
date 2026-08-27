@@ -1,12 +1,25 @@
 package takagi.ru.monica.github.navigation
 
 import kotlinx.serialization.Serializable
+import takagi.ru.monica.github.feature.mywork.MyConversationsKind
 
 @Serializable
 data object GithubHomeRoute
 
 @Serializable
 data object GithubUserRepositoriesRoute
+
+@Serializable
+data object GithubOrganizationsRoute
+
+// kind is stored as its name: navigation restores enum route arguments
+// reflectively via Class.forName, which R8 renaming breaks.
+@Serializable
+data class GithubMyConversationsRoute(val kind: String) {
+    constructor(kind: MyConversationsKind) : this(kind.name)
+
+    val conversationsKind: MyConversationsKind get() = MyConversationsKind.valueOf(kind)
+}
 
 @Serializable
 data class GithubUserProfileRoute(val login: String)
