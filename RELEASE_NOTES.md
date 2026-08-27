@@ -16,12 +16,12 @@ Etoile 最初是从 [Monica Android](https://github.com/Monica-Pass/Monica-for-A
 - **配套内容**：Room 数据库与实体、上述模块的设置项与多语言文案、其单元测试与仪器化测试、
   相关资源文件、CI 工作流与架构文档。
 
-因此 **1.0.306 及更早版本的说明已不适用于当前代码**，那部分历史记录不再保留在仓库中。
-如需查阅 Steam 形态的实现与说明，可回看移除前的提交：
+因此 **1.0.306 及更早版本的逐版说明不再保留在仓库中**。
+Steam 形态的完整代码与当时的说明仍保留在本仓库的根提交 `cfe88b3`（移除前的最后一个状态）：
 
 ```bash
-git show 5a4bbdd:RELEASE_NOTES.md
-git show 5a4bbdd --stat
+git show cfe88b3:RELEASE_NOTES.md
+git show cfe88b3 --stat
 ```
 
 ## 当前版本线
