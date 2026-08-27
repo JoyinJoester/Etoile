@@ -1,0 +1,169 @@
+package takagi.ru.monica.github.data
+
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import okhttp3.FormBody
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import takagi.ru.monica.github.domain.GithubDeviceAccessToken
+import takagi.ru.monica.github.domain.GithubDeviceAuthRepository
+import takagi.ru.monica.github.domain.GithubDeviceAuthorization
+import takagi.ru.monica.github.domain.GithubDeviceFlowNotConfiguredException
+import takagi.ru.monica.github.domain.GithubDeviceFlowProtocolException
+import takagi.ru.monica.github.domain.GithubDevicePollResult
+
+class GithubOAuthDeviceAuthRepository(
+    private val client: OkHttpClient,
+    clientId: String,
+    scopes: Set<String> = DEFAULT_SCOPES,
+    private val json: Json = Json { ignoreUnknownKeys = true },
+    baseUrl: String = "https://github.com/login/",
+    private val nowEpochMillis: () -> Long = { System.currentTimeMillis() }
+) : GithubDeviceAuthRepository {
+    private val normalizedClientId = clientId.trim()
+    private val normalizedScopes = scopes.map(String::trim).filter(String::isNotEmpty).toSortedSet()
+    private val loginBaseUrl = baseUrl.toHttpUrl()
+
+    init {
+        require(loginBaseUrl.isHttps || loginBaseUrl.host in LOCAL_TEST_HOSTS)
+    }
+
+    override val isConfigured: Boolean = isValidClientId(normalizedClientId)
+
+    override suspend fun start(): Result<GithubDeviceAuthorization> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            if (!isConfigured) throw GithubDeviceFlowNotConfiguredException()
+            val body = FormBody.Builder()
+                .add("client_id", normalizedClientId)
+                .apply {
+                    if (normalizedScopes.isNotEmpty()) add("scope", normalizedScopes.joinToString(" "))
+                }
+                .build()
+            val request = oauthRequest("device/code").post(body).build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException(response.code)
+                val payload = json.decodeFromString(
+                    DeviceCodeResponse.serializer(),
+                    response.body?.string().orEmpty()
+                )
+                payload.toDomain(nowEpochMillis(), loginBaseUrl.host)
+            }
+        }
+    }
+
+    override suspend fun poll(deviceCode: String): Result<GithubDevicePollResult> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            if (!isConfigured) throw GithubDeviceFlowNotConfiguredException()
+            require(deviceCode.length in 20..255 && deviceCode.none(Char::isWhitespace))
+            val body = FormBody.Builder()
+                .add("client_id", normalizedClientId)
+                .add("device_code", deviceCode)
+                .add("grant_type", DEVICE_GRANT_TYPE)
+                .build()
+            val request = oauthRequest("oauth/access_token").post(body).build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException(response.code)
+                json.decodeFromString(
+                    AccessTokenResponse.serializer(),
+                    response.body?.string().orEmpty()
+                ).toDomain()
+            }
+        }
+    }
+
+    private fun oauthRequest(path: String): Request.Builder = Request.Builder()
+        .url(loginBaseUrl.resolve(path) ?: throw IllegalArgumentException("Invalid GitHub OAuth endpoint"))
+        .header("Accept", "application/json")
+        .header("User-Agent", "Etoile-GitHub-Client")
+
+    @Serializable
+    private data class DeviceCodeResponse(
+        @SerialName("device_code") val deviceCode: String,
+        @SerialName("user_code") val userCode: String,
+        @SerialName("verification_uri") val verificationUri: String,
+        @SerialName("expires_in") val expiresIn: Int,
+        val interval: Int = MINIMUM_INTERVAL_SECONDS
+    ) {
+        fun toDomain(nowEpochMillis: Long, expectedHost: String): GithubDeviceAuthorization {
+            val verificationUrl = verificationUri.toHttpUrlOrNull()
+            if (
+                deviceCode.length !in 20..255 ||
+                deviceCode.any(Char::isWhitespace) ||
+                userCode.length !in 4..32 ||
+                userCode.any(Char::isWhitespace) ||
+                verificationUrl == null ||
+                !verificationUrl.isHttps ||
+                !isTrustedVerificationHost(verificationUrl.host, expectedHost) ||
+                expiresIn !in 60..86_400 ||
+                interval !in 1..300
+            ) {
+                throw GithubDeviceFlowProtocolException("invalid_device_response")
+            }
+            return GithubDeviceAuthorization(
+                deviceCode = deviceCode,
+                userCode = userCode,
+                verificationUri = verificationUrl.toString(),
+                expiresAtEpochMillis = nowEpochMillis + expiresIn * 1_000L,
+                intervalSeconds = interval.coerceAtLeast(MINIMUM_INTERVAL_SECONDS)
+            )
+        }
+    }
+
+    @Serializable
+    private data class AccessTokenResponse(
+        @SerialName("access_token") val accessToken: String? = null,
+        @SerialName("token_type") val tokenType: String? = null,
+        val scope: String? = null,
+        val error: String? = null
+    ) {
+        fun toDomain(): GithubDevicePollResult {
+            if (!accessToken.isNullOrBlank()) {
+                val normalizedTokenType = tokenType
+                    ?.takeIf { it.equals("bearer", ignoreCase = true) }
+                    ?: throw GithubDeviceFlowProtocolException("invalid_token_type")
+                return GithubDevicePollResult.Authorized(
+                    GithubDeviceAccessToken(
+                        accessToken = accessToken,
+                        tokenType = normalizedTokenType,
+                        scopes = scope.orEmpty()
+                            .split(',', ' ')
+                            .map(String::trim)
+                            .filter(String::isNotEmpty)
+                            .toSet()
+                    )
+                )
+            }
+            return when (error) {
+                "authorization_pending" -> GithubDevicePollResult.Pending
+                "slow_down" -> GithubDevicePollResult.SlowDown
+                "expired_token" -> GithubDevicePollResult.Expired
+                "access_denied" -> GithubDevicePollResult.Denied
+                else -> throw GithubDeviceFlowProtocolException(error ?: "invalid_token_response")
+            }
+        }
+    }
+
+    private companion object {
+        const val DEVICE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code"
+        const val MINIMUM_INTERVAL_SECONDS = 5
+        val DEFAULT_SCOPES = setOf("notifications", "read:user", "repo")
+        val LOCAL_TEST_HOSTS = setOf("localhost", "127.0.0.1")
+
+        /**
+         * MockWebServer may expose either loopback spelling depending on the
+         * JDK/network stack. Treat those two spellings as the same host only
+         * for local test endpoints; production OAuth hosts still require an
+         * exact match with the configured GitHub login host.
+         */
+        fun isTrustedVerificationHost(actual: String, expected: String): Boolean =
+            actual == expected || (actual in LOCAL_TEST_HOSTS && expected in LOCAL_TEST_HOSTS)
+
+        fun isValidClientId(value: String): Boolean =
+            value.length in 10..255 && value.none { it.isWhitespace() || it.isISOControl() }
+    }
+}

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="steam_points_reward_detail_title">奖励详情</string>
+    <string name="steam_points_reward_animated">动态奖励</string>
+    <string name="steam_points_reward_description">详情</string>
+    <string name="steam_points_reward_ids">App ID %1$d · 奖励 ID %2$d</string>
+</resources>

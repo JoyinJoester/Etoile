@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="steam_points_reward_detail_title">Reward details</string>
+    <string name="steam_points_reward_animated">Animated reward</string>
+    <string name="steam_points_reward_description">Description</string>
+    <string name="steam_points_reward_ids">App ID %1$d · Reward ID %2$d</string>
+</resources>
