@@ -19,7 +19,6 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import takagi.ru.monica.data.AppSettings
 import takagi.ru.monica.data.Language
-import takagi.ru.monica.security.SessionManager
 import takagi.ru.monica.utils.LocaleHelper
 import takagi.ru.monica.utils.ScreenshotProtectionUtil
 import takagi.ru.monica.utils.SettingsManager
@@ -84,9 +83,6 @@ abstract class BaseMonicaActivity : FragmentActivity() {
                     
                     // 更新截图保护
                     applyScreenshotProtection(settings.screenshotProtectionEnabled)
-                    
-                    // 更新 SessionManager 的自动锁定超时
-                    SessionManager.updateAutoLockTimeout(settings.autoLockMinutes)
                 }
             }
         }
@@ -95,32 +91,9 @@ abstract class BaseMonicaActivity : FragmentActivity() {
     override fun onResume() {
         super.onResume()
 
-        // Keep Monica's own UI out of the platform Autofill pipeline so the app
+        // Keep Etoile's own UI out of the platform Autofill pipeline so the app
         // never suggests or saves credentials for its own internal forms.
         disableSystemAutofillForMonicaUi()
-
-        // Sync latest timeout before expiration check to avoid using stale defaults.
-        // Only update if settings have been loaded; do not overwrite with fallback default.
-        cachedSettings?.let { SessionManager.updateAutoLockTimeout(it.autoLockMinutes) }
-
-        if (!shouldEnforceSharedSessionLock()) {
-            return
-        }
-        
-        // 检查会话是否过期
-        if (SessionManager.isSessionExpired()) {
-            SessionManager.markLocked()
-            onSessionExpired()
-        } else {
-            // 刷新会话时间戳
-            SessionManager.refreshSession()
-        }
-    }
-
-    override fun onUserInteraction() {
-        super.onUserInteraction()
-        // 用户交互时刷新会话时间戳，确保“非空闲”不会被错误锁定
-        SessionManager.refreshSession()
     }
     
     /**
@@ -132,29 +105,6 @@ abstract class BaseMonicaActivity : FragmentActivity() {
         } else {
             ScreenshotProtectionUtil.disableScreenshotProtection(this)
         }
-    }
-    
-    /**
-     * 会话过期回调，子类可覆写以处理锁定逻辑
-     */
-    protected open fun onSessionExpired() {
-        // 默认空实现，子类可覆写
-        android.util.Log.d("BaseMonicaActivity", "Session expired")
-    }
-
-    /**
-     * 是否沿用主应用共享会话门控。
-     * 某些独立鉴权页面只借用验证界面，不应把共享会话作为前置条件。
-     */
-    protected open fun shouldEnforceSharedSessionLock(): Boolean {
-        return true
-    }
-    
-    /**
-     * 标记验证成功，更新会话状态
-     */
-    protected fun markAuthenticationSuccess() {
-        SessionManager.markUnlocked()
     }
 
     private fun disableSystemAutofillForMonicaUi() {

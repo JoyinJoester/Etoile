@@ -23,4 +23,3 @@ dependencyResolutionManagement {
 
 rootProject.name = "Etoile"
 include ':app'
-include ':mdbx-engine'

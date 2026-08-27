@@ -255,10 +255,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = '11'
-        // Miuix 0.9.3 is published with Kotlin 2.4 metadata. Its Android AAR
-        // only uses stable JVM/Compose APIs here, so keep Etoile's
-        // existing compiler and permit reading the newer library metadata.
-        freeCompilerArgs += ['-Xskip-metadata-version-check']
     }
     buildFeatures {
         compose true
@@ -276,22 +272,7 @@ android {
         }
     }
 
-    sourceSets {
-        main {
-            java {
-                exclude 'takagi/ru/monica/MainActivity.kt'
-                exclude 'takagi/ru/monica/MonicaApplication.kt'
-                exclude 'takagi/ru/monica/ui/SimpleMainScreen.kt'
-            }
-            kotlin {
-                exclude 'takagi/ru/monica/MainActivity.kt'
-                exclude 'takagi/ru/monica/MonicaApplication.kt'
-                exclude 'takagi/ru/monica/ui/SimpleMainScreen.kt'
-            }
-        }
-    }
     lint {
-        baseline = file('lint-baseline.xml')
         // Workaround: lint/lifecycle detector crashes with Kotlin 2.x analysis API in current toolchain.
         disable 'NullSafeMutableLiveData',
                 'FrequentlyChangingValue',
@@ -314,10 +295,6 @@ android {
         resources {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
             excludes += 'META-INF/versions/9/OSGI-INF/MANIFEST.MF'
-            // These data tables support password analysis and Picnic signatures,
-            // neither of which is reachable from the standalone Steam experience.
-            excludes += 'com/nulabinc/zxcvbn/matchers/dictionaries/**'
-            excludes += 'org/bouncycastle/pqc/crypto/picnic/**'
         }
     }
 }
@@ -341,32 +318,8 @@ tasks.register('verifyReleaseSigningConfiguration') {
     }
 }
 
-// The standalone Steam product does not ship these Monica feature surfaces.
-// Their tests remain in the copied source tree for reference, but the default
-// test task covers only code that can be reached from EtoileActivity.
-tasks.withType(Test).configureEach {
-    exclude '**/attachments/**'
-    exclude '**/autofill/**'
-    exclude '**/autofill_ng/**'
-    exclude '**/keepass/**'
-    exclude '**/ui/cardwallet/**'
-    exclude '**/util/Aegis*'
-    exclude '**/util/KeePass*'
-    exclude '**/data/KeePassOperationAvailabilityTest*'
-    exclude '**/repository/MdbxAndroidIntegrationGuardTest*'
-    exclude '**/security/BiometricUnlockRegressionGuardTest*'
-    exclude '**/security/SecondarySessionImmediateLockRegressionGuardTest*'
-    exclude '**/viewmodel/MultiPasswordSaveRegressionGuardTest*'
-    exclude '**/viewmodel/TotpPasswordBindingRegressionGuardTest*'
-}
-
 configurations.configureEach {
     resolutionStrategy.force(
-        "org.jetbrains.kotlin:kotlin-bom:2.1.20",
-        "org.jetbrains.kotlin:kotlin-stdlib:2.1.20",
-        "org.jetbrains.kotlin:kotlin-stdlib-common:2.1.20",
-        "org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.1.20",
-        "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.1.20",
         "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.6.0",
         "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0",
         "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.0",
@@ -382,7 +335,6 @@ configurations.named('testCompileOnly') {
 }
 
 dependencies {
-    implementation project(':mdbx-engine')
 
     constraints {
         implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0")
@@ -410,20 +362,10 @@ dependencies {
 
     // Native liquid-glass renderer used by the optional Dock. Transitives are
     // intentionally excluded so the app keeps its AndroidX Compose graph.
-    implementation('top.yukonga.miuix.kmp:miuix-shader-android:0.9.3') {
-        transitive = false
-    }
-    implementation('top.yukonga.miuix.kmp:miuix-blur-android:0.9.3') {
-        transitive = false
-    }
     
     // Navigation
     implementation libs.androidx.navigation.compose
     
-    // Room Database
-    implementation libs.androidx.room.runtime
-    implementation libs.androidx.room.ktx
-    ksp libs.androidx.room.compiler
     
     // Biometric
     implementation libs.androidx.biometric
@@ -444,100 +386,25 @@ dependencies {
     // Fragment and Material Components (for BottomSheet)
     implementation libs.androidx.fragment.ktx
     implementation libs.material
-    
-    // Legacy non-Steam sources still compile, but these features are not shipped.
-    implementation libs.androidx.autofill
-    compileOnly libs.androidx.slice.core
-    compileOnly libs.androidx.slice.builders
-    
-    // Credentials API (for Passkey support, Android 14+)
-    implementation "androidx.credentials:credentials:1.3.0"
-    implementation "androidx.credentials:credentials-play-services-auth:1.3.0"
-    
-    // Google Play Services Auth (for SMS Retriever API - OTP auto-read)
-    implementation libs.play.services.auth
+
     
     // DataStore
     implementation libs.androidx.datastore.preferences
-    
-    // TOTP and QR Code
-    implementation libs.zxing.core
-    implementation libs.zxing.android.embedded
-    implementation 'com.google.mlkit:barcode-scanning:17.3.0'
-    
-    // Camera
-    implementation libs.androidx.camera.core
-    implementation libs.androidx.camera.camera2
-    implementation libs.androidx.camera.lifecycle
-    implementation libs.androidx.camera.view
-    
-    // Permissions
-    implementation libs.accompanist.permissions
-    implementation libs.accompanist.drawablepainter
+
     
     // Kotlinx Serialization
     implementation libs.kotlinx.serialization.json
-    implementation "com.kizitonwose.calendar:compose:2.6.1"
-    
-    // WebDAV for cloud backup
-    implementation 'com.github.thegrizzlylabs:sardine-android:0.8'
-    
-    // KeePass KDBX library for KeePass compatibility
-    // 0.10.0 is the newest release compatible with the project's Kotlin 1.9 toolchain.
-    implementation 'app.keemobile:kotpass:0.10.0'
-    
-    // WorkManager for auto backup
-    implementation libs.androidx.work.runtime.ktx
 
-    // Reorderable for drag-and-drop sorting
-    implementation libs.reorderable
-
-    // Koin Dependency Injection (for autofill modularization)
-
-    // Markdown rendering
-    compileOnly libs.commonmark
-    compileOnly 'org.commonmark:commonmark-ext-gfm-tables:0.22.0'
-    compileOnly 'org.commonmark:commonmark-ext-gfm-strikethrough:0.22.0'
-    compileOnly 'org.commonmark:commonmark-ext-task-list-items:0.22.0'
-    
-    // Charts for ledger analytics
-    // TODO: Re-enable after resolving Kotlin version compatibility
-    // implementation libs.vico.compose.m3
-    
-    // Scrypt for Aegis decryption
-    compileOnly libs.scrypt
-
-    // Password strength analysis, same engine used by Keyguard
-    compileOnly 'com.nulab-inc:zxcvbn:1.9.0'
-    
-    // ==== Bitwarden Integration ====
-    // Retrofit for API calls
-    compileOnly 'com.squareup.retrofit2:retrofit:2.11.0'
-    compileOnly 'com.squareup.retrofit2:converter-kotlinx-serialization:2.11.0'
     
     // OkHttp for networking
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     compileOnly 'com.squareup.okhttp3:logging-interceptor:4.12.0'
     implementation 'com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0'
-    implementation libs.jsoup
 
-    // Steam chat stickers are APNG. Android's ImageDecoder only exposes their first frame.
-    implementation libs.apng
 
-    // Microsoft identity platform / OneDrive auth
-    implementation 'com.microsoft.identity.client:msal:8.3.2'
-    implementation 'com.squareup.moshi:moshi-adapters:1.15.1'
-    
-    // BouncyCastle for Argon2 (Bitwarden KDF support)
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.78.1'
     // Native Argon2 backend for Bitwarden Argon2id KDF. This keeps high-memory
     // KDF work off the Android JVM heap.
-    implementation('com.lambdapioneer.argon2kt:argon2kt:1.6.0') {
-        exclude group: 'androidx.appcompat', module: 'appcompat'
-        exclude group: 'androidx.core', module: 'core-ktx'
-    }
 
-    // Brand icon loading now uses remote PNG assets from Stratum Auth app
     
     // Testing
     testImplementation libs.junit

@@ -23,7 +23,7 @@
         <item name="android:backgroundDimAmount">0.5</item>
     </style>
     
-    <!-- Legacy non-Steam activities keep their resource IDs for compilation. -->
+    <!-- Shared theme surfaces keep their resource IDs for compilation. -->
     <style name="Theme.TransparentDialog" parent="android:Theme.Material.Light.Dialog">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

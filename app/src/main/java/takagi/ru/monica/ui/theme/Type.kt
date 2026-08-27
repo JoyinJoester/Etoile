@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.sp
 import takagi.ru.monica.R
 
 /**
- * Google Sans Flex instances used for the expressive Steam account data
+ * Google Sans Flex instances used for the expressive account data
  * hierarchy. CJK text falls back to the platform font automatically.
  */
 val GoogleSansFlexFontFamily = FontFamily(

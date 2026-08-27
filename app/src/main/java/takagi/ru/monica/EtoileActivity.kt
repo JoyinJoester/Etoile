@@ -17,8 +17,6 @@ import takagi.ru.monica.ui.theme.EtoileTheme
 class EtoileActivity : BaseMonicaActivity() {
     private val pendingGithubUrl = MutableStateFlow<String?>(null)
 
-    override fun shouldEnforceSharedSessionLock(): Boolean = false
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pendingGithubUrl.value = intent?.data?.toString()?.takeIf { GithubLinkRouter.parse(it) != null }
