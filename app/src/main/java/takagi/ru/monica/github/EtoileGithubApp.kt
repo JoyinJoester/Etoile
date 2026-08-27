@@ -81,8 +81,8 @@ import takagi.ru.monica.github.feature.explore.ExploreUiState
 import takagi.ru.monica.github.feature.explore.ExploreViewModel
 import takagi.ru.monica.github.feature.auth.GithubSessionAction
 import takagi.ru.monica.github.feature.auth.GithubSessionViewModel
-import takagi.ru.monica.github.feature.auth.GithubAccountSheet
-import takagi.ru.monica.github.feature.auth.GithubSignInSheet
+import takagi.ru.monica.github.feature.auth.GithubAccountsScreen
+import takagi.ru.monica.github.feature.auth.GithubSignInScreen
 import takagi.ru.monica.github.feature.commits.CommitDetailScreen
 import takagi.ru.monica.github.feature.commits.CommitDetailViewModel
 import takagi.ru.monica.github.feature.commits.CommitsScreen
@@ -131,7 +131,7 @@ import takagi.ru.monica.github.feature.releases.ReleaseDetailViewModel
 import takagi.ru.monica.github.feature.releases.ReleaseReference
 import takagi.ru.monica.github.feature.releases.ReleasesScreen
 import takagi.ru.monica.github.feature.releases.ReleasesViewModel
-import takagi.ru.monica.github.feature.starred.StarredCollectionsSheet
+import takagi.ru.monica.github.feature.starred.GithubStarredScreen
 import takagi.ru.monica.github.feature.starred.StarredUiState
 import takagi.ru.monica.github.feature.starred.StarredViewModel
 import takagi.ru.monica.github.component.GithubAvatar
@@ -150,6 +150,10 @@ import takagi.ru.monica.github.navigation.GithubDestination
 import takagi.ru.monica.github.navigation.GithubActionsJobRoute
 import takagi.ru.monica.github.navigation.GithubActionsRunRoute
 import takagi.ru.monica.github.navigation.GithubHomeRoute
+import takagi.ru.monica.github.navigation.GithubSignInRoute
+import takagi.ru.monica.github.navigation.GithubSettingsRoute
+import takagi.ru.monica.github.navigation.GithubAccountsRoute
+import takagi.ru.monica.github.navigation.GithubStarredRoute
 import takagi.ru.monica.github.navigation.GithubMyConversationsRoute
 import takagi.ru.monica.github.navigation.GithubOrganizationsRoute
 import takagi.ru.monica.github.navigation.GithubUserRepositoriesRoute
@@ -176,7 +180,7 @@ import takagi.ru.monica.github.navigation.GithubRepositoryRoute
 import takagi.ru.monica.github.navigation.GithubWorkflowRunsRoute
 import takagi.ru.monica.github.navigation.GithubLinkDestination
 import takagi.ru.monica.github.navigation.GithubLinkRouter
-import takagi.ru.monica.github.settings.GithubSettingsSheet
+import takagi.ru.monica.github.settings.GithubSettingsScreen
 import takagi.ru.monica.utils.SettingsManager
 
 @Composable
@@ -187,10 +191,6 @@ fun EtoileGithubApp(
     onGithubUrlConsumed: (String) -> Unit = {}
 ) {
     var destination by rememberSaveable { mutableStateOf(GithubDestination.HOME) }
-    var settingsVisible by rememberSaveable { mutableStateOf(false) }
-    var starredVisible by rememberSaveable { mutableStateOf(false) }
-    var signInVisible by rememberSaveable { mutableStateOf(false) }
-    var accountsVisible by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
@@ -300,7 +300,6 @@ fun EtoileGithubApp(
     }
 
     LaunchedEffect(sessionState.session) {
-        if (sessionState.session is GithubSession.SignedIn) signInVisible = false
         inboxViewModel.onSessionChanged(sessionState.session)
         starredViewModel.onSessionChanged(sessionState.session)
     }
@@ -325,7 +324,7 @@ fun EtoileGithubApp(
                 destination = destination,
                 session = sessionState.session,
                 onDestinationSelected = { destination = it },
-                onOpenSettings = { settingsVisible = true }
+                onOpenSettings = { navController.navigate(GithubSettingsRoute) { launchSingleTop = true } }
             ) { contentModifier ->
                 GithubDestinationContent(
                     destination = destination,
@@ -338,17 +337,17 @@ fun EtoileGithubApp(
                     modifier = contentModifier,
                     onInboxAction = inboxViewModel::onAction,
                     onExploreAction = exploreViewModel::onAction,
-                    onOpenSettings = { settingsVisible = true },
-                    onSignIn = { signInVisible = true },
+                    onOpenSettings = { navController.navigate(GithubSettingsRoute) { launchSingleTop = true } },
+                    onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                     onSignOut = { sessionViewModel.onAction(GithubSessionAction.SignOut) },
                     onRetrySession = { sessionViewModel.onAction(GithubSessionAction.RetryRestore) },
-                    onManageAccounts = { accountsVisible = true },
+                    onManageAccounts = { navController.navigate(GithubAccountsRoute) { launchSingleTop = true } },
                     onOpenRepositories = {
                         navController.navigate(GithubUserRepositoriesRoute) {
                             launchSingleTop = true
                         }
                     },
-                    onOpenStarred = { starredVisible = true },
+                    onOpenStarred = { navController.navigate(GithubStarredRoute) { launchSingleTop = true } },
                     onOpenOrganizations = {
                         navController.navigate(GithubOrganizationsRoute) {
                             launchSingleTop = true
@@ -497,7 +496,7 @@ fun EtoileGithubApp(
                         }
                     }
                 },
-                onSignIn = { signInVisible = true },
+                onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -534,7 +533,7 @@ fun EtoileGithubApp(
                     }
                 },
                 viewerLogin = (sessionState.session as? GithubSession.SignedIn)?.account?.login,
-                onSignIn = { signInVisible = true },
+                onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                 onOpenExternal = openUrl,
                 modifier = Modifier.fillMaxSize()
             )
@@ -664,7 +663,7 @@ fun EtoileGithubApp(
                     }
                 },
                 canWrite = sessionState.session is GithubSession.SignedIn,
-                onSignIn = { signInVisible = true },
+                onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                 onOpenRepository = { repository ->
                     navController.navigate(GithubRepositoryRoute(repository.fullName)) {
                         launchSingleTop = true
@@ -860,7 +859,7 @@ fun EtoileGithubApp(
                         launchSingleTop = true
                     }
                 },
-                onSignIn = { signInVisible = true },
+                onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                 onOpenExternal = openUrl,
                 modifier = Modifier.fillMaxSize()
             )
@@ -921,7 +920,7 @@ fun EtoileGithubApp(
                 onAction = pullRequestViewModel::onAction,
                 onBack = { navController.popBackStack() },
                 canWrite = sessionState.session is GithubSession.SignedIn,
-                onSignIn = { signInVisible = true },
+                onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                 onOpenExternal = openUrl,
                 modifier = Modifier.fillMaxSize()
             )
@@ -1175,7 +1174,7 @@ fun EtoileGithubApp(
                 onAction = issueViewModel::onAction,
                 onBack = { navController.popBackStack() },
                 canWrite = sessionState.session is GithubSession.SignedIn,
-                onSignIn = { signInVisible = true },
+                onSignIn = { navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                 onOpenExternal = openUrl,
                 modifier = Modifier.fillMaxSize()
             )
@@ -1207,62 +1206,87 @@ fun EtoileGithubApp(
                         launchSingleTop = true
                     }
                 },
-                onSignIn = { signInVisible = true },
+                onSignIn = {
+                    navController.navigate(GithubSignInRoute) {
+                        launchSingleTop = true
+                    }
+                },
                 modifier = Modifier.fillMaxSize()
             )
-            }
         }
-    }
-
-    if (settingsVisible) {
-        GithubSettingsSheet(
-            settings = settings,
-            onDismiss = { settingsVisible = false },
-            onThemeSelected = { scope.launch { settingsManager.updateThemeMode(it) } },
-            onPaletteSelected = { scope.launch { settingsManager.updateColorScheme(it) } },
-            onLanguageSelected = { scope.launch { settingsManager.updateLanguage(it) } }
-        )
-    }
-
-    if (starredVisible) {
-        StarredCollectionsSheet(
-            state = starredState,
-            onAction = starredViewModel::onAction,
-            onDismiss = { starredVisible = false },
-            onSignIn = {
-                starredVisible = false
-                signInVisible = true
-            },
-            onOpenRepository = { repository ->
-                starredVisible = false
-                navController.navigate(GithubRepositoryRoute(repository.fullName)) {
-                    launchSingleTop = true
+        composable<GithubSignInRoute> {
+            GithubSignInScreen(
+                state = sessionState,
+                onAction = sessionViewModel::onAction,
+                onOpenUrl = openUrl,
+                onBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize()
+            )
+            // Mirror of the old sheet auto-dismiss: pop only when the session
+            // changes to signed-in while this page is open, so opening it while
+            // already signed in (adding an account) keeps the page on screen.
+            var sessionEmissionSeen by remember { mutableStateOf(false) }
+            LaunchedEffect(sessionState.session) {
+                if (!sessionEmissionSeen) {
+                    sessionEmissionSeen = true
+                } else if (sessionState.session is GithubSession.SignedIn) {
+                    navController.popBackStack()
                 }
             }
-        )
-    }
-
-    if (signInVisible) {
-        GithubSignInSheet(
-            state = sessionState,
-            onAction = sessionViewModel::onAction,
-            onOpenUrl = openUrl,
-            onDismiss = { signInVisible = false }
-        )
-    }
-    if (accountsVisible) {
-        GithubAccountSheet(
-            state = sessionState,
-            onAction = sessionViewModel::onAction,
-            onAddAccount = {
-                accountsVisible = false
-                signInVisible = true
-            },
-            onDismiss = {
-                accountsVisible = false
-                sessionViewModel.onAction(GithubSessionAction.ClearAccountError)
+        }
+        composable<GithubSettingsRoute> {
+            GithubSettingsScreen(
+                settings = settings,
+                onBack = { navController.popBackStack() },
+                onThemeSelected = { scope.launch { settingsManager.updateThemeMode(it) } },
+                onPaletteSelected = { scope.launch { settingsManager.updateColorScheme(it) } },
+                onLanguageSelected = { scope.launch { settingsManager.updateLanguage(it) } },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        composable<GithubAccountsRoute> {
+            GithubAccountsScreen(
+                state = sessionState,
+                onAction = sessionViewModel::onAction,
+                onAddAccount = {
+                    navController.navigate(GithubSignInRoute) {
+                        launchSingleTop = true
+                    }
+                },
+                onBack = {
+                    sessionViewModel.onAction(GithubSessionAction.ClearAccountError)
+                    navController.popBackStack()
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        composable<GithubStarredRoute> {
+            val starredRouteViewModel: StarredViewModel = viewModel(
+                key = "starred-page",
+                factory = starredFactory
+            )
+            val starredRouteState by starredRouteViewModel.state.collectAsStateWithLifecycle()
+            LaunchedEffect(sessionState.session, starredRouteViewModel) {
+                starredRouteViewModel.onSessionChanged(sessionState.session)
             }
-        )
+            GithubStarredScreen(
+                state = starredRouteState,
+                onAction = starredRouteViewModel::onAction,
+                onBack = { navController.popBackStack() },
+                onSignIn = {
+                    navController.navigate(GithubSignInRoute) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenRepository = { repository ->
+                    navController.navigate(GithubRepositoryRoute(repository.fullName)) {
+                        launchSingleTop = true
+                    }
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        }
     }
 }
 }

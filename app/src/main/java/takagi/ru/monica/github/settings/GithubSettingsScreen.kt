@@ -1,6 +1,5 @@
 package takagi.ru.monica.github.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,27 +31,33 @@ import takagi.ru.monica.data.AppSettings
 import takagi.ru.monica.data.ColorScheme
 import takagi.ru.monica.data.Language
 import takagi.ru.monica.data.ThemeMode
-import takagi.ru.monica.github.component.GithubModalBottomSheet
+import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubSectionHeader
-import takagi.ru.monica.github.component.GithubSheetHeader
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 
 @Composable
-fun GithubSettingsSheet(
+fun GithubSettingsScreen(
     settings: AppSettings,
-    onDismiss: () -> Unit,
+    onBack: () -> Unit,
     onThemeSelected: (ThemeMode) -> Unit,
     onPaletteSelected: (ColorScheme) -> Unit,
-    onLanguageSelected: (Language) -> Unit
+    onLanguageSelected: (Language) -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    GithubModalBottomSheet(onDismissRequest = onDismiss) {
+    GithubDetailScaffold(
+        title = stringResource(R.string.github_settings),
+        subtitle = stringResource(R.string.github_settings_subtitle),
+        backContentDescription = stringResource(R.string.github_back),
+        onBack = onBack,
+        modifier = modifier
+    ) { padding ->
         Column(
-            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 20.dp, end = 20.dp, bottom = 32.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
-            GithubSheetHeader(
-                title = stringResource(R.string.github_settings),
-                subtitle = stringResource(R.string.github_settings_subtitle)
-            )
             GithubSectionHeader(stringResource(R.string.github_theme))
             ChoiceRow(stringResource(R.string.github_system), settings.themeMode == ThemeMode.SYSTEM) { onThemeSelected(ThemeMode.SYSTEM) }
             ChoiceRow(stringResource(R.string.github_light), settings.themeMode == ThemeMode.LIGHT) { onThemeSelected(ThemeMode.LIGHT) }
@@ -62,6 +68,7 @@ fun GithubSettingsSheet(
             Language.entries.forEach { language ->
                 ChoiceRow(languageLabel(language), settings.language == language) { onLanguageSelected(language) }
             }
+            Spacer(Modifier.height(28.dp))
         }
     }
 }

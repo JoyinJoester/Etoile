@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -27,24 +28,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
+import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubFilterRow
-import takagi.ru.monica.github.component.GithubModalBottomSheet
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.GithubRepositoryRow
 import takagi.ru.monica.github.component.GithubSearchField
 import takagi.ru.monica.github.component.GithubServiceStatusNotices
-import takagi.ru.monica.github.component.GithubSheetHeader
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubStarCategory
 
 @Composable
-fun StarredCollectionsSheet(
+fun GithubStarredScreen(
     state: StarredUiState,
     onAction: (StarredAction) -> Unit,
-    onDismiss: () -> Unit,
+    onBack: () -> Unit,
     onSignIn: () -> Unit,
-    onOpenRepository: (GithubRepository) -> Unit
+    onOpenRepository: (GithubRepository) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val categories = GithubStarCategory.entries
     val labels = listOf(
@@ -54,35 +55,39 @@ fun StarredCollectionsSheet(
         stringResource(R.string.github_star_category_tools)
     )
 
-    GithubModalBottomSheet(onDismissRequest = onDismiss) {
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
-            GithubSheetHeader(
-                title = stringResource(R.string.github_star_collections),
-                subtitle = stringResource(R.string.github_star_collections_subtitle),
-                modifier = Modifier.padding(bottom = 14.dp)
-            )
-
+    GithubDetailScaffold(
+        title = stringResource(R.string.github_star_collections),
+        subtitle = stringResource(R.string.github_star_collections_subtitle),
+        backContentDescription = stringResource(R.string.github_back),
+        onBack = onBack,
+        modifier = modifier
+    ) { padding ->
+        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.requiresAuthentication -> GithubMessageState(
                     title = stringResource(R.string.github_star_sign_in_required),
                     actionLabel = stringResource(R.string.github_sign_in),
-                    onAction = onSignIn
+                    onAction = onSignIn,
+                    modifier = Modifier.padding(top = 12.dp)
                 )
+
                 else -> {
                     GithubServiceStatusNotices(modifier = Modifier.padding(bottom = 12.dp))
-                    GithubSearchField(
-                        value = state.query,
-                        onValueChange = { onAction(StarredAction.QueryChanged(it)) },
-                        label = stringResource(R.string.github_search_starred)
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    GithubFilterRow(
-                        labels = labels,
-                        selectedIndex = categories.indexOf(state.selectedCategory),
-                        onSelected = { onAction(StarredAction.CategorySelected(categories[it])) }
-                    )
+                    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+                        GithubSearchField(
+                            value = state.query,
+                            onValueChange = { onAction(StarredAction.QueryChanged(it)) },
+                            label = stringResource(R.string.github_search_starred)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        GithubFilterRow(
+                            labels = labels,
+                            selectedIndex = categories.indexOf(state.selectedCategory),
+                            onSelected = { onAction(StarredAction.CategorySelected(categories[it])) }
+                        )
+                    }
                     if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
-                    LazyColumn(contentPadding = PaddingValues(top = 12.dp, bottom = 32.dp)) {
+                    LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp)) {
                         items(state.visibleRepositories, key = { it.repository.id }) { item ->
                             GithubRepositoryRow(
                                 repository = item.repository,

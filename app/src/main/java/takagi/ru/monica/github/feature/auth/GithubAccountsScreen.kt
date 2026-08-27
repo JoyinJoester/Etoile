@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -16,7 +17,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -39,43 +39,36 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubAvatar
-import takagi.ru.monica.github.component.GithubModalBottomSheet
-import takagi.ru.monica.github.component.GithubSheetHeader
+import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubSession
 
 @Composable
-fun GithubAccountSheet(
+fun GithubAccountsScreen(
     state: GithubSessionUiState,
     onAction: (GithubSessionAction) -> Unit,
     onAddAccount: () -> Unit,
-    onDismiss: () -> Unit
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var removalCandidate by remember { mutableStateOf<GithubAccount?>(null) }
     val activeAccountId = (state.session as? GithubSession.SignedIn)?.account?.id
 
-    GithubModalBottomSheet(onDismissRequest = onDismiss) {
+    GithubDetailScaffold(
+        title = stringResource(R.string.github_accounts),
+        subtitle = stringResource(R.string.github_accounts_subtitle),
+        backContentDescription = stringResource(R.string.github_back),
+        onBack = onBack,
+        modifier = modifier
+    ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, bottom = 32.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
-            GithubSheetHeader(
-                title = stringResource(R.string.github_accounts),
-                subtitle = stringResource(R.string.github_accounts_subtitle),
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.ManageAccounts,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.size(32.dp)
-                    )
-                }
-            )
-            Spacer(Modifier.height(20.dp))
-
             if (state.accounts.isEmpty()) {
                 Text(
                     text = stringResource(R.string.github_no_saved_accounts),
@@ -148,6 +141,7 @@ fun GithubAccountSheet(
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.github_add_account))
             }
+            Spacer(Modifier.height(28.dp))
         }
     }
 

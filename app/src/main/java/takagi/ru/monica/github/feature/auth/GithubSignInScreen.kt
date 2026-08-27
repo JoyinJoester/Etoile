@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -23,7 +24,6 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -60,38 +60,42 @@ import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.launch
 import takagi.ru.monica.R
-import takagi.ru.monica.github.component.GithubModalBottomSheet
+import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubSectionHeader
-import takagi.ru.monica.github.component.GithubSheetHeader
 import takagi.ru.monica.github.design.GithubExpressiveMotion
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 
 @Composable
-fun GithubSignInSheet(
+fun GithubSignInScreen(
     state: GithubSessionUiState,
     onAction: (GithubSessionAction) -> Unit,
     onOpenUrl: (String) -> Unit,
-    onDismiss: () -> Unit
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val deviceFlowUnavailable = state.deviceSignIn is GithubDeviceSignInUiState.Unavailable
     var tokenFormExpanded by rememberSaveable { mutableStateOf(deviceFlowUnavailable) }
-    val dismiss = {
-        onAction(GithubSessionAction.ClearForm)
-        onDismiss()
-    }
 
-    GithubModalBottomSheet(onDismissRequest = dismiss) {
+    GithubDetailScaffold(
+        title = stringResource(R.string.github_sign_in),
+        subtitle = stringResource(R.string.github_sign_in_description),
+        backContentDescription = stringResource(R.string.github_back),
+        onBack = {
+            onAction(GithubSessionAction.ClearForm)
+            onBack()
+        },
+        modifier = modifier
+    ) { padding ->
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
+                .padding(padding)
                 .verticalScroll(rememberScrollState())
-                .padding(start = 20.dp, end = 20.dp, bottom = 32.dp)
+                .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
-            SignInHeader()
-            Spacer(Modifier.height(20.dp))
-
             if (deviceFlowUnavailable) {
                 DeviceFlowUnavailableNotice()
+                Spacer(Modifier.height(12.dp))
                 TokenSignInForm(state = state, onAction = onAction)
             } else {
                 DeviceSignInCard(
@@ -123,26 +127,7 @@ fun GithubSignInSheet(
                     TokenSignInForm(state = state, onAction = onAction)
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun SignInHeader() {
-    GithubSheetHeader(
-        title = stringResource(R.string.github_sign_in),
-        subtitle = stringResource(R.string.github_sign_in_description)
-    ) {
-        Surface(
-            shape = GithubExpressiveShapes.control,
-            color = MaterialTheme.colorScheme.primaryContainer
-        ) {
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(12.dp).size(28.dp)
-            )
+            Spacer(Modifier.height(28.dp))
         }
     }
 }

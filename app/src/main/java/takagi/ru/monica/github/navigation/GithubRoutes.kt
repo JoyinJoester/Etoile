@@ -7,6 +7,18 @@ import takagi.ru.monica.github.feature.mywork.MyConversationsKind
 data object GithubHomeRoute
 
 @Serializable
+data object GithubSignInRoute
+
+@Serializable
+data object GithubSettingsRoute
+
+@Serializable
+data object GithubAccountsRoute
+
+@Serializable
+data object GithubStarredRoute
+
+@Serializable
 data object GithubUserRepositoriesRoute
 
 @Serializable
