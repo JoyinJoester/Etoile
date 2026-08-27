@@ -1,73 +1,33 @@
 # Third-Party Notices
 
-## SteamRoute / SteamBolt
+## Monica for Android
 
-Parts of Etoile's network optimization target coverage, recovery strategy,
-and public-address validation were informed by SteamRoute / SteamBolt source code
-provided directly by its author and used with permission. The Etoile
-implementation is adapted to its app-scoped DNS override architecture and does
-not modify Android system hosts.
+Etoile's code base, Material 3 design language, navigation shell, and security components derive from
+[Monica for Android](https://github.com/Monica-Pass/Monica-for-Android), Copyright (C) Monica contributors,
+licensed under the GNU General Public License v3.0 or later. The extraction baseline is recorded in
+[`SOURCE.md`](./SOURCE.md). The Steam feature layer, the Monica vault modules, and the MDBX storage engine
+have since been removed from this repository.
 
-## Grit
+The complete GPL-3.0 text is in this repository's [`LICENSE`](LICENSE) file.
 
-The Etoile game distribution and play-activity analytics components are adapted from
-[`Grit`](https://github.com/shub39/Grit), including `AnalyticsCard`, `WeekDayBreakdown`,
-`HabitHeatMap`, and `CardArrows` interaction patterns.
+## Google Sans Flex
 
-Copyright (C) 2026 Shubham Gorai
+`app/src/main/res/font/` ships `GoogleSansFlex` variants (`regular`, `metric`, `display`), used by the
+typography in `ui/theme/Type.kt`.
 
-Licensed under the GNU General Public License v3.0 or later. The complete license text is
-included in this repository's `LICENSE` file.
+Copyright (C) Google LLC, licensed under the Apache License, Version 2.0.
 
-The heatmap calendar is rendered with
-[`Kizitonwose Calendar`](https://github.com/kizitonwose/calendar), developed by Kizito Nwose
-and distributed under the MIT License.
+## AndroidX, Material Components, Kotlin, and OkHttp
 
-## Essentials
+Everything else arrives as a published build dependency declared in `gradle/libs.versions.toml` and
+`app/build.gradle`: Jetpack AndroidX, Jetpack Compose and Material 3, `com.google.android.material`
+color utilities (Apache License 2.0), Kotlin and kotlinx-serialization / kotlinx-coroutines (Apache
+License 2.0), OkHttp and MockWebServer (Apache License 2.0), and JUnit (Eclipse Public License 1.0).
 
-The Etoile floating Dock interaction is adapted from
-[`EssentialsFloatingToolbar`](https://github.com/sameerasw/essentials/blob/main/app/src/main/java/com/sameerasw/essentials/ui/components/EssentialsFloatingToolbar.kt).
+Each artifact carries its own license text and copyright notice inside the published package; the
+dependency declarations above identify the exact versions used.
 
-MIT License
+## GitHub
 
-Copyright (c) 2025 Sameera Sandakelum
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-## KernelSU FloatingBottomBar
-
-The optional Etoile liquid-glass Dock adapts the motion and rendering
-structure of KernelSU's `FloatingBottomBar` at commit
-`778fb38bbf0c43f168b8bbd7d9e369d6fb46754b`.
-
-Copyright (C) KernelSU contributors
-
-Licensed under the GNU General Public License v3.0. The complete license text
-is included in this repository's `LICENSE` file.
-
-## Miuix blur and AndroidLiquidGlass
-
-The liquid-glass backdrop capture, RuntimeShader effects, highlight model, and
-supporting lens concepts use
-[`miuix-blur`](https://github.com/compose-miuix-ui/miuix) and
-[`AndroidLiquidGlass`](https://github.com/Kyant0/AndroidLiquidGlass).
-
-Copyright (C) compose-miuix-ui contributors and Kyant0 contributors
-
-Licensed under the Apache License, Version 2.0.
+GitHub is a trademark of GitHub, Inc. / Microsoft. Etoile is an unofficial third-party client and is not
+affiliated with, authorized by, or sponsored by GitHub.

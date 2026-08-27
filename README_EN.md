@@ -6,8 +6,8 @@
 
 <img src="image/etoile_launcher.png" alt="Etoile App Icon" width="220" />
 
-<p><strong>A Steam-focused standalone Android client</strong></p>
-<p>Steam Guard · Library · Store · Friends & Chat · Mobile Confirmations</p>
+<p><strong>A GitHub-focused standalone Android client</strong></p>
+<p>Inbox · Repositories &amp; code · Issues · Pull requests · Actions · Releases · Explore</p>
 
 <p>
 	Links:
@@ -29,172 +29,104 @@
 
 [![Afdian](https://img.shields.io/badge/Afdian-JoyinJoester-ea4aaa?style=flat-square)](https://afdian.com/a/JoyinJoester)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-joyinjoester-29ABE0?style=flat-square&logo=kofi&logoColor=white)](https://ko-fi.com/joyinjoester)
-[![PayPal](https://img.shields.io/badge/PayPal-Support%20Monica-FFD140?style=flat-square&logo=paypal&logoColor=003087)](https://www.paypal.com/ncp/payment/BHSYWK73CA8FW)
 
 </div>
 
 <br>
 
-<div align="center">
+Etoile is an independently maintained third-party GitHub client for Android, built with Jetpack Compose
+and Material 3 Expressive. It brings the day-to-day GitHub loop onto your phone: triage notifications,
+read code, handle issues and pull requests, and watch Actions runs.
 
-# ⚠️ IMPORTANT RISK WARNING ⚠️
-
-### Etoile may trigger Steam risk control and cause a “red letter” / account restriction
-
-### If that concerns you, do not use it for now
-
-### When this notice is removed from the README, the issue has been resolved
-
-</div>
-
-<br>
-
-Etoile is a Steam-focused Android client derived from the Steam surfaces in [Monica Android](https://github.com/Monica-Pass/Monica-for-Android).
-It brings Steam Guard, account management, mobile confirmations, library, store, friends, chat, notifications, and Steam account backup into a standalone app.
-
-> **Status: public test build.** Etoile is under active development. It is not a stable release and not an official Steam client.
+> **Status: public test build.** Interfaces and layouts are still changing. This is not a stable release
+> and not an official GitHub client.
 >
-> This project is not affiliated with, endorsed by, or sponsored by Valve Corporation. Steam, Steam Guard, and related marks belong to their respective owners.
+> This project is not affiliated with, authorized by, or sponsored by GitHub, Inc. / Microsoft.
+> GitHub and related marks belong to their respective owners.
 
 ---
 
 ## Read this first
 
 ### Who Etoile is for
-- People who manage multiple Steam accounts and Steam Guard codes on Android.
-- Users who want login approvals, trade confirmations, friends chat, and store browsing on mobile.
-- Monica users who want Steam features as a separate app, not the full password vault.
+- People who need to act on issue and pull-request reviews and notifications from a phone, not only in a browser.
+- Users who want to read repository code, Actions logs, and releases natively instead of being pushed into a WebView.
+- People who need multiple accounts switched quickly, or who do not want full GitHub Mobile for light usage.
 
 ### What you get
-- Steam Guard codes, multi-account switching, `maFile` import, and mobile confirmations.
-- Library, playtime stats, achievements, family sharing, and offline cache.
-- Store browsing, wishlist, and cart entry points (final checkout still uses Steam’s official flow).
-- Friends, DM/group chat, notifications, and experimental voice calls.
-- Main-password / biometric lock, plus WebDAV / ZIP Steam account backups.
+- **Inbox**: paginated notification threads, per-item Done / Unsubscribe, unread state, and in-place failure hints.
+- **Repositories & code**: directory browsing, branch/tag switching, README rendering, raw files, commits, releases;
+  plus separate read-only pages for branch lists, collaborator permissions, and webhooks.
+- **Issues**: detail view with a unified management sheet — title/body editing, labels, assignees, milestone,
+  close/reopen, conversation locking, and reactions.
+- **Pull requests**: Conversation and Diff, inline review comments, reviewer requests, labels/assignees/milestone,
+  and a merge confirmation bound to the head SHA (MERGE / SQUASH / REBASE).
+- **Actions**: workflow and run lists, logs, re-run/cancel, enable/disable, and manual dispatch.
+- **Explore**: five search tabs — Repositories / Users / Code / Issues / Pull Requests — sharing debouncing,
+  pagination, and error states.
+- **Profiles**: public profile, followers/following, repositories and stars (categorized locally).
+- **Deep links**: recognized `github.com` issue, PR, and Actions run/job links open native screens;
+  unknown paths still go to the browser.
 
 ### Quick install
 
-1. Download the latest APK from [Releases](https://github.com/JoyinJoester/Etoile/releases).
+1. Download the APK matching your device ABI from [Releases](https://github.com/JoyinJoester/Etoile/releases).
 2. Install on Android 8.0+.
-3. Import a `maFile` or sign in to Steam to initialize tokens and sessions.
-4. **Back up existing `maFile` / authenticator data first.** Never treat a test build as your only copy.
+3. Sign in with the GitHub device flow; credentials stay in encrypted on-device storage.
 
 ### Known limitations
-- Still a public test build; APIs and UI may change.
-- Some features depend on Steam web pages or non-public mobile endpoints and may break when Steam changes them.
-- Store prices, gifts, notifications, chat, and voice may depend on region, session state, and risk-control policy.
-- Experimental voice call reliability varies by device and network.
-- **Steam risk control may lead to red-letter / account restrictions. Skip this app if that is unacceptable.**
-
----
-
-## Relationship with Monica Pass
-
-[Monica Pass](https://github.com/Monica-Pass/Monica-for-Android) is the main Monica ecosystem and local-first password-vault project. Monica Android originally included both password management and Steam surfaces.
-
-Etoile was extracted from that Steam experience and is maintained as a separate product:
-
-| Project | Role | Link |
-| --- | --- | --- |
-| Monica Pass | Local-first password vault and Monica ecosystem | [GitHub](https://github.com/Monica-Pass/Monica-for-Android) · [Website](https://monica-pass.github.io/Monica/) |
-| Monica Android | Full Monica Android client and source of the Steam module | [Android project](https://github.com/Monica-Pass/Monica-for-Android) |
-| Etoile | Standalone Steam-focused Android client | [This repository](https://github.com/JoyinJoester/Etoile) |
-
-- Own application ID, sandbox, release cycle, and repository: `app.etoile`.
-- May reuse Monica Material 3 design, navigation, security, storage, and Steam components, but does **not** modify Monica Android.
-- Does **not** include the Monica Pass vault, Bitwarden, KeePass, autofill, or password-management workflows.
-- Cannot open or manage Monica Pass vault records.
-- `maFile`, Steam account ZIP, MDBX, and WebDAV here are for Steam account data only.
-
-See [`SOURCE.md`](./SOURCE.md) for the extraction baseline.
-
----
-
-## Features
-
-### Steam accounts and Steam Guard
-- Steam Guard TOTP codes and multi-account management.
-- `maFile`, key-only, credential, and QR-code imports.
-- Login approvals, mobile confirmations, and authorized-device management.
-- Authenticator removal and account switching.
-- Local encrypted account storage with optional MDBX backing.
-
-### Library and game data
-- Library, family sharing, playtime, achievements, and ownership details.
-- Account-level game count, playtime, and estimated-value summaries.
-- Recent-play filters, completion filters, distribution charts, and play-activity heatmaps.
-- Cached library data for offline viewing.
-
-### Steam Store
-- Browsing, search, regional prices, currency conversion, and account-region filtering.
-- Purchase options, editions, DLC, bundles, system requirements, screenshots, and reviews.
-- Native cart and wishlist views; final checkout stays on Steam’s official flow.
-- Events and points-store content when Steam exposes compatible data.
-
-### Friends, chat, and notifications
-- Friends list, profiles, unified DM/group conversations.
-- Text, emoji, stickers, images, reactions, reports, and chat search where supported.
-- Group channels, roles/permissions, invite links, and related management.
-- Notifications, unread state, gift/confirmation-related actions.
-- Experimental private/group voice calls.
-
-### Appearance and backup
-- Monica color schemes, including Monica Plus palettes.
-- Material 3 Expressive layouts, floating Dock, liquid-glass Dock, and UI scaling.
-- Steam-only `maFile` WebDAV backup/restore, plus ZIP export/import.
-- Main-password and biometric protection; log viewing/cleanup/sharing.
-- Account and recently-played widgets.
-- Steam network optimization (hosts / diagnostics).
+- Still a public test build; APIs and UI may change at any time.
+- Relies on the GitHub REST API and is subject to rate limits. Throttling and cache fallback are shown
+  explicitly in the UI — stale data is never presented silently.
+- High-risk or externally visible operations (editing branch protection, adding or removing collaborators,
+  delivering or deleting webhooks) intentionally redirect to GitHub's official settings pages;
+  the client does not reproduce the web permission model.
+- For merges, permission changes, and any final outcome, **the GitHub server response is authoritative**.
 
 ---
 
 ## Data and security boundaries
 
-- App ID: `app.etoile`. Databases and preferences are isolated by Android’s application sandbox.
-- Can be installed side by side with Monica Android; data is **not** shared automatically.
-- Back up existing `maFile` files before import, migration, or remote backup.
-- Steam pages and mobile APIs can change without notice. For purchases, gifts, account security, or final confirmation, **Steam’s official result is authoritative**.
-- Never treat a test build as the only copy of your Steam authenticator or account data.
+- Application ID: `app.etoile`; data is isolated by the Android application sandbox.
+- Access tokens come from the GitHub device flow and are kept in encrypted on-device storage. Nothing is
+  uploaded to third-party servers.
+- Cache follows ETag / 304 validation and is cleared on sign-out or account switch; 401/403/4xx responses
+  never surface another account's stale data.
+- Webhook URLs, secrets, and similar sensitive configuration are kept out of client models and screens.
+- This repository contains no telemetry or advertising SDKs.
 
-### Security model (current implementation)
-- UI: Jetpack Compose + Material 3 / Material 3 Expressive.
-- Local protection: main password, biometrics (BiometricPrompt), encrypted local storage.
-- Async / background: Kotlin Coroutines + Flow + WorkManager.
-- Networking: OkHttp and related stacks against Steam web/mobile endpoints.
-- Backup: WebDAV, ZIP, and `maFile` import/export.
+### Implementation
+- UI: Jetpack Compose + Material 3 / Material 3 Expressive, adaptive phone and tablet layouts.
+- Layering: `feature` → `domain` ← `data`, with `domain` kept pure Kotlin and shareable across platforms.
+- Networking: OkHttp directly against the GitHub REST API, with unified pagination, authenticated requests,
+  and structured caching for read-only GETs.
+- State: Kotlin Coroutines + Flow; immutable `UiState` exposed through `StateFlow`.
+- Secure storage: Keystore-backed local token store.
+
+---
+
+## Provenance
+
+Etoile's code base derives from [Monica Android](https://github.com/Monica-Pass/Monica-for-Android), a
+local-first password manager, and reuses its Material 3 design language, navigation, and security components.
+The repository has since converged on the GitHub client itself: the Steam feature layer, the Monica vault
+modules (Bitwarden, KeePass, autofill, attachments, passkeys), and the MDBX storage engine have been removed.
+See [`SOURCE.md`](./SOURCE.md) for the extraction baseline.
 
 ---
 
 ## Sponsorship
 
-If Etoile / the Monica projects help you, support is welcome.
+If Etoile is useful to you, support for continued development is welcome.
 
 <div align="center">
 <img src="image/support_author.jpg" alt="Support Etoile" width="320"/>
 <br/>
 <sub>WeChat / Alipay QR</sub>
 <br/><br/>
-
-<form action="https://www.paypal.com/ncp/payment/BHSYWK73CA8FW" method="post" target="_blank" style="display:inline-grid;justify-items:center;align-content:start;gap:0.5rem;">
-  <input style="text-align:center;border:none;border-radius:0.25rem;min-width:11.625rem;padding:0 2rem;height:2.625rem;font-weight:bold;background-color:#FFD140;color:#000000;font-family:&quot;Helvetica Neue&quot;,Arial,sans-serif;font-size:1rem;line-height:1.25rem;cursor:pointer;" type="submit" value="Support Monica" />
-  <img src="https://www.paypalobjects.com/images/Debit_Credit_APM.svg" alt="cards" />
-  <section style="font-size: 0.75rem;"> Powered by <img src="https://www.paypalobjects.com/paypal-ui/logos/svg/paypal-wordmark-color.svg" alt="paypal" style="height:0.875rem;vertical-align:middle;"/></section>
-</form>
-
-<br/>
-<p>
-  <a href="https://www.paypal.com/ncp/payment/BHSYWK73CA8FW">
-    <img src="https://img.shields.io/badge/PayPal-Support%20Monica-FFD140?style=for-the-badge&logo=paypal&logoColor=003087" alt="PayPal Support Monica" />
-  </a>
-</p>
 </div>
 
-Support is prioritized for:
-- Steam protocol adaptation and risk-control mitigation.
-- Android experience and stability work.
-- Chat, notification, and backup maintenance.
-
-You can also support via [Afdian](https://afdian.com/a/JoyinJoester), [Ko-fi](https://ko-fi.com/joyinjoester), or [PayPal](https://www.paypal.com/ncp/payment/BHSYWK73CA8FW).
+You can also support via [Afdian](https://afdian.com/a/JoyinJoester) or [Ko-fi](https://ko-fi.com/joyinjoester).
 
 ---
 
@@ -221,42 +153,26 @@ Build packages:
 .\gradlew.bat :app:assembleRelease
 ```
 
-Release signing is supplied externally through `keystore.properties` or `ETOILE_RELEASE_*` environment variables. Never commit signing files or credentials.
+Note: `debug` builds also enable `minifyEnabled` and set `debuggable false`, so debug them the way you
+would a release build.
+
+Release signing is supplied externally through `keystore.properties` or `ETOILE_RELEASE_*` environment
+variables. Never commit signing files or credentials. When signing configuration is missing, the build
+produces an explicitly unsigned release package instead of falling back to the debug certificate.
 
 ### Code layout (current)
-- `takagi/ru/monica/steam` — Steam domain (accounts, tokens, confirmations, library, store, friends, chat, notifications, …).
-- `takagi/ru/monica/ui` — Compose screens and shared settings shell.
-- `takagi/ru/monica/data` / `repository` / `security` — local data, repositories, and security.
-- `takagi/ru/monica/webdav` / `workers` — backup and background work.
+- `takagi/ru/monica/github` — all GitHub client business, layered as `feature` / `domain` / `data` / `component` / `design` / `navigation`.
+- `takagi/ru/monica/data` / `utils` / `ui` — app-level settings, preference storage, theming, and base activity.
+- The Java/Kotlin package remains `takagi.ru.monica` (inherited from Monica) while `applicationId` is `app.etoile`.
 
 ### Repository guide
 - [`README.md`](./README.md) — Chinese overview (main)
-- [`RELEASE_NOTES.md`](./RELEASE_NOTES.md) — public test release notes
+- [`docs/architecture/GITHUB_MODULES.md`](./docs/architecture/GITHUB_MODULES.md) — layering, pagination, and UI maintenance conventions
+- [`docs/architecture/GITHUB_UI_LAYOUT.md`](./docs/architecture/GITHUB_UI_LAYOUT.md) — responsive layout conventions
+- [`docs/configuration/GITHUB_OAUTH.md`](./docs/configuration/GITHUB_OAUTH.md) — OAuth client ID configuration
+- [`docs/release-signing.md`](./docs/release-signing.md) — external signing contract
 - [`SOURCE.md`](./SOURCE.md) — extraction baseline from Monica Android
 - [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) — third-party notices
-- [`docs/`](./docs) — architecture and release-signing notes
-
----
-
-## Acknowledgments
-
-Etoile’s design, compatibility work, and feature direction draw inspiration from:
-
-- [Monica Pass](https://github.com/Monica-Pass/Monica-for-Android) — design language, security lock, and shared foundations.
-- [Steam Desktop Authenticator](https://github.com/Jessecar96/SteamDesktopAuthenticator) — maFile / Steam Guard / confirmation reference.
-- [steamguard-cli](https://github.com/dyc3/steamguard-cli) — login, token migration, and confirmation protocol reference.
-- [AnotherVaporAuth](https://github.com/freefrank/AnotherVaporAuth) — mobile authenticator and approval UX reference.
-- [Grit](https://github.com/shub39/Grit) — library analytics and heatmap interaction reference.
-- [Essentials](https://github.com/sameerasw/essentials) — floating Dock interaction reference.
-- [KernelSU](https://github.com/tiann/KernelSU) — liquid-glass Dock motion structure reference.
-
-See [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for full third-party license text.
-
----
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=JoyinJoester/Etoile&type=Date)](https://star-history.com/#JoyinJoester/Etoile&Date)
 
 ---
 
@@ -264,7 +180,13 @@ See [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for full third-party li
 
 - Issues: [Etoile Issues](https://github.com/JoyinJoester/Etoile/issues)
 - QQ group: `1087865010`
-- Sponsor: [Afdian](https://afdian.com/a/JoyinJoester) · [Ko-fi](https://ko-fi.com/joyinjoester) · [PayPal](https://www.paypal.com/ncp/payment/BHSYWK73CA8FW)
+- Sponsor: [Afdian](https://afdian.com/a/JoyinJoester) · [Ko-fi](https://ko-fi.com/joyinjoester)
+
+---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=JoyinJoester/Etoile&type=Date)](https://star-history.com/#JoyinJoester/Etoile&Date)
 
 ---
 
@@ -276,4 +198,5 @@ Etoile is released under the [GNU General Public License v3.0](LICENSE).
 
 Additional third-party copyright and license information is in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
 
-Steam and related trademarks belong to Valve Corporation and their respective owners. This project is an unofficial third-party client.
+GitHub and related trademarks belong to GitHub, Inc. / Microsoft and their respective owners.
+This project is an unofficial third-party client.
