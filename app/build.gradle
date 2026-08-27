@@ -3,8 +3,6 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    id 'kotlin-parcelize'
 }
 
 // Release signing is intentionally external. A missing or partial contract
@@ -337,13 +335,9 @@ dependencies {
 
     // Core Android libraries
     implementation libs.androidx.core.ktx
-    implementation libs.androidx.core.splashscreen  // 添加splashscreen依赖
     implementation libs.androidx.lifecycle.runtime.ktx
-    implementation "androidx.lifecycle:lifecycle-process:2.8.7"
     implementation libs.androidx.activity.compose
-    // Pin profileinstaller to the latest stable patch and avoid older transitive copies.
-    implementation "androidx.profileinstaller:profileinstaller:1.4.1"
-    
+
     // Compose
     implementation platform(libs.androidx.compose.bom)
     implementation libs.androidx.ui
@@ -352,31 +346,24 @@ dependencies {
     implementation libs.androidx.material3
     implementation libs.androidx.material3.window.size
     implementation "androidx.compose.animation:animation"
-    implementation "androidx.compose.animation:animation-graphics"
 
-    // Native liquid-glass renderer used by the optional Dock. Transitives are
-    // intentionally excluded so the app keeps its AndroidX Compose graph.
-    
     // Navigation
     implementation libs.androidx.navigation.compose
 
-    // Biometric
-    implementation libs.androidx.biometric
-    
     // Security
     implementation libs.androidx.security.crypto
-    
+
     // ViewModel
     implementation libs.androidx.lifecycle.viewmodel.compose
     implementation libs.androidx.lifecycle.runtime.compose
-    
+
     // Coroutines
     implementation libs.kotlin.coroutines.android
-    
+
     // Material Icons Extended
     implementation libs.androidx.material.icons.extended
-    
-    // Fragment and Material Components (for BottomSheet)
+
+    // Fragment and Material Color Utilities
     implementation libs.androidx.fragment.ktx
     implementation libs.material
 
@@ -389,17 +376,12 @@ dependencies {
     // OkHttp for networking
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 
-    
-    
     // Testing
     testImplementation libs.junit
     testImplementation libs.kotlin.coroutines.test
     testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
-    androidTestImplementation libs.androidx.junit
-    androidTestImplementation libs.androidx.espresso.core
-    androidTestImplementation platform(libs.androidx.compose.bom)
-    androidTestImplementation libs.androidx.ui.test.junit4
+
+    // Compose preview tooling
     debugImplementation libs.androidx.ui.tooling
-    debugImplementation libs.androidx.ui.test.manifest
 }
 

@@ -33,7 +33,6 @@ keystore.properties
 *.aab
 *.apks
 *.idsig
-installed-monica.apk
 
 # Kiro files
 *.kiro
@@ -41,6 +40,5 @@ installed-monica.apk
 
 # Local scratch files
 gradle_props.txt
-fix_webdav.py
 quick-fix.ps1
 test_crypto.kt

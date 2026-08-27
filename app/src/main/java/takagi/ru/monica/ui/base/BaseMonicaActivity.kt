@@ -24,17 +24,11 @@ import takagi.ru.monica.utils.ScreenshotProtectionUtil
 import takagi.ru.monica.utils.SettingsManager
 
 /**
- * Monica 应用的统一基类 Activity
- * 
- * 功能：
- * - attachBaseContext：统一处理语言上下文（LocaleHelper），带超时保护
- * - Theme：统一监听 SettingsManager 并应用主题（深色模式、动态取色）
- * - ScreenshotProtection：统一处理防截屏逻辑
- * - SessionManager：统一管理会话状态和自动锁定
- * 
- * 继承此基类的 Activity：
- * - MainActivity
- * - AutofillPickerActivityV2
+ * Etoile 的统一基类 Activity
+ *
+ * - attachBaseContext：按保存的语言偏好包裹 Locale 上下文，带超时保护
+ * - Theme：监听 SettingsManager 并缓存设置，供主题与防截屏使用
+ * - ScreenshotProtection：统一处理防截屏开关
  */
 abstract class BaseMonicaActivity : FragmentActivity() {
     
@@ -71,11 +65,11 @@ abstract class BaseMonicaActivity : FragmentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        disableSystemAutofillForMonicaUi()
+        disableSystemAutofillForAppUi()
         
         settingsManager = SettingsManager(applicationContext)
         
-        // 监听设置变化，更新截图保护和自动锁定配置
+        // 监听设置变化，更新缓存与截图保护开关
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 settingsManager.settingsFlow.collect { settings ->
@@ -93,7 +87,7 @@ abstract class BaseMonicaActivity : FragmentActivity() {
 
         // Keep Etoile's own UI out of the platform Autofill pipeline so the app
         // never suggests or saves credentials for its own internal forms.
-        disableSystemAutofillForMonicaUi()
+        disableSystemAutofillForAppUi()
     }
     
     /**
@@ -107,7 +101,7 @@ abstract class BaseMonicaActivity : FragmentActivity() {
         }
     }
 
-    private fun disableSystemAutofillForMonicaUi() {
+    private fun disableSystemAutofillForAppUi() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
 
         window?.decorView?.importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
