@@ -127,6 +127,20 @@
     <string name="github_device_code_copied">已复制</string>
     <string name="github_device_code_expires_at">代码将在 %1$s 失效</string>
     <string name="github_device_code_open_github">打开 GitHub</string>
+    <string name="github_sign_in_in_app">应用内网页登录</string>
+    <string name="github_sign_in_in_app_description">在应用内打开 GitHub 登录页，支持账号密码与两步验证，全程不离开 App。</string>
+    <string name="github_sign_in_browser">用系统浏览器打开</string>
+    <string name="github_sign_in_browser_description">跳转浏览器完成登录，完整支持 Passkey。</string>
+    <string name="github_sign_in_methods">选择登录方式</string>
+    <string name="github_web_sign_in_title">GitHub 登录</string>
+    <string name="github_web_sign_in_close">关闭</string>
+    <string name="github_web_sign_in_hint">已自动填入一次性代码，完成登录并授权即可</string>
+    <string name="github_home_welcome_title">欢迎使用 Etoile</string>
+    <string name="github_home_welcome_body">登录后你的仓库、议题、组织与收藏将集中在这里，一目了然。</string>
+    <string name="github_home_welcome_feature_repositories">同步你的仓库</string>
+    <string name="github_home_welcome_feature_issues">跟进议题与请求</string>
+    <string name="github_home_welcome_feature_organizations">浏览组织动态</string>
+    <string name="github_home_welcome_feature_starred">收藏常驻入口</string>
     <string name="github_device_code_waiting">正在等待授权</string>
     <string name="github_device_sign_in_failed_title">未能完成 GitHub 登录</string>
     <string name="github_device_sign_in_request_failed">无法发起安全登录请求，请检查网络后重试。</string>
@@ -196,14 +210,35 @@
     <string name="github_light">浅色</string>
     <string name="github_dark">深色</string>
     <string name="github_palette">配色</string>
+    <string name="github_design_style">UI 设计</string>
+    <string name="github_design_material">Material</string>
+    <string name="github_design_nothing">Nothing</string>
+    <string name="github_design_miunix">Miuix</string>
     <string name="github_search_results">搜索结果</string>
     <string name="github_search_error">无法加载 GitHub 结果。</string>
     <string name="github_retry">重试</string>
+    <string name="github_loading">加载中</string>
     <string name="github_no_repositories">还没有仓库。</string>
     <string name="github_no_search_results">没有匹配的 GitHub 结果。</string>
     <string name="github_no_description">暂无描述</string>
     <string name="github_unknown_language">未知</string>
     <string name="github_updated_recently">最近更新</string>
+    <string name="github_time_just_now">刚刚</string>
+    <plurals name="github_time_minutes_ago">
+        <item quantity="other">%1$d 分钟前</item>
+    </plurals>
+    <plurals name="github_time_hours_ago">
+        <item quantity="other">%1$d 小时前</item>
+    </plurals>
+    <plurals name="github_time_days_ago">
+        <item quantity="other">%1$d 天前</item>
+    </plurals>
+    <plurals name="github_time_months_ago">
+        <item quantity="other">%1$d 个月前</item>
+    </plurals>
+    <plurals name="github_time_years_ago">
+        <item quantity="other">%1$d 年前</item>
+    </plurals>
     <string name="github_followers">关注者</string>
     <string name="github_following">关注中</string>
     <string name="github_followers_error">无法加载关注者。</string>

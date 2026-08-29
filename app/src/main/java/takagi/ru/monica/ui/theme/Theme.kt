@@ -1,7 +1,11 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+
 package takagi.ru.monica.ui.theme
 
 import android.app.Activity
 import android.os.Build
+import androidx.compose.foundation.LocalOverscrollConfiguration
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -17,6 +21,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import takagi.ru.monica.data.ColorScheme
+import takagi.ru.monica.data.DesignStyle
+import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // ============================================
 // 📱 默认配色方案 (Material Design 3 默认紫色)
@@ -946,6 +952,7 @@ fun EtoileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     oledPureBlackEnabled: Boolean = false,
     colorScheme: ColorScheme = ColorScheme.DEFAULT,
+    designStyle: DesignStyle = DesignStyle.MATERIAL,
     customPrimaryColor: Long = 0xFF6650a4,
     customSecondaryColor: Long = 0xFF625b71,
     customTertiaryColor: Long = 0xFF7D5260,
@@ -974,7 +981,33 @@ fun EtoileTheme(
         colorScheme == ColorScheme.TECH_PURPLE -> {
             if (darkTheme) TechPurpleDarkColorScheme else TechPurpleLightColorScheme
         }
-        
+
+        colorScheme == ColorScheme.MIUI_BLUE -> {
+            if (darkTheme) {
+                generatedSchemeForMonet(
+                    darkTheme = true,
+                    primary = MIUIBluePrimaryDark,
+                    secondary = MIUIBlueSecondaryDark,
+                    tertiary = MIUIBlueTertiaryDark,
+                    neutral = MIUIBlueBackgroundDark,
+                    neutralVariant = MIUIBlueSurfaceDark
+                )
+            } else {
+                generatedSchemeForMonet(
+                    darkTheme = false,
+                    primary = MIUIBluePrimary,
+                    secondary = MIUIBlueSecondary,
+                    tertiary = MIUIBlueTertiary,
+                    neutral = MIUIBlueBackground,
+                    neutralVariant = MIUIBlueSurface
+                )
+            }
+        }
+
+        colorScheme == ColorScheme.NOTHING -> {
+            if (darkTheme) NothingDarkColorScheme else NothingLightColorScheme
+        }
+
         colorScheme == ColorScheme.BLACK_MAMBA -> {
             if (darkTheme) BlackMambaDarkColorScheme else BlackMambaLightColorScheme
         }
@@ -1242,11 +1275,22 @@ fun EtoileTheme(
         }
     }
 
-    MaterialTheme(
-        colorScheme = finalColorScheme,
-        typography = Typography,
-        content = content
-    )
+    val isNothingStyle = designStyle == DesignStyle.NOTHING
+    // 全局关闭"拉伸过滚动"：滚到顶/底后不再被拽出空白回弹区
+    CompositionLocalProvider(LocalOverscrollConfiguration provides null) {
+        MiuixTheme(colors = finalColorScheme.toMiuixColors(darkTheme)) {
+            MaterialTheme(
+                colorScheme = finalColorScheme,
+                typography = if (isNothingStyle) NothingTypography else Typography,
+                shapes = when (designStyle) {
+                    DesignStyle.NOTHING -> NothingShapes
+                    DesignStyle.MIUIX -> MiuixStyleShapes
+                    else -> MaterialTheme.shapes
+                },
+                content = content
+            )
+        }
+    }
 }
 
 private fun MaterialColorScheme.withPureBlackSurfaces(): MaterialColorScheme {

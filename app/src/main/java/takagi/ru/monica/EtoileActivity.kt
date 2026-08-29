@@ -32,6 +32,7 @@ class EtoileActivity : BaseMonicaActivity() {
                 darkTheme = darkTheme,
                 oledPureBlackEnabled = settings.oledPureBlackEnabled,
                 colorScheme = settings.colorScheme,
+                designStyle = settings.designStyle,
                 customPrimaryColor = settings.customPrimaryColor,
                 customSecondaryColor = settings.customSecondaryColor,
                 customTertiaryColor = settings.customTertiaryColor,

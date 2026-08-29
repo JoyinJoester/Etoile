@@ -78,7 +78,7 @@ def requireReleaseSigning = project.findProperty('requireReleaseSigning')?.toStr
 
 android {
     namespace 'takagi.ru.monica'
-    compileSdk 35
+    compileSdk 37
 
     def previewVersionSuffix = project.findProperty('previewVersionSuffix')?.toString()?.trim()
     def appVersionCode = 1
@@ -106,11 +106,13 @@ android {
         value.replace('\\', '\\\\').replace('"', '\\"')
     }
 
+    // 兜底使用 GitHub CLI 的公开 client id（device flow 惯例，开箱即用）。
+    // 在 local.properties 配置 githubOAuthClientId 可替换为你自己注册的 OAuth App。
     def githubOAuthClientId = (
             project.findProperty('githubOAuthClientId')
                     ?: System.getenv('ETOILE_GITHUB_OAUTH_CLIENT_ID')
                     ?: localBuildProperties.getProperty('githubOAuthClientId')
-                    ?: ''
+                    ?: '178c6fc778ccc68e1d6a'
     ).toString().trim()
 
     def resolveArchTag = { output ->
@@ -311,19 +313,19 @@ tasks.register('verifyReleaseSigningConfiguration') {
 
 configurations.configureEach {
     resolutionStrategy.force(
-        "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.6.0",
-        "org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0",
-        "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.6.0",
-        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0",
-        "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.6.0"
+        "org.jetbrains.kotlinx:kotlinx-serialization-bom:1.9.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.9.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0",
+        "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.9.0"
     )
 }
 
 dependencies {
 
     constraints {
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.0")
-        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.9.0")
+        implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
     }
 
     // Core Android libraries
@@ -352,6 +354,11 @@ dependencies {
 
     // Coroutines
     implementation libs.kotlin.coroutines.android
+
+    // Miuix (MIUI-style Compose Multiplatform UI)
+    implementation libs.miuix.ui
+    implementation libs.miuix.preference
+    implementation libs.miuix.squircle
 
     // Material Icons Extended
     implementation libs.androidx.material.icons.extended

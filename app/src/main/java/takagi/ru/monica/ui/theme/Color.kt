@@ -851,3 +851,18 @@ val ParliamentFogOnSurfaceDark = Color(0xFFE0E0E0)
 // ============================================
 // 🎨 错误颜色 (Error Colors - 全局共享)
 // ============================================
+// ============================================
+// 🌀 MIUI 蓝 (MIUI Blue) - HyperOS 风格
+// ============================================
+
+val MIUIBluePrimary = Color(0xFF3482FF)
+val MIUIBlueSecondary = Color(0xFF6AA6FF)
+val MIUIBlueTertiary = Color(0xFF9EC3FF)
+val MIUIBlueBackground = Color(0xFFF6F8FC)
+val MIUIBlueSurface = Color(0xFFEBF0F8)
+
+val MIUIBluePrimaryDark = Color(0xFF6AA3FF)
+val MIUIBlueSecondaryDark = Color(0xFF8FBCFF)
+val MIUIBlueTertiaryDark = Color(0xFFB8D4FF)
+val MIUIBlueBackgroundDark = Color(0xFF0E1116)
+val MIUIBlueSurfaceDark = Color(0xFF3A4149)

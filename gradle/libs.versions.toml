@@ -1,17 +1,18 @@
 [versions]
-agp = "8.7.3"
-kotlin = "2.0.21"
+agp = "8.13.2"
+kotlin = "2.4.10"
 coreKtx = "1.10.1"
-kotlinxSerialization = "1.6.0"
+kotlinxSerialization = "1.9.0"
 junit = "4.13.2"
 lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.9.3"
 composeBom = "2026.03.00"
 material3Expressive = "1.5.0-alpha18"
+miuix = "0.9.3"
 navigation = "2.8.9"
 securityCrypto = "1.1.0-alpha06"
 viewModel = "2.8.7"
-coroutines = "1.7.3"
+coroutines = "1.10.2"
 datastore = "1.0.0"
 fragment = "1.6.2"
 material = "1.11.0"
@@ -35,6 +36,9 @@ androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lif
 kotlin-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlin-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
+miuix-ui = { group = "top.yukonga.miuix.kmp", name = "miuix-ui", version.ref = "miuix" }
+miuix-preference = { group = "top.yukonga.miuix.kmp", name = "miuix-preference", version.ref = "miuix" }
+miuix-squircle = { group = "top.yukonga.miuix.kmp", name = "miuix-squircle", version.ref = "miuix" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }

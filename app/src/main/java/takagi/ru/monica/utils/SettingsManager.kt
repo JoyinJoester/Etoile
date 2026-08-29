@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import takagi.ru.monica.data.AppSettings
 import takagi.ru.monica.data.ColorScheme
+import takagi.ru.monica.data.DesignStyle
 import takagi.ru.monica.data.Language
 import takagi.ru.monica.data.ThemeMode
 
@@ -35,6 +36,7 @@ class SettingsManager(private val context: Context) {
         private val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
         private val OLED_PURE_BLACK_ENABLED_KEY = booleanPreferencesKey("oled_pure_black_enabled")
         private val COLOR_SCHEME_KEY = stringPreferencesKey("color_scheme")
+        private val DESIGN_STYLE_KEY = stringPreferencesKey("design_style")
         private val CUSTOM_PRIMARY_COLOR_KEY = longPreferencesKey("custom_primary_color")
         private val CUSTOM_SECONDARY_COLOR_KEY = longPreferencesKey("custom_secondary_color")
         private val CUSTOM_TERTIARY_COLOR_KEY = longPreferencesKey("custom_tertiary_color")
@@ -73,6 +75,9 @@ class SettingsManager(private val context: Context) {
             colorScheme = runCatching {
                 ColorScheme.valueOf(preferences[COLOR_SCHEME_KEY] ?: ColorScheme.DEFAULT.name)
             }.getOrDefault(ColorScheme.DEFAULT),
+            designStyle = runCatching {
+                DesignStyle.valueOf(preferences[DESIGN_STYLE_KEY] ?: DesignStyle.MATERIAL.name)
+            }.getOrDefault(DesignStyle.MATERIAL),
             customPrimaryColor = preferences[CUSTOM_PRIMARY_COLOR_KEY] ?: 0xFF6650a4,
             customSecondaryColor = preferences[CUSTOM_SECONDARY_COLOR_KEY] ?: 0xFF625b71,
             customTertiaryColor = preferences[CUSTOM_TERTIARY_COLOR_KEY] ?: 0xFF7D5260,
@@ -83,7 +88,7 @@ class SettingsManager(private val context: Context) {
             language = runCatching {
                 Language.valueOf(preferences[LANGUAGE_KEY] ?: Language.SYSTEM.name)
             }.getOrDefault(Language.SYSTEM),
-            screenshotProtectionEnabled = preferences[SCREENSHOT_PROTECTION_KEY] ?: true
+            screenshotProtectionEnabled = preferences[SCREENSHOT_PROTECTION_KEY] ?: false
         )
     }
 
@@ -96,6 +101,12 @@ class SettingsManager(private val context: Context) {
     suspend fun updateColorScheme(colorScheme: ColorScheme) {
         dataStore.edit { preferences ->
             preferences[COLOR_SCHEME_KEY] = colorScheme.name
+        }
+    }
+
+    suspend fun updateDesignStyle(designStyle: DesignStyle) {
+        dataStore.edit { preferences ->
+            preferences[DESIGN_STYLE_KEY] = designStyle.name
         }
     }
 

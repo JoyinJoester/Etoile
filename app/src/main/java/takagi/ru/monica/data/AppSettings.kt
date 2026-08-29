@@ -13,6 +13,8 @@ enum class ColorScheme {
     SUNSET_ORANGE,   // 日落橙
     FOREST_GREEN,    // 森林绿
     TECH_PURPLE,     // 科技紫
+    MIUI_BLUE,       // MIUI 蓝（HyperOS）
+    NOTHING,         // Nothing 单色工业风
     BLACK_MAMBA,     // 黑曼巴
     GREY_STYLE,      // 小黑紫
     WATER_LILIES,    // 睡莲
@@ -38,10 +40,17 @@ enum class NoteCodeBlockCollapseMode {
     EXPANDED
 }
 
+enum class DesignStyle {
+    MATERIAL,   // Material 3 默认
+    NOTHING,    // Nothing 单色工业风
+    MIUIX       // Miuix (MIUI 风格组件)
+}
+
 data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val oledPureBlackEnabled: Boolean = false,
     val colorScheme: ColorScheme = ColorScheme.DEFAULT,
+    val designStyle: DesignStyle = DesignStyle.MATERIAL,
     val customPrimaryColor: Long = 0xFF6650a4,
     val customSecondaryColor: Long = 0xFF625b71,
     val customTertiaryColor: Long = 0xFF7D5260,

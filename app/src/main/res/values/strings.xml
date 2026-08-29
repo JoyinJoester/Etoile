@@ -129,6 +129,20 @@
     <string name="github_device_code_copied">Copied</string>
     <string name="github_device_code_expires_at">Code expires at %1$s</string>
     <string name="github_device_code_open_github">Open GitHub</string>
+    <string name="github_sign_in_in_app">Sign in inside the app</string>
+    <string name="github_sign_in_in_app_description">Open the GitHub sign-in page inside the app. Supports password and 2FA without leaving.</string>
+    <string name="github_sign_in_browser">Open in system browser</string>
+    <string name="github_sign_in_browser_description">Finish sign-in in your browser. Full Passkey support.</string>
+    <string name="github_sign_in_methods">Choose a sign-in method</string>
+    <string name="github_web_sign_in_title">GitHub sign-in</string>
+    <string name="github_web_sign_in_close">Close</string>
+    <string name="github_web_sign_in_hint">Your one-time code is filled in automatically. Sign in and authorize to continue.</string>
+    <string name="github_home_welcome_title">Welcome to Etoile</string>
+    <string name="github_home_welcome_body">Sign in to bring your repositories, issues, organizations and stars together in one place.</string>
+    <string name="github_home_welcome_feature_repositories">Your repositories</string>
+    <string name="github_home_welcome_feature_issues">Issues and pulls</string>
+    <string name="github_home_welcome_feature_organizations">Organizations</string>
+    <string name="github_home_welcome_feature_starred">Stars at hand</string>
     <string name="github_device_code_waiting">Waiting for approval</string>
     <string name="github_device_sign_in_failed_title">GitHub sign-in was not completed</string>
     <string name="github_device_sign_in_request_failed">The secure sign-in request could not be started. Check your connection and retry.</string>
@@ -198,14 +212,40 @@
     <string name="github_light">Light</string>
     <string name="github_dark">Dark</string>
     <string name="github_palette">Palette</string>
+    <string name="github_design_style">UI design</string>
+    <string name="github_design_material">Material</string>
+    <string name="github_design_nothing">Nothing</string>
+    <string name="github_design_miunix">Miuix</string>
     <string name="github_search_results">Search results</string>
     <string name="github_search_error">Could not load GitHub results.</string>
     <string name="github_retry">Retry</string>
+    <string name="github_loading">Loading</string>
     <string name="github_no_repositories">No repositories yet.</string>
     <string name="github_no_search_results">No GitHub results matched that query.</string>
     <string name="github_no_description">No description</string>
     <string name="github_unknown_language">Unknown</string>
     <string name="github_updated_recently">Updated recently</string>
+    <string name="github_time_just_now">just now</string>
+    <plurals name="github_time_minutes_ago">
+        <item quantity="one">%1$d minute ago</item>
+        <item quantity="other">%1$d minutes ago</item>
+    </plurals>
+    <plurals name="github_time_hours_ago">
+        <item quantity="one">%1$d hour ago</item>
+        <item quantity="other">%1$d hours ago</item>
+    </plurals>
+    <plurals name="github_time_days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <plurals name="github_time_months_ago">
+        <item quantity="one">%1$d month ago</item>
+        <item quantity="other">%1$d months ago</item>
+    </plurals>
+    <plurals name="github_time_years_ago">
+        <item quantity="one">%1$d year ago</item>
+        <item quantity="other">%1$d years ago</item>
+    </plurals>
     <string name="github_followers">Followers</string>
     <string name="github_following">Following</string>
     <string name="github_followers_error">Followers could not be loaded.</string>

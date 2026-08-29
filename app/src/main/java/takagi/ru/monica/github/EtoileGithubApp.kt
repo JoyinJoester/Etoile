@@ -63,6 +63,11 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import takagi.ru.monica.R
 import takagi.ru.monica.data.AppSettings
+import takagi.ru.monica.data.DesignStyle
+import top.yukonga.miuix.kmp.basic.NavigationBar as MiuixNavigationBar
+import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
+import top.yukonga.miuix.kmp.theme.MiuixTheme
+import takagi.ru.monica.data.ColorScheme
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.design.GithubExpressiveMotion
 import takagi.ru.monica.github.di.GithubAppDependencies
@@ -137,6 +142,7 @@ import takagi.ru.monica.github.feature.starred.StarredViewModel
 import takagi.ru.monica.github.component.GithubAvatar
 import takagi.ru.monica.github.component.GithubServiceStatusProvider
 import takagi.ru.monica.github.component.GithubServiceStatusNotices
+import takagi.ru.monica.github.component.GithubTimestampProvider
 import takagi.ru.monica.github.component.LocalGithubUserNavigator
 import takagi.ru.monica.github.component.LocalGithubAvatarRepository
 import takagi.ru.monica.github.domain.GithubSession
@@ -180,6 +186,7 @@ import takagi.ru.monica.github.navigation.GithubRepositoryRoute
 import takagi.ru.monica.github.navigation.GithubWorkflowRunsRoute
 import takagi.ru.monica.github.navigation.GithubLinkDestination
 import takagi.ru.monica.github.navigation.GithubLinkRouter
+import takagi.ru.monica.github.navigation.GithubNavigationTransitions
 import takagi.ru.monica.github.settings.GithubSettingsScreen
 import takagi.ru.monica.utils.SettingsManager
 
@@ -308,6 +315,7 @@ fun EtoileGithubApp(
         rateLimit = rateLimits["core"],
         cacheFallback = cacheFallback
     ) {
+        GithubTimestampProvider {
         CompositionLocalProvider(
             LocalGithubAvatarRepository provides dependencies.avatarRepository,
             LocalGithubUserNavigator provides { login ->
@@ -317,12 +325,17 @@ fun EtoileGithubApp(
             NavHost(
             navController = navController,
             startDestination = GithubHomeRoute,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            enterTransition = { GithubNavigationTransitions.enter() },
+            exitTransition = { GithubNavigationTransitions.exit() },
+            popEnterTransition = { GithubNavigationTransitions.popEnter() },
+            popExitTransition = { GithubNavigationTransitions.popExit() }
             ) {
         composable<GithubHomeRoute> {
             GithubAdaptiveScaffold(
                 destination = destination,
                 session = sessionState.session,
+                designStyle = settings.designStyle,
                 onDestinationSelected = { destination = it },
                 onOpenSettings = { navController.navigate(GithubSettingsRoute) { launchSingleTop = true } }
             ) { contentModifier ->
@@ -1240,6 +1253,25 @@ fun EtoileGithubApp(
                 onBack = { navController.popBackStack() },
                 onThemeSelected = { scope.launch { settingsManager.updateThemeMode(it) } },
                 onPaletteSelected = { scope.launch { settingsManager.updateColorScheme(it) } },
+                onDesignStyleSelected = { style ->
+                    scope.launch {
+                        settingsManager.updateDesignStyle(style)
+                        when (style) {
+                            // Nothing 锁定单色配色
+                            DesignStyle.NOTHING ->
+                                settingsManager.updateColorScheme(ColorScheme.NOTHING)
+                            // 切回支持配色的设计时，若还停在 Nothing 单色则自动选默认配色
+                            DesignStyle.MATERIAL ->
+                                if (settings.colorScheme == ColorScheme.NOTHING) {
+                                    settingsManager.updateColorScheme(ColorScheme.DEFAULT)
+                                }
+                            DesignStyle.MIUIX ->
+                                if (settings.colorScheme == ColorScheme.NOTHING) {
+                                    settingsManager.updateColorScheme(ColorScheme.MIUI_BLUE)
+                                }
+                        }
+                    }
+                },
                 onLanguageSelected = { scope.launch { settingsManager.updateLanguage(it) } },
                 modifier = Modifier.fillMaxSize()
             )
@@ -1286,9 +1318,10 @@ fun EtoileGithubApp(
                 modifier = Modifier.fillMaxSize()
             )
         }
+            }
+        }
         }
     }
-}
 }
 
 @Composable
@@ -1360,6 +1393,7 @@ private fun GithubReleaseDetailDestination(
 private fun GithubAdaptiveScaffold(
     destination: GithubDestination,
     session: GithubSession,
+    designStyle: DesignStyle,
     onDestinationSelected: (GithubDestination) -> Unit,
     onOpenSettings: () -> Unit,
     content: @Composable (Modifier) -> Unit
@@ -1373,6 +1407,7 @@ private fun GithubAdaptiveScaffold(
                     destination = destination,
                     session = session,
                     showBottomNavigation = false,
+                    designStyle = designStyle,
                     onDestinationSelected = onDestinationSelected,
                     onOpenSettings = onOpenSettings,
                     modifier = Modifier.weight(1f).fillMaxSize()
@@ -1385,6 +1420,7 @@ private fun GithubAdaptiveScaffold(
                 destination = destination,
                 session = session,
                 showBottomNavigation = true,
+                designStyle = designStyle,
                 onDestinationSelected = onDestinationSelected,
                 onOpenSettings = onOpenSettings,
                 modifier = Modifier.fillMaxSize()
@@ -1401,6 +1437,7 @@ private fun GithubScaffold(
     destination: GithubDestination,
     session: GithubSession,
     showBottomNavigation: Boolean,
+    designStyle: DesignStyle,
     onDestinationSelected: (GithubDestination) -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -1420,7 +1457,7 @@ private fun GithubScaffold(
             )
         },
         bottomBar = {
-            if (showBottomNavigation) GithubBottomNavigation(destination, onDestinationSelected)
+            if (showBottomNavigation) GithubBottomNavigation(destination, designStyle, onDestinationSelected)
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
@@ -1497,8 +1534,22 @@ private fun GithubTopAppBar(
 @Composable
 private fun GithubBottomNavigation(
     destination: GithubDestination,
+    designStyle: DesignStyle,
     onDestinationSelected: (GithubDestination) -> Unit
 ) {
+    if (designStyle == DesignStyle.MIUIX) {
+        MiuixNavigationBar(color = MiuixTheme.colorScheme.surface) {
+            githubNavigationItems.forEach { item ->
+                MiuixNavigationBarItem(
+                    selected = destination == item.destination,
+                    onClick = { onDestinationSelected(item.destination) },
+                    icon = item.icon,
+                    label = destinationLabel(item.destination)
+                )
+            }
+        }
+        return
+    }
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         githubNavigationItems.forEach { item ->
             NavigationBarItem(
