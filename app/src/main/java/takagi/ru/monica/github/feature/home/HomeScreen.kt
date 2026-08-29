@@ -1,11 +1,16 @@
 package takagi.ru.monica.github.feature.home
 
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallSplit
@@ -16,8 +21,9 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubAuthPromptCard
+import takagi.ru.monica.github.component.GithubSkeletonList
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubPreferenceGroup
 import takagi.ru.monica.github.component.GithubPreferenceGroupDivider
@@ -79,12 +87,8 @@ fun HomeScreen(
                     CircularProgressIndicator()
                 }
 
-                GithubSession.SignedOut -> GithubAuthPromptCard(
-                    title = stringResource(R.string.github_sign_in),
-                    description = stringResource(R.string.github_home_sign_in_description),
-                    actionLabel = stringResource(R.string.github_sign_in),
-                    icon = Icons.Default.Person,
-                    onAction = onSignIn,
+                GithubSession.SignedOut -> HomeSignedOutHero(
+                    onSignIn = onSignIn,
                     modifier = Modifier.padding(top = 8.dp)
                 )
 
@@ -195,7 +199,7 @@ private fun FavoritesSection(
     val categorized = state.repositories.filter { it.category != GithubStarCategory.ALL }
     when {
         state.isLoading && categorized.isEmpty() ->
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            GithubSkeletonList(row = GithubSkeletonRow.LIST, rowCount = 4)
 
         categorized.isEmpty() -> GithubMessageState(
             title = stringResource(R.string.github_home_favorites_empty),
@@ -248,4 +252,57 @@ private fun categoryLabel(category: GithubStarCategory): String = when (category
     GithubStarCategory.ANDROID -> stringResource(R.string.github_star_category_android)
     GithubStarCategory.KOTLIN -> stringResource(R.string.github_star_category_kotlin)
     GithubStarCategory.TOOLS -> stringResource(R.string.github_star_category_tools)
+}
+
+@Composable
+private fun HomeSignedOutHero(onSignIn: () -> Unit, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth().padding(top = 16.dp)) {
+        Text(
+            text = stringResource(R.string.github_home_welcome_title),
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = stringResource(R.string.github_home_welcome_body),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 8.dp)
+        )
+        Spacer(Modifier.height(20.dp))
+        listOf(
+            Icons.Default.Folder to R.string.github_home_welcome_feature_repositories,
+            Icons.AutoMirrored.Filled.CallSplit to R.string.github_home_welcome_feature_issues,
+            Icons.Default.Public to R.string.github_home_welcome_feature_organizations,
+            Icons.Default.Star to R.string.github_home_welcome_feature_starred
+        ).forEach { (icon, labelRes) ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = stringResource(labelRes),
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(start = 12.dp)
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+        Button(
+            onClick = onSignIn,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            shape = GithubExpressiveShapes.control
+        ) {
+            Icon(Icons.Default.Person, contentDescription = null)
+            Text(
+                text = stringResource(R.string.github_sign_in),
+                modifier = Modifier.padding(start = 8.dp)
+            )
+        }
+    }
 }
