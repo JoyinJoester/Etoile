@@ -509,7 +509,6 @@ private fun GithubDeviceLoginWebView(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
-                .padding(bottom = 96.dp)
         )
         if (progress < 100) {
             LinearProgressIndicator(
