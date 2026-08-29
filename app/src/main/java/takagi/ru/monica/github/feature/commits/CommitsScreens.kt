@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Code
@@ -38,6 +39,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubSkeletonList
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubMetadataRow
 import takagi.ru.monica.github.component.GithubMetric
@@ -85,7 +88,15 @@ fun CommitsScreen(
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f)
                 )
-                if (state.isLoading) LinearProgressIndicator(modifier = Modifier.width(72.dp))
+                if (state.isLoading && state.items.isNotEmpty()) {
+                    LinearProgressIndicator(modifier = Modifier.width(72.dp))
+                }
+            }
+            if (state.isLoading && state.items.isEmpty()) {
+                GithubSkeletonList(
+                    row = GithubSkeletonRow.CARD,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
             }
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -105,6 +116,7 @@ fun CommitsScreen(
                         errorMessage = stringResource(R.string.github_commit_list_error),
                         emptyMessage = stringResource(R.string.github_no_commits),
                         onRetry = { onAction(CommitsAction.Retry) },
+                        emptyIcon = Icons.Default.History,
                         onLoadMore = { onAction(CommitsAction.LoadMore) }
                     )
                 }

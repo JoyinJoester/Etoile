@@ -29,7 +29,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -53,6 +52,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubModalBottomSheet
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
@@ -110,9 +111,12 @@ fun RepositoryFilesScreen(
                 onAction = onAction,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp)
             )
-            if (state.isLoading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.items.isNotEmpty(),
+                row = GithubSkeletonRow.COMPACT,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
             when {
                 state.error -> GithubMessageState(
                     title = stringResource(R.string.github_directory_load_error),

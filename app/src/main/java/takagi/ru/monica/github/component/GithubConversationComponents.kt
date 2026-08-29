@@ -152,7 +152,7 @@ fun GithubCommentCard(
                 avatarUrl = comment.author.avatarUrl,
                 suffix = stringResource(
                     R.string.github_comment_metadata_suffix,
-                    comment.createdAt.take(10)
+                    githubRelativeTime(comment.createdAt)
                 ),
                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                 color = MaterialTheme.colorScheme.primary,

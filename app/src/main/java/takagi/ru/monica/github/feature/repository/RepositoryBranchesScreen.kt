@@ -17,7 +17,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -31,6 +30,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.design.GithubExpressiveShapes
@@ -68,7 +69,12 @@ fun RepositoryBranchesScreen(
                 shape = GithubExpressiveShapes.control,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp)
             )
-            if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.filteredItems.isNotEmpty(),
+                row = GithubSkeletonRow.COMPACT,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
@@ -90,6 +96,7 @@ fun RepositoryBranchesScreen(
                         errorMessage = stringResource(R.string.github_branches_error),
                         emptyMessage = stringResource(R.string.github_no_branches),
                         onRetry = { onAction(RepositoryBranchesAction.Retry) },
+                        emptyIcon = Icons.AutoMirrored.Filled.CallSplit,
                         onLoadMore = { onAction(RepositoryBranchesAction.LoadMore) }
                     )
                 }

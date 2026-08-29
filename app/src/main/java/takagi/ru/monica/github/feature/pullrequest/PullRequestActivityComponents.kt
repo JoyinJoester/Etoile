@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubCharacterCounter
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubFilterRow
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
@@ -117,7 +118,7 @@ internal fun PullRequestReviewCommentCard(
                 prefix = "",
                 login = comment.author.login,
                 avatarUrl = comment.author.avatarUrl,
-                suffix = comment.createdAt.take(10),
+                suffix = githubRelativeTime(comment.createdAt),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.fillMaxWidth()

@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Notifications
@@ -29,7 +30,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -47,10 +47,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubFilterRow
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubAuthPromptCard
 import takagi.ru.monica.github.component.GithubMetric
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubPagedListStatus
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubPullToRefreshBox
 import takagi.ru.monica.github.component.GithubScreenIntro
 import takagi.ru.monica.github.component.GithubSectionHeader
@@ -142,7 +145,11 @@ fun InboxScreen(
 
             if (state.isLoading && !state.requiresAuthentication) {
                 item(key = "loading") {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    GithubListLoadingState(
+                        isLoading = true,
+                        hasItems = state.visibleItems.isNotEmpty(),
+                        row = GithubSkeletonRow.LIST
+                    )
                 }
             }
 
@@ -192,7 +199,8 @@ fun InboxScreen(
                                 }
                             )
                         },
-                        onLoadMore = { onAction(InboxAction.LoadMore) }
+                        onLoadMore = { onAction(InboxAction.LoadMore) },
+                        emptyIcon = Icons.Default.Inbox
                     )
                 }
             }
@@ -259,7 +267,7 @@ private fun InboxNotificationRow(
                 Text(item.subjectType, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(item.updatedAt.take(10), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(githubRelativeTime(item.updatedAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Box(contentAlignment = Alignment.Center) {
                     if (isTriageBusy) {
                         CircularProgressIndicator(

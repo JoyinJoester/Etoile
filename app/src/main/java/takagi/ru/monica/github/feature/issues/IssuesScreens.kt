@@ -27,7 +27,6 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -49,6 +48,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubCommentCard
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubAvatar
 import takagi.ru.monica.github.component.GithubCommentComposer
 import takagi.ru.monica.github.component.GithubConversationContentEditor
@@ -129,7 +131,12 @@ fun IssuesScreen(
                 onOpenOrdering = { orderingOpen = true },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
-            if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.visibleItems.isNotEmpty(),
+                row = GithubSkeletonRow.LIST,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -158,6 +165,7 @@ fun IssuesScreen(
                             }
                         ),
                         onRetry = { onAction(IssuesAction.Retry) },
+                        emptyIcon = Icons.Default.RadioButtonChecked,
                         onLoadMore = { onAction(IssuesAction.LoadMore) }
                     )
                 }
@@ -308,7 +316,8 @@ fun IssueDetailScreen(
                         errorMessage = stringResource(R.string.github_comments_load_error),
                         emptyMessage = stringResource(R.string.github_no_comments),
                         onRetry = { onAction(IssueDetailAction.RetryComments) },
-                        onLoadMore = { onAction(IssueDetailAction.LoadMoreComments) }
+                        onLoadMore = { onAction(IssueDetailAction.LoadMoreComments) },
+                        compact = true
                     )
                 }
                 item {
@@ -557,7 +566,7 @@ private fun IssueRow(
                     avatarUrl = issue.author.avatarUrl,
                     suffix = stringResource(
                         R.string.github_issue_metadata_suffix,
-                        issue.createdAt.take(10)
+                        githubRelativeTime(issue.createdAt)
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -644,7 +653,7 @@ private fun IssueBody(
                 avatarUrl = issue.author.avatarUrl,
                 suffix = stringResource(
                     R.string.github_issue_metadata_suffix,
-                    issue.createdAt.take(10)
+                    githubRelativeTime(issue.createdAt)
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

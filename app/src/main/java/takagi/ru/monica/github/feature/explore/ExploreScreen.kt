@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubIssueSearchResultRow
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.GithubRepositoryRow
 import takagi.ru.monica.github.component.GithubScreenIntro
@@ -139,8 +141,11 @@ fun ExploreScreen(
         }
         if (state.isLoading) {
             item(key = "loading") {
-                LinearProgressIndicator(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                GithubListLoadingState(
+                    isLoading = true,
+                    hasItems = state.itemCount > 0,
+                    row = GithubSkeletonRow.LIST,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
             }
         }
@@ -187,6 +192,7 @@ fun ExploreScreen(
                     }
                 ),
                 onRetry = { onAction(ExploreAction.Retry) },
+                emptyIcon = Icons.Default.Search,
                 onLoadMore = { onAction(ExploreAction.LoadMore) }
             )
         }

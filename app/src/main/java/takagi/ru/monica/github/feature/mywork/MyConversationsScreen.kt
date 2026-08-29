@@ -8,9 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.RadioButtonChecked
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -19,6 +19,8 @@ import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubAuthPromptCard
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubIssueSearchResultRow
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.domain.GithubIssueSearchResult
 import takagi.ru.monica.github.domain.GithubSession
@@ -63,7 +65,12 @@ fun MyConversationsScreen(
                 }
 
                 else -> {
-                    if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    GithubListLoadingState(
+                        isLoading = state.isLoading,
+                        hasItems = state.items.isNotEmpty(),
+                        row = GithubSkeletonRow.CARD,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
@@ -84,6 +91,7 @@ fun MyConversationsScreen(
                                 errorMessage = stringResource(R.string.github_my_conversations_error),
                                 emptyMessage = stringResource(R.string.github_my_conversations_empty),
                                 onRetry = { onAction(MyConversationsAction.Retry) },
+                                emptyIcon = Icons.Default.Forum,
                                 onLoadMore = { onAction(MyConversationsAction.LoadMore) }
                             )
                         }

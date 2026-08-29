@@ -32,6 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubLabelRow
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubMetric
 import takagi.ru.monica.github.component.GithubMetadataRow
 import takagi.ru.monica.github.component.GithubUserMetadataLine
@@ -68,7 +69,7 @@ internal fun PullRequestListRow(
                     avatarUrl = pullRequest.author.avatarUrl,
                     suffix = stringResource(
                         R.string.github_pr_metadata_suffix,
-                        pullRequest.createdAt.take(10)
+                        githubRelativeTime(pullRequest.createdAt)
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -151,7 +152,7 @@ internal fun PullRequestOverviewCard(
                 avatarUrl = pullRequest.author.avatarUrl,
                 suffix = stringResource(
                     R.string.github_pr_metadata_suffix,
-                    pullRequest.createdAt.take(10)
+                    githubRelativeTime(pullRequest.createdAt)
                 ),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

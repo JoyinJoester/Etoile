@@ -6,12 +6,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.Inbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
@@ -40,6 +44,13 @@ internal fun githubPagedListIndicator(
     else -> GithubPagedListIndicator.NONE
 }
 
+/**
+ * Error, empty, and pagination affordances for a paged list.
+ *
+ * A list that owns its screen gets the full [GithubEmptyState] treatment. Pass [compact] for a
+ * paginated section nested inside a longer detail page, where a centred icon block would outweigh
+ * the content around it.
+ */
 @Composable
 fun GithubPagedListStatus(
     itemCount: Int,
@@ -51,7 +62,10 @@ fun GithubPagedListStatus(
     emptyMessage: String,
     onRetry: () -> Unit,
     onLoadMore: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    emptyIcon: ImageVector = Icons.Default.Inbox,
+    emptyDescription: String? = null,
+    compact: Boolean = false
 ) {
     when (
         githubPagedListIndicator(
@@ -62,21 +76,43 @@ fun GithubPagedListStatus(
             canLoadMore = canLoadMore
         )
     ) {
-        GithubPagedListIndicator.ERROR -> GithubMessageState(
-            title = errorMessage,
-            color = MaterialTheme.colorScheme.error,
-            actionLabel = stringResource(R.string.github_retry),
-            onAction = onRetry,
-            modifier = modifier
-        )
+        // An error alongside existing rows is a note about the failed page, not a whole-surface
+        // state, so it stays compact and leaves the loaded rows in place.
+        GithubPagedListIndicator.ERROR -> if (compact || itemCount > 0) {
+            GithubMessageState(
+                title = errorMessage,
+                color = MaterialTheme.colorScheme.error,
+                actionLabel = stringResource(R.string.github_retry),
+                onAction = onRetry,
+                modifier = modifier
+            )
+        } else {
+            GithubEmptyState(
+                title = errorMessage,
+                icon = Icons.Default.CloudOff,
+                accent = MaterialTheme.colorScheme.error,
+                accentContainer = MaterialTheme.colorScheme.errorContainer,
+                actionLabel = stringResource(R.string.github_retry),
+                onAction = onRetry,
+                modifier = modifier
+            )
+        }
 
-        GithubPagedListIndicator.EMPTY -> GithubMessageState(
-            title = emptyMessage,
+        GithubPagedListIndicator.EMPTY -> EmptyIndicator(
+            message = emptyMessage,
+            icon = emptyIcon,
+            description = emptyDescription,
+            compact = compact,
             modifier = modifier
         )
 
         GithubPagedListIndicator.EMPTY_WITH_LOAD_MORE -> Column(modifier = modifier) {
-            GithubMessageState(title = emptyMessage)
+            EmptyIndicator(
+                message = emptyMessage,
+                icon = emptyIcon,
+                description = emptyDescription,
+                compact = compact
+            )
             GithubPaginationFooter(
                 canLoadMore = true,
                 isLoading = false,
@@ -99,6 +135,26 @@ fun GithubPagedListStatus(
         )
 
         GithubPagedListIndicator.NONE -> Unit
+    }
+}
+
+@Composable
+private fun EmptyIndicator(
+    message: String,
+    icon: ImageVector,
+    description: String?,
+    compact: Boolean,
+    modifier: Modifier = Modifier
+) {
+    if (compact) {
+        GithubMessageState(title = message, modifier = modifier)
+    } else {
+        GithubEmptyState(
+            title = message,
+            icon = icon,
+            description = description,
+            modifier = modifier
+        )
     }
 }
 

@@ -113,7 +113,7 @@ fun GithubIssueSearchResultRow(
                     avatarUrl = result.author.avatarUrl,
                     suffix = stringResource(
                         R.string.github_search_result_updated_suffix,
-                        result.updatedAt.take(10)
+                        githubRelativeTime(result.updatedAt)
                     ),
                     modifier = Modifier.padding(top = 6.dp)
                 )

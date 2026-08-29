@@ -6,14 +6,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Group
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.GithubPullToRefreshBox
@@ -72,7 +75,11 @@ fun GithubUserConnectionsScreen(
             ) {
                 if (state.isLoading) {
                     item(key = "loading") {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        GithubListLoadingState(
+                            isLoading = true,
+                            hasItems = state.users.isNotEmpty(),
+                            row = GithubSkeletonRow.LIST
+                        )
                     }
                 }
                 items(state.users, key = GithubUserSummary::login) { user ->
@@ -93,6 +100,7 @@ fun GithubUserConnectionsScreen(
                         errorMessage = errorMessage,
                         emptyMessage = emptyMessage,
                         onRetry = { onAction(GithubUserConnectionsAction.Retry) },
+                        emptyIcon = Icons.Default.Group,
                         onLoadMore = { onAction(GithubUserConnectionsAction.LoadMore) }
                     )
                 }

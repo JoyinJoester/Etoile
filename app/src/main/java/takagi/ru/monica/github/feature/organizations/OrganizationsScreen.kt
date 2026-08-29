@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,9 +21,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Public
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubAvatar
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.design.GithubExpressiveShapes
@@ -52,7 +55,12 @@ fun OrganizationsScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.items.isNotEmpty(),
+                row = GithubSkeletonRow.LIST,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
@@ -73,6 +81,7 @@ fun OrganizationsScreen(
                         errorMessage = stringResource(R.string.github_organizations_error),
                         emptyMessage = stringResource(R.string.github_organizations_empty),
                         onRetry = { onAction(OrganizationsAction.Retry) },
+                        emptyIcon = Icons.Default.Public,
                         onLoadMore = { onAction(OrganizationsAction.LoadMore) }
                     )
                 }

@@ -11,11 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -29,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubFilterRow
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubPagedListStatus
@@ -86,7 +88,12 @@ fun GithubStarredScreen(
                             onSelected = { onAction(StarredAction.CategorySelected(categories[it])) }
                         )
                     }
-                    if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
+                    GithubListLoadingState(
+                        isLoading = state.isLoading,
+                        hasItems = state.visibleRepositories.isNotEmpty(),
+                        row = GithubSkeletonRow.LIST,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+                    )
                     LazyColumn(contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp)) {
                         items(state.visibleRepositories, key = { it.repository.id }) { item ->
                             GithubRepositoryRow(
@@ -120,7 +127,8 @@ fun GithubStarredScreen(
                                         }
                                     )
                                 },
-                                onLoadMore = { onAction(StarredAction.LoadMore) }
+                                onLoadMore = { onAction(StarredAction.LoadMore) },
+                                emptyIcon = Icons.Default.Star
                             )
                         }
                     }

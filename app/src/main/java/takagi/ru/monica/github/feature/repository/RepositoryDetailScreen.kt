@@ -60,6 +60,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubMetadataRow
 import takagi.ru.monica.github.component.GithubMetric
@@ -457,11 +458,11 @@ private fun RepositorySummary(
                     value = license
                 )
             }
-            repository.updatedAt?.take(10)?.let { updated ->
+            repository.updatedAt?.let { updatedAt ->
                 GithubMetadataRow(
                     icon = Icons.Default.Update,
                     title = stringResource(R.string.github_updated_recently),
-                    value = updated
+                    value = githubRelativeTime(updatedAt)
                 )
             }
 

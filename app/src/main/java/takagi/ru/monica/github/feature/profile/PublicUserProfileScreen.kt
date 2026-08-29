@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PersonAdd
@@ -35,6 +36,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubAvatar
+import takagi.ru.monica.github.component.GithubSkeletonList
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubMetric
@@ -110,7 +113,9 @@ fun PublicUserProfileScreen(
                 )
             }
             if (state.isLoadingRepositories && state.repositories.isEmpty()) {
-                item(key = "repositories-loading") { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+                item(key = "repositories-loading") {
+                    GithubSkeletonList(row = GithubSkeletonRow.LIST, rowCount = 4)
+                }
             }
             items(state.repositories, key = GithubRepository::id) { repository ->
                 GithubRepositoryRow(
@@ -131,6 +136,7 @@ fun PublicUserProfileScreen(
                     errorMessage = stringResource(R.string.github_public_repositories_error),
                     emptyMessage = stringResource(R.string.github_no_public_repositories),
                     onRetry = { onAction(PublicUserProfileAction.RetryRepositories) },
+                    emptyIcon = Icons.Default.Folder,
                     onLoadMore = { onAction(PublicUserProfileAction.LoadMore) }
                 )
             }

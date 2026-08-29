@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Download
@@ -43,6 +44,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubMetadataRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
@@ -78,9 +82,12 @@ fun ReleasesScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (state.isLoading) {
-                LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-            }
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.items.isNotEmpty(),
+                row = GithubSkeletonRow.CARD,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
@@ -102,6 +109,7 @@ fun ReleasesScreen(
                         errorMessage = stringResource(R.string.github_release_list_error),
                         emptyMessage = stringResource(R.string.github_no_releases),
                         onRetry = { onAction(ReleasesAction.Retry) },
+                        emptyIcon = Icons.Default.LocalOffer,
                         onLoadMore = { onAction(ReleasesAction.LoadMore) }
                     )
                 }
@@ -190,7 +198,7 @@ private fun ReleaseListCard(
                 verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Text(
-                    text = release.publishedAt?.take(10) ?: release.createdAt.take(10),
+                    text = githubRelativeTime(release.publishedAt ?: release.createdAt),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -411,7 +419,7 @@ private fun ReleaseSummary(release: GithubRelease) {
                         R.string.github_release_published
                     }
                 ),
-                value = (release.publishedAt ?: release.createdAt).take(10)
+                value = githubRelativeTime(release.publishedAt ?: release.createdAt)
             )
             GithubMetadataRow(
                 icon = Icons.AutoMirrored.Filled.CallSplit,

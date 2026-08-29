@@ -10,11 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Webhook
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PauseCircle
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -27,6 +27,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.design.GithubExpressiveShapes
@@ -54,7 +56,12 @@ fun RepositoryWebhooksScreen(
         }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.items.isNotEmpty(),
+                row = GithubSkeletonRow.COMPACT,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)
+            )
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
@@ -73,6 +80,7 @@ fun RepositoryWebhooksScreen(
                         errorMessage = stringResource(R.string.github_webhooks_error),
                         emptyMessage = stringResource(R.string.github_no_webhooks),
                         onRetry = { onAction(RepositoryWebhooksAction.Retry) },
+                        emptyIcon = Icons.Default.Webhook,
                         onLoadMore = { onAction(RepositoryWebhooksAction.LoadMore) }
                     )
                 }

@@ -32,6 +32,7 @@ import androidx.compose.runtime.saveable.SaveableStateHolder
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubCenteredProgress
+import takagi.ru.monica.github.component.GithubListLoadingState
+import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubAssigneesEditorSheet
 import takagi.ru.monica.github.component.GithubCommentCard
 import takagi.ru.monica.github.component.GithubCommentComposer
@@ -115,7 +118,12 @@ fun PullRequestsScreen(
                 onOpenOrdering = { orderingOpen = true },
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
-            if (state.isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+            GithubListLoadingState(
+                isLoading = state.isLoading,
+                hasItems = state.visibleItems.isNotEmpty(),
+                row = GithubSkeletonRow.LIST,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+            )
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -144,6 +152,7 @@ fun PullRequestsScreen(
                             }
                         ),
                         onRetry = { onAction(PullRequestsAction.Retry) },
+                        emptyIcon = Icons.AutoMirrored.Filled.CallSplit,
                         onLoadMore = { onAction(PullRequestsAction.LoadMore) }
                     )
                 }
@@ -689,7 +698,8 @@ private fun PullRequestFilesContent(
                 errorMessage = stringResource(R.string.github_pr_files_error),
                 emptyMessage = stringResource(R.string.github_no_changed_files),
                 onRetry = { onAction(PullRequestDetailAction.RetryFiles) },
-                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreFiles) }
+                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreFiles) },
+                compact = true
             )
         }
     }
@@ -732,7 +742,8 @@ private fun PullRequestActivityContent(
                 errorMessage = stringResource(R.string.github_pr_reviews_error),
                 emptyMessage = stringResource(R.string.github_no_reviews),
                 onRetry = { onAction(PullRequestDetailAction.RetryReviews) },
-                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreReviews) }
+                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreReviews) },
+                compact = true
             )
         }
         item(key = "review-comments-title") {
@@ -759,7 +770,8 @@ private fun PullRequestActivityContent(
                 errorMessage = stringResource(R.string.github_pr_review_comments_error),
                 emptyMessage = stringResource(R.string.github_no_review_comments),
                 onRetry = { onAction(PullRequestDetailAction.RetryReviewComments) },
-                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreReviewComments) }
+                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreReviewComments) },
+                compact = true
             )
         }
         item(key = "review-composer") {
@@ -806,7 +818,8 @@ private fun PullRequestActivityContent(
                 errorMessage = stringResource(R.string.github_comments_load_error),
                 emptyMessage = stringResource(R.string.github_no_comments),
                 onRetry = { onAction(PullRequestDetailAction.RetryComments) },
-                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreComments) }
+                onLoadMore = { onAction(PullRequestDetailAction.LoadMoreComments) },
+                compact = true
             )
         }
         item(key = "comment-composer") {

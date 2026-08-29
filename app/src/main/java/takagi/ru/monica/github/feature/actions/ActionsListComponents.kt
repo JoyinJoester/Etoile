@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubUserMetadataLine
+import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubActionsConclusion
 import takagi.ru.monica.github.domain.GithubActionsStatus
@@ -97,7 +98,7 @@ internal fun ActionsWorkflowRow(
             }
         }
         Text(
-            text = stringResource(R.string.github_workflow_updated, workflow.updatedAt.take(10)),
+            text = stringResource(R.string.github_workflow_updated, githubRelativeTime(workflow.updatedAt)),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 8.dp)
@@ -213,7 +214,7 @@ internal fun WorkflowRunRow(
                         R.string.github_run_metadata,
                         run.runNumber,
                         run.event,
-                        run.createdAt.take(10)
+                        githubRelativeTime(run.createdAt)
                     ),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

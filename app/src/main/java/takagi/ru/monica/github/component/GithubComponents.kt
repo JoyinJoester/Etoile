@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -63,6 +65,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
@@ -391,6 +394,67 @@ fun GithubMessageState(
     }
 }
 
+/**
+ * Full-width empty or error state for a list surface.
+ *
+ * [GithubMessageState] stays the right choice for short notes rendered inside a card or a row; this
+ * one claims vertical space and centres a tonal icon, so it only suits a surface that has nothing
+ * else to show.
+ */
+@Composable
+fun GithubEmptyState(
+    title: String,
+    icon: ImageVector,
+    modifier: Modifier = Modifier,
+    description: String? = null,
+    accent: Color = MaterialTheme.colorScheme.secondary,
+    accentContainer: Color = MaterialTheme.colorScheme.secondaryContainer,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null
+) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 36.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Box(
+            modifier = Modifier.size(56.dp).background(accentContainer, CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(GithubExpressiveSizes.standardIcon)
+            )
+        }
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 16.dp)
+        )
+        if (description != null) {
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+        }
+        if (actionLabel != null && onAction != null) {
+            Button(
+                onClick = onAction,
+                shape = GithubExpressiveShapes.control,
+                modifier = Modifier.padding(top = 18.dp)
+            ) {
+                Text(actionLabel)
+            }
+        }
+    }
+}
+
 @Composable
 fun GithubCenteredProgress(
     modifier: Modifier = Modifier
@@ -470,7 +534,7 @@ fun GithubRepositoryRow(
                 Spacer(Modifier.width(4.dp))
                 Text(formatStars(repository.stars), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Text(repository.updatedAt?.take(10) ?: updatedFallback, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(githubRelativeTimeOrElse(repository.updatedAt, updatedFallback), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         HorizontalDivider(modifier = Modifier.padding(top = 15.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
     }
