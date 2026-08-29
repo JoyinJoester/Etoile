@@ -1,5 +1,6 @@
 package takagi.ru.monica.github.feature.repository
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -21,7 +23,9 @@ import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Archive
 import androidx.compose.material.icons.filled.Balance
+import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Lock
@@ -29,9 +33,12 @@ import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Button
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
@@ -52,7 +59,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -414,34 +423,17 @@ private fun RepositorySummary(
                 )
             }
 
-            Spacer(Modifier.height(18.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GithubMetric(
+            Spacer(Modifier.height(14.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+                GithubInlineStat(
+                    icon = Icons.Default.Star,
                     value = formatCount(repository.stars),
-                    label = stringResource(R.string.github_stars),
-                    accent = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.weight(1f)
+                    label = stringResource(R.string.github_stars)
                 )
-                GithubMetric(
+                GithubInlineStat(
+                    icon = Icons.AutoMirrored.Filled.CallSplit,
                     value = formatCount(details.forks),
-                    label = stringResource(R.string.github_forks),
-                    accent = MaterialTheme.colorScheme.secondary,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                GithubMetric(
-                    value = formatCount(details.watchers),
-                    label = stringResource(R.string.github_watchers),
-                    accent = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.weight(1f)
-                )
-                GithubMetric(
-                    value = formatCount(details.openIssues),
-                    label = stringResource(R.string.github_open_issues),
-                    accent = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.weight(1f)
+                    label = stringResource(R.string.github_forks)
                 )
             }
 
@@ -450,6 +442,11 @@ private fun RepositorySummary(
                 icon = Icons.AutoMirrored.Filled.CallSplit,
                 title = stringResource(R.string.github_default_branch),
                 value = details.defaultBranch
+            )
+            GithubMetadataRow(
+                icon = Icons.Default.Visibility,
+                title = stringResource(R.string.github_watchers),
+                value = formatCount(details.watchers)
             )
             details.license?.let { license ->
                 GithubMetadataRow(
@@ -475,48 +472,55 @@ private fun RepositorySummary(
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.github_browse_code))
             }
-            RepositoryQuickLinkButton(
-                icon = Icons.AutoMirrored.Filled.CallSplit,
-                label = stringResource(R.string.github_view_branches),
-                onClick = { onOpenBranches(details) }
-            )
-            if (canWrite) {
-                RepositoryQuickLinkButton(
-                    icon = Icons.Default.Group,
-                    label = stringResource(R.string.github_view_collaborators),
-                    onClick = { onOpenCollaborators(details) }
-                )
-                RepositoryQuickLinkButton(
-                    icon = Icons.Default.Link,
-                    label = stringResource(R.string.github_view_webhooks),
-                    onClick = { onOpenWebhooks(details) }
-                )
-            }
-            RepositoryQuickLinkButton(
+            Spacer(Modifier.height(14.dp))
+            GithubCompactNavRow(
                 icon = Icons.Default.BugReport,
+                iconContainer = GithubSectionTints.issues,
                 label = stringResource(R.string.github_view_issues),
-                onClick = { onOpenIssues(details) }
-            )
-            RepositoryQuickLinkButton(
+                count = formatCount(details.openIssues)
+            ) { onOpenIssues(details) }
+            GithubCompactNavRow(
                 icon = Icons.AutoMirrored.Filled.CallSplit,
-                label = stringResource(R.string.github_view_pull_requests),
-                onClick = { onOpenPullRequests(details) }
-            )
-            RepositoryQuickLinkButton(
+                iconContainer = GithubSectionTints.pulls,
+                label = stringResource(R.string.github_view_pull_requests)
+            ) { onOpenPullRequests(details) }
+            GithubCompactNavRow(
+                icon = Icons.Default.Forum,
+                iconContainer = GithubSectionTints.discussions,
+                label = stringResource(R.string.github_discussions)
+            ) { onOpenExternal(repository.htmlUrl.trimEnd('/') + "/discussions") }
+            GithubCompactNavRow(
                 icon = Icons.Default.PlayArrow,
-                label = stringResource(R.string.github_view_actions),
-                onClick = { onOpenActions(details) }
-            )
-            RepositoryQuickLinkButton(
+                iconContainer = GithubSectionTints.actions,
+                label = stringResource(R.string.github_view_actions)
+            ) { onOpenActions(details) }
+            GithubCompactNavRow(
                 icon = Icons.Default.NewReleases,
-                label = stringResource(R.string.github_view_releases),
-                onClick = { onOpenReleases(details) }
-            )
-            RepositoryQuickLinkButton(
+                iconContainer = GithubSectionTints.neutral,
+                label = stringResource(R.string.github_view_releases)
+            ) { onOpenReleases(details) }
+            GithubCompactNavRow(
                 icon = Icons.Default.Code,
-                label = stringResource(R.string.github_commits),
-                onClick = { onOpenCommits(details) }
-            )
+                iconContainer = GithubSectionTints.neutral,
+                label = stringResource(R.string.github_commits)
+            ) { onOpenCommits(details) }
+            GithubCompactNavRow(
+                icon = Icons.Default.AccountTree,
+                iconContainer = GithubSectionTints.neutral,
+                label = stringResource(R.string.github_view_branches)
+            ) { onOpenBranches(details) }
+            if (canWrite) {
+                GithubCompactNavRow(
+                    icon = Icons.Default.Group,
+                    iconContainer = GithubSectionTints.neutral,
+                    label = stringResource(R.string.github_view_collaborators)
+                ) { onOpenCollaborators(details) }
+                GithubCompactNavRow(
+                    icon = Icons.Default.Link,
+                    iconContainer = GithubSectionTints.neutral,
+                    label = stringResource(R.string.github_view_webhooks)
+                ) { onOpenWebhooks(details) }
+            }
             RepositorySettingsMenu(
                 fullName = repository.fullName,
                 onOpenExternal = onOpenExternal,
@@ -585,21 +589,92 @@ private fun RepositoryBranchProtection(
     }
 }
 
+private object GithubSectionTints {
+    val issues = Color(0xFF3FB950)
+    val pulls = Color(0xFF539BF5)
+    val discussions = Color(0xFFAB7DF8)
+    val actions = Color(0xFFD4A72C)
+    val neutral = Color(0xFF8B949E)
+}
+
 @Composable
-private fun RepositoryQuickLinkButton(
+private fun GithubInlineStat(
     icon: ImageVector,
+    value: String,
     label: String,
+    modifier: Modifier = Modifier
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyLarge,
+            fontWeight = FontWeight.SemiBold,
+            maxLines = 1,
+            modifier = Modifier.padding(start = 4.dp)
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            modifier = Modifier.padding(start = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun GithubCompactNavRow(
+    icon: ImageVector,
+    iconContainer: Color,
+    label: String,
+    count: String? = null,
     onClick: () -> Unit
 ) {
-    FilledTonalButton(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        shape = GithubExpressiveShapes.control
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null)
-        Spacer(Modifier.width(8.dp))
-        Text(label)
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = iconContainer,
+            modifier = Modifier.size(34.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    icon,
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+        }
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 14.dp)
+        )
+        if (count != null) {
+            Text(
+                text = count,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
+    HorizontalDivider(
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+    )
 }
 
 @Composable
