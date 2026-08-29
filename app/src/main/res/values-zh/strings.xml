@@ -134,6 +134,9 @@
     <string name="github_sign_in_methods">选择登录方式</string>
     <string name="github_web_sign_in_title">GitHub 登录</string>
     <string name="github_web_sign_in_close">关闭</string>
+    <string name="github_web_back">后退</string>
+    <string name="github_web_forward">前进</string>
+    <string name="github_web_refresh">刷新</string>
     <string name="github_web_sign_in_hint">已自动填入一次性代码，完成登录并授权即可</string>
     <string name="github_home_welcome_title">欢迎使用 Etoile</string>
     <string name="github_home_welcome_body">登录后你的仓库、议题、组织与收藏将集中在这里，一目了然。</string>

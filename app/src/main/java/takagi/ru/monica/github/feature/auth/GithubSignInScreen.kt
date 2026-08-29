@@ -13,6 +13,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
@@ -35,7 +37,10 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -70,6 +75,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import java.text.DateFormat
 import java.util.Date
+import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.launch
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
@@ -89,7 +95,7 @@ fun GithubSignInScreen(
     var tokenFormExpanded by rememberSaveable { mutableStateOf(deviceFlowUnavailable) }
     var inAppWebSignIn by rememberSaveable { mutableStateOf(false) }
     val webWaiting = state.deviceSignIn as? GithubDeviceSignInUiState.Waiting
-    BackHandler(enabled = inAppWebSignIn && webWaiting != null) { inAppWebSignIn = false }
+    BackHandler(enabled = inAppWebSignIn) { inAppWebSignIn = false }
 
     Box(modifier = modifier.fillMaxSize()) {
     GithubDetailScaffold(
@@ -116,7 +122,10 @@ fun GithubSignInScreen(
             } else {
                 DeviceSignInCard(
                     deviceSignIn = state.deviceSignIn,
-                    onStart = { onAction(GithubSessionAction.StartDeviceSignIn) },
+                    onStart = {
+                        onAction(GithubSessionAction.StartDeviceSignIn)
+                        inAppWebSignIn = true
+                    },
                     onCancel = { onAction(GithubSessionAction.CancelDeviceSignIn) },
                     onOpenUrl = onOpenUrl,
                     onOpenInApp = { inAppWebSignIn = true }
@@ -147,10 +156,10 @@ fun GithubSignInScreen(
             Spacer(Modifier.height(28.dp))
         }
     }
-    if (inAppWebSignIn && webWaiting != null) {
+    if (inAppWebSignIn) {
         GithubDeviceLoginWebView(
-            userCode = webWaiting.userCode,
-            url = webWaiting.verificationUri,
+            userCode = webWaiting?.userCode,
+            url = webWaiting?.verificationUri,
             onClose = { inAppWebSignIn = false }
         )
     }
@@ -210,13 +219,13 @@ private fun DeviceSignInCard(
 private fun DeviceSignInIdle(onStart: () -> Unit) {
     Column(modifier = Modifier.padding(22.dp)) {
         Text(
-            text = stringResource(R.string.github_device_sign_in_title),
+            text = stringResource(R.string.github_sign_in_in_app),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-            text = stringResource(R.string.github_device_sign_in_description),
+            text = stringResource(R.string.github_sign_in_in_app_description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)
@@ -226,7 +235,7 @@ private fun DeviceSignInIdle(onStart: () -> Unit) {
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = GithubExpressiveShapes.control
         ) {
-            Text(stringResource(R.string.github_device_sign_in_action))
+            Text(stringResource(R.string.github_sign_in))
         }
     }
 }
@@ -503,52 +512,64 @@ private fun TokenSignInForm(
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 private fun GithubDeviceLoginWebView(
-    userCode: String,
-    url: String,
+    userCode: String?,
+    url: String?,
     onClose: () -> Unit
 ) {
     var progress by remember { mutableStateOf(0) }
-    Column(
+    var currentUrl by remember { mutableStateOf("") }
+    var canGoBack by remember { mutableStateOf(false) }
+    var canGoForward by remember { mutableStateOf(false) }
+    var webView by remember { mutableStateOf<WebView?>(null) }
+    var injectedFor by remember { mutableStateOf<String?>(null) }
+
+    // 设备码就绪后，若已停留在设备码页则立即补注入
+    LaunchedEffect(userCode, currentUrl) {
+        val view = webView ?: return@LaunchedEffect
+        if (userCode != null && injectedFor != userCode &&
+            currentUrl.contains("github.com/login/device")
+        ) {
+            injectDeviceCode(view, userCode)
+            injectedFor = userCode
+        }
+    }
+
+    BackHandler {
+        val view = webView
+        if (view != null && view.canGoBack()) view.goBack() else onClose()
+    }
+
+    Box(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .statusBarsPadding()
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = onClose) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.github_web_sign_in_close))
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = stringResource(R.string.github_web_sign_in_title),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = stringResource(R.string.github_web_sign_in_hint),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-        }
-        if (progress < 100) {
-            LinearProgressIndicator(
-                progress = { progress / 100f },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
         AndroidView(
             factory = { context ->
                 WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
                     webViewClient = object : WebViewClient() {
+                        override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
+                            super.doUpdateVisitedHistory(view, url, isReload)
+                            currentUrl = url.orEmpty()
+                            canGoBack = view.canGoBack()
+                            canGoForward = view.canGoForward()
+                        }
+
                         override fun onPageFinished(view: WebView, url: String?) {
                             super.onPageFinished(view, url)
-                            injectDeviceCode(view, userCode)
+                            currentUrl = url.orEmpty()
+                            if (userCode != null && injectedFor != userCode &&
+                                url.orEmpty().contains("github.com/login/device")
+                            ) {
+                                injectDeviceCode(view, userCode)
+                                injectedFor = userCode
+                            }
+                            // OAuth 授权页自动点"授权"，减少一次手动点击
+                            if (url.orEmpty().contains("login/oauth/authorize")) {
+                                view.evaluateJavascript(AUTO_AUTHORIZE_JS, null)
+                            }
                         }
                     }
                     webChromeClient = object : android.webkit.WebChromeClient() {
@@ -556,13 +577,86 @@ private fun GithubDeviceLoginWebView(
                             progress = newProgress
                         }
                     }
-                    loadUrl(url)
+                    WebView.setWebContentsDebuggingEnabled(false)
+                    loadUrl(url ?: "https://github.com/login/device")
+                    webView = this
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            update = { view ->
+                // url 从 null（请求中）变为就绪时重定向到设备码页
+                if (url != null && currentUrl.isEmpty()) {
+                    view.loadUrl(url)
+                }
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .statusBarsPadding()
+                .padding(bottom = 96.dp)
         )
+        if (progress < 100) {
+            LinearProgressIndicator(
+                progress = { progress / 100f },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .statusBarsPadding()
+            )
+        }
+        if (userCode == null) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+        // 底部悬浮工具栏（Monica Steam 风格）
+        Surface(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(horizontal = 24.dp)
+                .navigationBarsPadding()
+                .padding(bottom = 12.dp),
+            shape = RoundedCornerShape(28.dp),
+            tonalElevation = 3.dp,
+            shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.96f)
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                IconButton(
+                    onClick = { webView?.goBack() },
+                    enabled = canGoBack
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.github_web_back))
+                }
+                IconButton(
+                    onClick = { webView?.goForward() },
+                    enabled = canGoForward
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.github_web_forward))
+                }
+                IconButton(onClick = { webView?.reload() }) {
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
+                }
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.github_web_sign_in_close))
+                }
+            }
+        }
     }
 }
+
+private val AUTO_AUTHORIZE_JS = """
+        (function() {
+          try {
+            var button = document.querySelector('button[name="authorize"], input[name="authorize"], button[value="authorize"]');
+            if (button) { button.click(); }
+          } catch (e) {}
+        })();
+    """.trimIndent()
 
 // 在 GitHub 设备码页自动填入一次性代码并提交，用户只需完成登录与授权
 private fun injectDeviceCode(view: WebView, userCode: String) {

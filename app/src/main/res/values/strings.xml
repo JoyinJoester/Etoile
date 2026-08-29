@@ -136,6 +136,9 @@
     <string name="github_sign_in_methods">Choose a sign-in method</string>
     <string name="github_web_sign_in_title">GitHub sign-in</string>
     <string name="github_web_sign_in_close">Close</string>
+    <string name="github_web_back">Back</string>
+    <string name="github_web_forward">Forward</string>
+    <string name="github_web_refresh">Refresh</string>
     <string name="github_web_sign_in_hint">Your one-time code is filled in automatically. Sign in and authorize to continue.</string>
     <string name="github_home_welcome_title">Welcome to Etoile</string>
     <string name="github_home_welcome_body">Sign in to bring your repositories, issues, organizations and stars together in one place.</string>
