@@ -12,6 +12,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Arrangement
@@ -198,11 +199,9 @@ private fun DeviceSignInCard(
                     title = stringResource(R.string.github_device_sign_in_preparing),
                     description = stringResource(R.string.github_device_sign_in_preparing_description)
                 )
-                is GithubDeviceSignInUiState.Waiting -> DeviceSignInWaiting(
-                    state = targetState,
+                is GithubDeviceSignInUiState.Waiting -> DeviceSignInWaitingCompact(
                     onCancel = onCancel,
-                    onOpenUrl = onOpenUrl,
-                    onOpenInApp = onOpenInApp
+                    onReopen = onOpenInApp
                 )
                 GithubDeviceSignInUiState.Verifying -> DeviceSignInProgress(
                     title = stringResource(R.string.github_device_sign_in_verifying),
@@ -261,80 +260,31 @@ private fun DeviceSignInProgress(title: String, description: String) {
 }
 
 @Composable
-private fun DeviceSignInWaiting(
-    state: GithubDeviceSignInUiState.Waiting,
+private fun DeviceSignInWaitingCompact(
     onCancel: () -> Unit,
-    onOpenUrl: (String) -> Unit,
-    onOpenInApp: () -> Unit
+    onReopen: () -> Unit
 ) {
-    val clipboard = LocalClipboard.current
-    val coroutineScope = rememberCoroutineScope()
-    val clipboardLabel = stringResource(R.string.github_device_code_title)
-    var copied by remember(state.userCode) { mutableStateOf(false) }
-    val expiresAt = remember(state.expiresAtEpochMillis) {
-        DateFormat.getTimeInstance(DateFormat.SHORT).format(Date(state.expiresAtEpochMillis))
-    }
-
     Column(modifier = Modifier.padding(22.dp)) {
-        Text(
-            text = stringResource(R.string.github_device_code_title),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
-        )
-        Text(
-            text = stringResource(R.string.github_device_code_instructions),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.padding(top = 4.dp, bottom = 14.dp)
-        )
-        Surface(
+        Row(
             modifier = Modifier.fillMaxWidth(),
-            shape = GithubExpressiveShapes.control,
-            color = MaterialTheme.colorScheme.surface
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                modifier = Modifier.padding(start = 16.dp, top = 10.dp, end = 8.dp, bottom = 10.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                SelectionContainer(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = state.userCode,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontFamily = FontFamily.Monospace,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-                TextButton(
-                    onClick = {
-                        coroutineScope.launch {
-                            clipboard.setClipEntry(
-                                ClipData.newPlainText(clipboardLabel, state.userCode).toClipEntry()
-                            )
-                            copied = true
-                        }
-                    }
-                ) {
-                    Icon(Icons.Default.ContentCopy, contentDescription = null)
-                    Text(
-                        text = stringResource(
-                            if (copied) R.string.github_device_code_copied else R.string.github_device_code_copy
-                        ),
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
-                }
+            CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
+            Text(
+                text = stringResource(R.string.github_device_code_waiting),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onCancel) {
+                Text(stringResource(R.string.cancel))
             }
         }
-        Text(
-            text = stringResource(R.string.github_device_code_expires_at, expiresAt),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer,
-            modifier = Modifier.padding(top = 8.dp)
-        )
-        Button(
-            onClick = onOpenInApp,
-            modifier = Modifier.fillMaxWidth().padding(top = 16.dp).height(52.dp),
-            shape = GithubExpressiveShapes.control
+        TextButton(
+            onClick = onReopen,
+            modifier = Modifier.fillMaxWidth()
         ) {
             Icon(Icons.Default.Public, contentDescription = null)
             Text(
@@ -342,40 +292,8 @@ private fun DeviceSignInWaiting(
                 modifier = Modifier.padding(start = 8.dp)
             )
         }
-        OutlinedButton(
-            onClick = { onOpenUrl(state.verificationUri) },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp).height(48.dp),
-            shape = GithubExpressiveShapes.control
-        ) {
-            Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
-            Text(
-                text = stringResource(R.string.github_sign_in_browser),
-                modifier = Modifier.padding(start = 8.dp)
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                Text(
-                    text = stringResource(R.string.github_device_code_waiting),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                )
-            }
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
     }
 }
-
 @Composable
 private fun DeviceSignInFailure(error: GithubDeviceSignInError, onRetry: () -> Unit) {
     Column(modifier = Modifier.padding(22.dp)) {
@@ -609,39 +527,45 @@ private fun GithubDeviceLoginWebView(
                 CircularProgressIndicator()
             }
         }
-        // 底部悬浮工具栏（Monica Steam 风格）
+        // 底部悬浮工具栏（Monica Steam 风格）。
+        // 形状取全局 MaterialTheme.shapes.extraLarge：Material=28dp 圆角、
+        // Nothing=16dp 利落圆角、Miuix=squircle，自动适配三种设计。
         Surface(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(horizontal = 24.dp)
+                .padding(horizontal = 28.dp)
                 .navigationBarsPadding()
-                .padding(bottom = 12.dp),
-            shape = RoundedCornerShape(28.dp),
+                .padding(bottom = 20.dp),
+            shape = MaterialTheme.shapes.extraLarge,
             tonalElevation = 3.dp,
-            shadowElevation = 8.dp,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.96f)
+            shadowElevation = 12.dp,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 IconButton(
                     onClick = { webView?.goBack() },
-                    enabled = canGoBack
+                    enabled = canGoBack,
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.github_web_back))
                 }
                 IconButton(
                     onClick = { webView?.goForward() },
-                    enabled = canGoForward
+                    enabled = canGoForward,
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.github_web_forward))
                 }
-                IconButton(onClick = { webView?.reload() }) {
+                IconButton(onClick = { webView?.reload() }, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
                 }
-                IconButton(onClick = onClose) {
+                IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(R.string.github_web_sign_in_close))
                 }
             }
