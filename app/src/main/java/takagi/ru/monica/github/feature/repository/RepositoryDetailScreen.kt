@@ -508,7 +508,8 @@ private fun RepositorySummary(
             GithubCompactNavRow(
                 icon = Icons.Default.AccountTree,
                 iconContainer = GithubSectionTints.neutral,
-                label = stringResource(R.string.github_view_branches)
+                label = stringResource(R.string.github_view_branches),
+                showDivider = canWrite
             ) { onOpenBranches(details) }
             if (canWrite) {
                 GithubCompactNavRow(
@@ -519,7 +520,8 @@ private fun RepositorySummary(
                 GithubCompactNavRow(
                     icon = Icons.Default.Link,
                     iconContainer = GithubSectionTints.neutral,
-                    label = stringResource(R.string.github_view_webhooks)
+                    label = stringResource(R.string.github_view_webhooks),
+                    showDivider = false
                 ) { onOpenWebhooks(details) }
             }
                 }
@@ -637,13 +639,14 @@ private fun GithubCompactNavRow(
     iconContainer: Color,
     label: String,
     count: String? = null,
+    showDivider: Boolean = true,
     onClick: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 10.dp),
+            .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
@@ -671,13 +674,17 @@ private fun GithubCompactNavRow(
             Text(
                 text = count,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 14.dp)
             )
         }
     }
-    HorizontalDivider(
-        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
-    )
+    if (showDivider) {
+        HorizontalDivider(
+            modifier = Modifier.padding(start = 62.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.45f)
+        )
+    }
 }
 
 @Composable
