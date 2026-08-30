@@ -360,6 +360,11 @@ dependencies {
     implementation libs.miuix.preference
     implementation libs.miuix.squircle
 
+    // Markdown full rendering (GFM: tables, task lists, code fences, images)
+    implementation libs.markdown.renderer
+    implementation libs.markdown.renderer.m3
+    implementation libs.markdown.renderer.coil3
+
     // Material Icons Extended
     implementation libs.androidx.material.icons.extended
 
