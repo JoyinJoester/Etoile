@@ -347,13 +347,8 @@ private fun RepositorySummary(
     onOpenExternal: (String) -> Unit
 ) {
     val repository = details.repository
-    GithubSectionHeader(title = stringResource(R.string.github_repository_about))
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = GithubExpressiveShapes.prominent,
-        color = MaterialTheme.colorScheme.surfaceContainerLow
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
+    // 头部信息直接铺在页面背景上（官方风格），不再包卡片
+    Column(modifier = Modifier.fillMaxWidth()) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Surface(
                     shape = GithubExpressiveShapes.control,
@@ -472,7 +467,13 @@ private fun RepositorySummary(
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.github_browse_code))
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(16.dp))
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = MaterialTheme.shapes.large,
+                color = MaterialTheme.colorScheme.surfaceContainerLow
+            ) {
+                Column(modifier = Modifier.padding(vertical = 6.dp)) {
             GithubCompactNavRow(
                 icon = Icons.Default.BugReport,
                 iconContainer = GithubSectionTints.issues,
@@ -521,6 +522,9 @@ private fun RepositorySummary(
                     label = stringResource(R.string.github_view_webhooks)
                 ) { onOpenWebhooks(details) }
             }
+                }
+            }
+            Spacer(Modifier.height(8.dp))
             RepositorySettingsMenu(
                 fullName = repository.fullName,
                 onOpenExternal = onOpenExternal,
@@ -534,7 +538,6 @@ private fun RepositorySummary(
                 Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.github_open_on_github))
-            }
         }
     }
 }
