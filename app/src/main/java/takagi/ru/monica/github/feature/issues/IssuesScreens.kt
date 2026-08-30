@@ -534,7 +534,7 @@ private fun IssueRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp)
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Icon(
@@ -549,13 +549,13 @@ private fun IssueRow(
                 } else {
                     MaterialTheme.colorScheme.tertiary
                 },
-                modifier = Modifier.padding(top = 2.dp).size(20.dp)
+                modifier = Modifier.padding(top = 1.dp).size(18.dp)
             )
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = issue.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -594,7 +594,7 @@ private fun IssueRow(
             GithubLabelRow(issue.labels, modifier = Modifier.padding(start = 32.dp, top = 10.dp))
         }
         HorizontalDivider(
-            modifier = Modifier.padding(top = 14.dp, start = 32.dp),
+            modifier = Modifier.padding(top = 10.dp, start = 32.dp),
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
         )
     }

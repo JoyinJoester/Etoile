@@ -154,15 +154,9 @@ fun GithubRateLimitNotice(
                 R.string.github_rate_limit_value,
                 snapshot.remaining,
                 snapshot.limit
-            ),
-            style = MaterialTheme.typography.bodyMedium,
-            color = contentColor,
-            modifier = Modifier.padding(top = 2.dp)
-        )
-        Text(
-            text = stringResource(R.string.github_rate_limit_resets, resetTime),
+            ) + " · " + stringResource(R.string.github_rate_limit_resets, resetTime),
             style = MaterialTheme.typography.labelMedium,
-            color = contentColor.copy(alpha = 0.78f),
+            color = contentColor.copy(alpha = 0.85f),
             modifier = Modifier.padding(top = 2.dp)
         )
     }
@@ -185,7 +179,7 @@ private fun GithubStatusNotice(
         color = containerColor
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(

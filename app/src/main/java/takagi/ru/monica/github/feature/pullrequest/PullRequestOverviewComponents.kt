@@ -50,7 +50,7 @@ internal fun PullRequestListRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp)
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             PullRequestStateIcon(pullRequest)
@@ -58,7 +58,7 @@ internal fun PullRequestListRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = pullRequest.title,
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
