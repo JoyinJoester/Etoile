@@ -27,7 +27,8 @@ data class GithubRepositorySettings(
     val isPrivate: Boolean,
     val isArchived: Boolean,
     val features: GithubRepositoryFeatures = GithubRepositoryFeatures(),
-    val description: String? = null
+    val description: String? = null,
+    val defaultBranch: String = "main"
 )
 
 data class GithubRepositorySettingsEdit(
@@ -37,7 +38,8 @@ data class GithubRepositorySettingsEdit(
     val hasWiki: Boolean? = null,
     val hasProjects: Boolean? = null,
     // null leaves the description alone while an empty string clears it on purpose.
-    val description: String? = null
+    val description: String? = null,
+    val defaultBranch: String? = null
 )
 
 // Discussions is absent on purpose: GitHub documents `has_discussions` only for the create endpoints, not for this patch.

@@ -44,7 +44,8 @@ data class GithubRepositoryDto(
         isPrivate = isPrivate,
         isArchived = archived,
         features = toFeatures(),
-        description = toDomain().description
+        description = toDomain().description,
+        defaultBranch = defaultBranch
     )
 
     fun toDetails() = GithubRepositoryDetails(

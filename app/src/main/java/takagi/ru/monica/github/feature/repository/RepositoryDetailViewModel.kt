@@ -86,6 +86,7 @@ sealed interface RepositoryDetailAction {
     data class SetArchived(val isArchived: Boolean) : RepositoryDetailAction
     data class SetFeature(val feature: GithubRepositoryFeature, val enabled: Boolean) : RepositoryDetailAction
     data class UpdateDescription(val description: String) : RepositoryDetailAction
+    data class SetDefaultBranch(val branch: String) : RepositoryDetailAction
 }
 
 class RepositoryDetailViewModel(
@@ -144,6 +145,9 @@ class RepositoryDetailViewModel(
             // Trim once here so the already-applied check and the request body see the same string.
             is RepositoryDetailAction.UpdateDescription -> updateSettings(
                 GithubRepositorySettingsEdit(description = action.description.trim())
+            )
+            is RepositoryDetailAction.SetDefaultBranch -> updateSettings(
+                GithubRepositorySettingsEdit(defaultBranch = action.branch.trim())
             )
         }
     }
@@ -417,7 +421,8 @@ class RepositoryDetailViewModel(
                                     description = settings.description
                                 ),
                                 isArchived = settings.isArchived,
-                                features = settings.features
+                                features = settings.features,
+                                defaultBranch = settings.defaultBranch
                             )
                         }
                         state.copy(
@@ -443,7 +448,8 @@ class RepositoryDetailViewModel(
         edit.hasIssues?.let { it to details.features.hasIssues },
         edit.hasWiki?.let { it to details.features.hasWiki },
         edit.hasProjects?.let { it to details.features.hasProjects },
-        edit.description?.let { it to details.repository.description.orEmpty() }
+        edit.description?.let { it to details.repository.description.orEmpty() },
+        edit.defaultBranch?.let { it to details.defaultBranch }
     ).all { (wanted, confirmed) -> wanted == confirmed } // an edit carrying nothing has nothing to send
 
     class Factory(

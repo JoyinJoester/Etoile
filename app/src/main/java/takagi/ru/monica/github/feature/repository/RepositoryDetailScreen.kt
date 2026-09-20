@@ -692,6 +692,14 @@ private fun RepositoryAdministration(
             descriptionDraft = null
         }
     }
+    var defaultBranchDraft by remember { mutableStateOf<String?>(null) }
+    var submittingDefaultBranch by remember { mutableStateOf(false) }
+    LaunchedEffect(submittingDefaultBranch, state.isUpdatingSettings, state.settingsFailure) {
+        if (submittingDefaultBranch && !state.isUpdatingSettings && state.settingsFailure == null) {
+            submittingDefaultBranch = false
+            defaultBranchDraft = null
+        }
+    }
     val isPrivate = details.repository.isPrivate
     val fullName = details.repository.fullName
     val featureRows = listOf(
@@ -784,7 +792,14 @@ private fun RepositoryAdministration(
                 enabled = !state.isUpdatingSettings && !details.isArchived,
                 onClick = { descriptionDraft = details.repository.description.orEmpty() }
             )
-            state.settingsFailure?.takeIf { descriptionDraft == null }?.let { failure ->
+            AdministrationEditRow(
+                icon = Icons.AutoMirrored.Filled.CallSplit,
+                title = stringResource(R.string.github_default_branch),
+                summary = details.defaultBranch,
+                enabled = !state.isUpdatingSettings && !details.isArchived,
+                onClick = { defaultBranchDraft = details.defaultBranch }
+            )
+            state.settingsFailure?.takeIf { descriptionDraft == null && defaultBranchDraft == null }?.let { failure ->
                 Text(
                     text = repositoryActionFailureText(failure),
                     color = MaterialTheme.colorScheme.error,
@@ -868,6 +883,58 @@ private fun RepositoryAdministration(
                     onClick = {
                         submittingDescription = false
                         descriptionDraft = null
+                    }
+                ) {
+                    Text(stringResource(R.string.github_cancel))
+                }
+            }
+        )
+    }
+    defaultBranchDraft?.let { draft ->
+        AlertDialog(
+            onDismissRequest = {
+                if (!state.isUpdatingSettings) {
+                    submittingDefaultBranch = false
+                    defaultBranchDraft = null
+                }
+            },
+            title = { Text(stringResource(R.string.github_edit_default_branch)) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = draft,
+                        onValueChange = { defaultBranchDraft = it },
+                        enabled = !state.isUpdatingSettings,
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.github_default_branch_hint)) }
+                    )
+                    state.settingsFailure?.let { failure ->
+                        Text(
+                            text = repositoryActionFailureText(failure),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !state.isUpdatingSettings && draft.isNotBlank(),
+                    onClick = {
+                        submittingDefaultBranch = true
+                        onAction(RepositoryDetailAction.SetDefaultBranch(draft))
+                    }
+                ) {
+                    Text(stringResource(R.string.github_save))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !state.isUpdatingSettings,
+                    onClick = {
+                        submittingDefaultBranch = false
+                        defaultBranchDraft = null
                     }
                 ) {
                     Text(stringResource(R.string.github_cancel))

@@ -390,6 +390,57 @@ class RepositoryDetailViewModelTest {
     }
 
     @Test
+    fun defaultBranchEditsSendOnlyTheBranchAndTrimTheDraft() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        viewModel.onAction(RepositoryDetailAction.SetFeature(GithubRepositoryFeature.Wiki, false))
+        advanceUntilIdle()
+
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("  release/1.2  "))
+        assertTrue(viewModel.state.value.isUpdatingSettings)
+        advanceUntilIdle()
+
+        assertEquals(GithubRepositorySettingsEdit(defaultBranch = "release/1.2"), repository.updatedSettings)
+        assertEquals("release/1.2", viewModel.state.value.details?.defaultBranch)
+        // The reply is a full repository object; a branch write must not move a toggle.
+        assertEquals(false, viewModel.state.value.details?.features?.hasWiki)
+        assertEquals(null, viewModel.state.value.settingsFailure)
+    }
+
+    @Test
+    fun refusedDefaultBranchKeepsTheConfirmedBranchAndNamesTheReason() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        repository.settingsRequest = { Result.failure(GithubApiException(422)) }
+
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("does-not-exist"))
+        advanceUntilIdle()
+
+        assertEquals(RepositoryWriteFailure.InvalidInput, viewModel.state.value.settingsFailure)
+        assertEquals("main", viewModel.state.value.details?.defaultBranch)
+        assertFalse(viewModel.state.value.isUpdatingSettings)
+    }
+
+    @Test
+    fun aDefaultBranchThatAlreadyMatchesTheRepositoryIsNeverSent() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("  main  "))
+        advanceUntilIdle()
+
+        assertEquals(null, repository.updatedSettings)
+        assertFalse(viewModel.state.value.isUpdatingSettings)
+        assertEquals(null, viewModel.state.value.settingsFailure)
+    }
+
+    @Test
     fun switchingAccountsIgnoresSuccessfulMutationsFromThePreviousAccount() =
         verifyLateMutationsIgnored(failure = false)
 
@@ -607,13 +658,15 @@ class RepositoryDetailViewModelTest {
                 isPrivate = loaded?.repository?.isPrivate ?: false,
                 isArchived = loaded?.isArchived ?: false,
                 features = loaded?.features ?: GithubRepositoryFeatures(),
-                description = loaded?.repository?.description
+                description = loaded?.repository?.description,
+                defaultBranch = loaded?.defaultBranch ?: "main"
             )
             val result = settingsRequest?.invoke() ?: Result.success(
                 previous.copy(
                     isPrivate = edit.isPrivate ?: previous.isPrivate,
                     isArchived = edit.isArchived ?: previous.isArchived,
                     description = (edit.description ?: previous.description)?.takeIf(String::isNotBlank),
+                    defaultBranch = edit.defaultBranch ?: previous.defaultBranch,
                     features = previous.features.copy(
                         hasIssues = edit.hasIssues ?: previous.features.hasIssues,
                         hasWiki = edit.hasWiki ?: previous.features.hasWiki,

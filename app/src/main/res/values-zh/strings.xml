@@ -714,6 +714,8 @@
     <string name="github_repository_description">描述</string>
     <string name="github_edit_description">编辑描述</string>
     <string name="github_description_hint">简短描述这个仓库</string>
+    <string name="github_edit_default_branch">修改默认分支</string>
+    <string name="github_default_branch_hint">填写一个已存在的分支名，如 main</string>
     <string name="github_create_repository">新建仓库</string>
     <string name="github_repository_name">仓库名称</string>
     <string name="github_repository_name_invalid">只能使用字母、数字、“-”、“_”或“.”，最长 100 个字符</string>

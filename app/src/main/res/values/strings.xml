@@ -725,6 +725,8 @@
     <string name="github_repository_description">Description</string>
     <string name="github_edit_description">Edit description</string>
     <string name="github_description_hint">A short description of the repository</string>
+    <string name="github_edit_default_branch">Change default branch</string>
+    <string name="github_default_branch_hint">Existing branch name, e.g. main</string>
     <string name="github_create_repository">New repository</string>
     <string name="github_repository_name">Repository name</string>
     <string name="github_repository_name_invalid">Use letters, numbers, "-", "_" or ".", up to 100 characters</string>

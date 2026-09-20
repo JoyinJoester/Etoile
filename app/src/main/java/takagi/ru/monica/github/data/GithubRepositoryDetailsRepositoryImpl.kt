@@ -140,6 +140,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 edit.hasWiki?.let { put("has_wiki", it) }
                 edit.hasProjects?.let { put("has_projects", it) }
                 edit.description?.let { put("description", it) }
+                edit.defaultBranch?.let { put("default_branch", it) }
             }
             val request = requests.builder(repositoryEndpoint(owner, name))
                 .header("Accept", "application/vnd.github+json")

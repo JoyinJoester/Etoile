@@ -209,6 +209,36 @@ class GithubRepositoryDetailsRepositoryImplTest {
     }
 
     @Test
+    fun defaultBranchIsTheOnlyFieldSentAndReadsBackFromTheServer() = runTest {
+        server.enqueue(MockResponse().setResponseCode(200).setBody(DEFAULT_BRANCH_JSON))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val settings = repository
+            .updateSettings("openai", "codex", GithubRepositorySettingsEdit(defaultBranch = "release/1.2"))
+            .getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("PATCH", request.method)
+        assertEquals("{\"default_branch\":\"release/1.2\"}", request.body.readUtf8())
+        assertEquals("release/1.2", settings.defaultBranch)
+    }
+
+    @Test
+    fun aRejectedDefaultBranchKeepsTheStatusForClassifying() = runTest {
+        server.enqueue(MockResponse().setResponseCode(422).setBody("{\"message\":\"Validation Failed\"}"))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val result = repository.updateSettings(
+            "openai",
+            "codex",
+            GithubRepositorySettingsEdit(defaultBranch = "does-not-exist")
+        )
+
+        val error = result.exceptionOrNull() as GithubApiException
+        assertEquals(422, error.statusCode)
+    }
+
+    @Test
     fun acceptedSettingsClearTheCacheAndRejectionsDoNot() = runTest {
         val cacheStore = TestGithubCacheStore()
         val repository = repository(
@@ -474,6 +504,19 @@ class GithubRepositoryDetailsRepositoryImplTest {
               "description": "",
               "private": false,
               "archived": false
+            }
+        """.trimIndent()
+
+        val DEFAULT_BRANCH_JSON = """
+            {
+              "id": 11,
+              "name": "codex",
+              "full_name": "openai/codex",
+              "html_url": "https://github.com/openai/codex",
+              "description": "A coding agent",
+              "private": false,
+              "archived": false,
+              "default_branch": "release/1.2"
             }
         """.trimIndent()
 
