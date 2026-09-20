@@ -41,7 +41,7 @@ enum class NoteCodeBlockCollapseMode {
 }
 
 enum class DesignStyle {
-    MATERIAL,   // Material 3 默认
+    MATERIAL,   // Material 3 Expressive
     NOTHING,    // Nothing 单色工业风
     MIUIX       // Miuix (MIUI 风格组件)
 }
@@ -50,7 +50,7 @@ data class AppSettings(
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
     val oledPureBlackEnabled: Boolean = false,
     val colorScheme: ColorScheme = ColorScheme.DEFAULT,
-    val designStyle: DesignStyle = DesignStyle.MATERIAL,
+    val designStyle: DesignStyle = DesignStyle.NOTHING,
     val customPrimaryColor: Long = 0xFF6650a4,
     val customSecondaryColor: Long = 0xFF625b71,
     val customTertiaryColor: Long = 0xFF7D5260,

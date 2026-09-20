@@ -7,6 +7,10 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import takagi.ru.monica.github.domain.GithubCreatePullRequestDraft
+import takagi.ru.monica.github.domain.GithubBranchComparison
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -29,6 +33,8 @@ import takagi.ru.monica.github.domain.GithubPullRequestsRepository
 import takagi.ru.monica.github.domain.GithubReviewState
 import takagi.ru.monica.github.domain.GithubRequestedReviewersUpdate
 
+private const val MAX_COMPARE_PAGE = 100
+
 class GithubPullRequestsRepositoryImpl(
     private val requests: GithubAuthenticatedRequests,
     private val client: OkHttpClient = GithubNetwork.client,
@@ -38,6 +44,72 @@ class GithubPullRequestsRepositoryImpl(
     cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter
 ) : GithubPullRequestsRepository {
     private val cachedGet = GithubCachedGetExecutor(cacheStore, cacheStatusReporter)
+
+    override suspend fun compare(
+        owner: String,
+        name: String,
+        base: String,
+        head: String,
+        headRepository: String?,
+        perPage: Int
+    ): Result<GithubBranchComparison> =
+        withContext(Dispatchers.IO) {
+            githubRunCatching {
+                val validated = GithubCreatePullRequestDraft.fromInput("Compare", "", base, head, headRepository = headRepository).getOrThrow()
+                val source = validated.headRepository?.let { fork ->
+                    // Resolve in the explicitly chosen fork instead of guessing among an owner's forks.
+                    val commitUrl = endpoint(validated.head.substringBefore(':'), fork, "commits", validated.head.substringAfter(':'))
+                    val commitRequest = requests.optionalBuilder(commitUrl.toString()).get().build()
+                    client.newCall(commitRequest).execute().use { response ->
+                        if (!response.isSuccessful) throw GithubApiException.of(response)
+                        json.decodeFromString(ComparisonCommit.serializer(), response.body?.string().orEmpty()).sha.also {
+                            require(it.matches(Regex("[0-9a-fA-F]{40}|[0-9a-fA-F]{64}"))) { "Invalid commit identity" }
+                        }
+                    }
+                } ?: validated.head
+                val url = endpoint(owner, name, "compare", "${validated.base}...$source").newBuilder()
+                    .addQueryParameter("per_page", perPage.coerceIn(1, MAX_COMPARE_PAGE).toString())
+                    .addQueryParameter("page", "1").build()
+                val request = requests.optionalBuilder(url.toString()).get().build()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
+                    val value = json.decodeFromString(ComparisonResponse.serializer(), response.body?.string().orEmpty())
+                    GithubBranchComparison(value.status, value.aheadBy, value.behindBy, value.totalCommits,
+                        value.files.map(GithubPullRequestFileDto::toDomain), value.files.size >= 300)
+                }
+            }
+        }
+
+    @Serializable
+    private data class ComparisonCommit(val sha: String)
+
+    @Serializable
+    private data class ComparisonResponse(
+        val status: String,
+        @SerialName("ahead_by") val aheadBy: Int,
+        @SerialName("behind_by") val behindBy: Int,
+        @SerialName("total_commits") val totalCommits: Int,
+        val files: List<GithubPullRequestFileDto> = emptyList()
+    )
+
+    override suspend fun create(owner: String, name: String, draft: GithubCreatePullRequestDraft): Result<GithubPullRequest> =
+        withContext(Dispatchers.IO) {
+            githubRunCatching {
+                val payload = buildJsonObject {
+                    put("title", draft.title); put("body", draft.body)
+                    put("base", draft.base); put("head", draft.head)
+                    put("draft", draft.draft); put("maintainer_can_modify", draft.maintainerCanModify)
+                    draft.headRepository?.let { put("head_repo", it) }
+                }.toString().toRequestBody(JSON_MEDIA_TYPE)
+                val request = requests.builder(endpoint(owner, name, "pulls").toString()).post(payload).build()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
+                    cacheStore.invalidateAfter {
+                        json.decodeFromString(GithubPullRequestDto.serializer(), response.body?.string().orEmpty()).toDomain()
+                    }
+                }
+            }
+        }
 
     override suspend fun pullRequests(
         owner: String,
@@ -201,7 +273,7 @@ class GithubPullRequestsRepositoryImpl(
                 .post(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubPullRequestReviewDto.serializer(),
@@ -231,7 +303,7 @@ class GithubPullRequestsRepositoryImpl(
                 .put(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(MergeResponse.serializer(), response.body?.string().orEmpty()).toDomain()
                 }
@@ -251,7 +323,7 @@ class GithubPullRequestsRepositoryImpl(
                 .patch(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubPullRequestDto.serializer(),
@@ -276,7 +348,7 @@ class GithubPullRequestsRepositoryImpl(
                 .patch(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubPullRequestDto.serializer(),
@@ -330,7 +402,7 @@ class GithubPullRequestsRepositoryImpl(
         )
         val request = if (remove) builder.delete(payload).build() else builder.post(payload).build()
         return client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw GithubApiException(response.code)
+            if (!response.isSuccessful) throw GithubApiException.of(response)
             cacheStore.invalidateAfter {
                 json.decodeFromString(
                     GithubPullRequestDto.serializer(),

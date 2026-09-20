@@ -17,7 +17,8 @@ data class GithubNotification(
 interface GithubNotificationsRepository {
     suspend fun notifications(
         page: Int = 1,
-        perPage: Int = 50
+        perPage: Int = 50,
+        includeRead: Boolean = false
     ): Result<GithubPage<GithubNotification>>
     suspend fun markRead(id: String): Result<Unit>
     suspend fun markAllRead(): Result<Unit>

@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -23,7 +24,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
@@ -46,19 +46,31 @@ internal fun PullRequestDiffCard(
         Column {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, bottom = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = file.filename,
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Row(
+                    SelectionContainer {
+                        Column {
+                            Text(
+                                text = file.filename.substringAfterLast('/'),
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            file.filename.substringBeforeLast('/', missingDelimiterValue = "")
+                                .takeIf(String::isNotEmpty)?.let { directory ->
+                                    Text(
+                                        text = directory,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                        }
+                    }
+                    FlowRow(
                         modifier = Modifier.padding(top = 5.dp),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
                             text = pullRequestFileStatusLabel(file.status),

@@ -4,12 +4,16 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Button
@@ -17,11 +21,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,12 +46,18 @@ fun CopilotPlaceholderScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    var copied by rememberSaveable { mutableStateOf(false) }
     val groupNumber = stringResource(R.string.github_copilot_qq_group, SUPPORT_QQ_GROUP)
 
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .padding(horizontal = 32.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 32.dp, vertical = 24.dp),
+        contentAlignment = Alignment.Center
+    ) {
+    Column(
+        modifier = Modifier.widthIn(max = 480.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -73,12 +90,30 @@ fun CopilotPlaceholderScreen(
             modifier = Modifier.padding(top = 10.dp)
         )
         Button(
-            onClick = { copyToClipboard(context, groupNumber) },
+            onClick = {
+                copyToClipboard(context, SUPPORT_QQ_GROUP)
+                copied = true
+            },
             shape = GithubExpressiveShapes.control,
-            modifier = Modifier.padding(top = 28.dp)
+            modifier = Modifier.padding(top = 28.dp).heightIn(min = 48.dp)
         ) {
             Text(stringResource(R.string.github_copilot_copy_qq_group))
         }
+        Text(
+            text = groupNumber,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(top = 12.dp)
+        )
+        if (copied) {
+            Text(
+                text = stringResource(R.string.github_copilot_copy_success),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(top = 12.dp).semantics { liveRegion = LiveRegionMode.Polite }
+            )
+        }
+    }
     }
 }
 

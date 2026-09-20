@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -46,6 +47,13 @@ import takagi.ru.monica.github.domain.GithubReactionToggle
 import takagi.ru.monica.github.domain.GithubRequestedReviewersUpdate
 import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.github.domain.GithubSortDirection
+import takagi.ru.monica.github.domain.GithubCollaboratorRole
+import takagi.ru.monica.github.domain.GithubRepositoryDetails
+import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
+import takagi.ru.monica.github.domain.TestGithubRepositoryDetailsRepository
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PullRequestsViewModelTest {
@@ -117,7 +125,9 @@ class PullRequestsViewModelTest {
     fun detailLoadsConversationDiffAndReviewsThenSupportsWrites() = runTest(dispatcher) {
         val pullRequests = FakePullRequestsRepository()
         val issues = FakeIssuesRepository()
-        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, pullRequests, issues)
+        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, pullRequests, issues, TestGithubRepositoryDetailsRepository())
+        advanceUntilIdle()
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         assertEquals("app/Main.kt", viewModel.state.value.files.single().filename)
@@ -128,7 +138,11 @@ class PullRequestsViewModelTest {
 
         viewModel.onAction(PullRequestDetailAction.ReviewBodyChanged("Ship it"))
         viewModel.onAction(PullRequestDetailAction.SubmitReview(GithubReviewEvent.APPROVE))
+        viewModel.onAction(PullRequestDetailAction.ReviewBodyChanged("Edit while submitting"))
+        assertEquals("Ship it", viewModel.state.value.reviewBody)
         advanceUntilIdle()
+        assertEquals("Ship it", pullRequests.submittedReview?.body)
+        assertEquals("", viewModel.state.value.reviewBody)
         viewModel.onAction(
             PullRequestDetailAction.Merge(
                 method = GithubMergeMethod.SQUASH,
@@ -153,11 +167,13 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             FakePullRequestsRepository(),
-            issues
+            issues,
+            TestGithubRepositoryDetailsRepository()
         )
         advanceUntilIdle()
 
         viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
         viewModel.onAction(
             PullRequestDetailAction.ToggleCommentReaction(901, GithubReactionContent.ROCKET)
         )
@@ -177,8 +193,11 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             pullRequests,
-            FakeIssuesRepository()
+            FakeIssuesRepository(),
+            TestGithubRepositoryDetailsRepository()
         )
+        advanceUntilIdle()
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(
@@ -203,8 +222,11 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             pullRequests,
-            FakeIssuesRepository()
+            FakeIssuesRepository(),
+            TestGithubRepositoryDetailsRepository()
         )
+        advanceUntilIdle()
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(PullRequestDetailAction.UpdateContent("", "Body"))
@@ -232,11 +254,13 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             FakePullRequestsRepository(),
-            issues
+            issues,
+            TestGithubRepositoryDetailsRepository()
         )
         advanceUntilIdle()
 
         viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
         viewModel.onAction(
             PullRequestDetailAction.ToggleCommentReaction(901, GithubReactionContent.HEART)
         )
@@ -255,8 +279,11 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             FakePullRequestsRepository(),
-            issues
+            issues,
+            TestGithubRepositoryDetailsRepository()
         )
+        advanceUntilIdle()
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(PullRequestDetailAction.ToggleLock)
@@ -281,8 +308,11 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             FakePullRequestsRepository(),
-            issues
+            issues,
+            TestGithubRepositoryDetailsRepository()
         )
+        advanceUntilIdle()
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(PullRequestDetailAction.LoadLabels)
@@ -315,8 +345,11 @@ class PullRequestsViewModelTest {
             "codex",
             1,
             pullRequests,
-            FakeIssuesRepository()
+            FakeIssuesRepository(),
+            TestGithubRepositoryDetailsRepository()
         )
+        advanceUntilIdle()
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(PullRequestDetailAction.UpdateRequestedReviewers(listOf("alice")))
@@ -331,6 +364,182 @@ class PullRequestsViewModelTest {
         assertEquals(listOf("bob"), viewModel.state.value.pullRequest?.requestedReviewers?.map { it.login })
         assertFalse(viewModel.state.value.isUpdatingReviewers)
         assertFalse(viewModel.state.value.reviewersUpdateError)
+    }
+
+    @Test
+    fun accountSwitchRevokesPullRequestManagementUntilTheNewRoleIsLoaded() = runTest(dispatcher) {
+        val pullRequests = FakePullRequestsRepository()
+        val details = TestGithubRepositoryDetailsRepository(GithubCollaboratorRole.ADMIN)
+        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, pullRequests, FakeIssuesRepository(), details)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.canMerge)
+
+        details.viewerRole = GithubCollaboratorRole.READ
+        viewModel.onSessionChanged(signedInSession("reader", 2))
+        assertEquals(GithubCollaboratorRole.UNKNOWN, viewModel.state.value.viewerRole)
+        assertFalse(viewModel.state.value.canMerge)
+        assertFalse(viewModel.state.value.canRequestReviewers)
+        assertFalse(viewModel.state.value.canLock)
+        viewModel.onAction(PullRequestDetailAction.Merge(GithubMergeMethod.SQUASH))
+        advanceUntilIdle()
+
+        assertEquals(GithubCollaboratorRole.READ, viewModel.state.value.viewerRole)
+        assertEquals(null, pullRequests.mergeDraft)
+        assertFalse(viewModel.state.value.pullRequest?.isMerged == true)
+    }
+
+    @Test
+    fun latePullRequestRoleResponseCannotGrantThePreviousAccountsPermissions() = runTest(dispatcher) {
+        val oldRole = PendingResult<GithubRepositoryDetails>()
+        val fallback = TestGithubRepositoryDetailsRepository(GithubCollaboratorRole.READ)
+        var requests = 0
+        val details = object : GithubRepositoryDetailsRepository by fallback {
+            override suspend fun details(owner: String, name: String) =
+                if (++requests == 1) oldRole.await() else fallback.details(owner, name)
+        }
+        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, FakePullRequestsRepository(), FakeIssuesRepository(), details)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        runCurrent()
+        viewModel.onSessionChanged(signedInSession("reader", 2))
+        advanceUntilIdle()
+        assertEquals(GithubCollaboratorRole.READ, viewModel.state.value.viewerRole)
+
+        oldRole.complete(Result.success(TestGithubRepositoryDetailsRepository.details(viewerRole = GithubCollaboratorRole.ADMIN)))
+        advanceUntilIdle()
+
+        assertEquals("reader", viewModel.state.value.viewerLogin)
+        assertEquals(GithubCollaboratorRole.READ, viewModel.state.value.viewerRole)
+        assertFalse(viewModel.state.value.canMerge)
+    }
+
+    @Test
+    fun oldPullRequestCommentSuccessDoesNotClearTheNextAccountsPendingDraft() =
+        verifyOldPullRequestCommentIgnored(failure = false)
+
+    @Test
+    fun oldPullRequestCommentFailureDoesNotFailTheNextAccountsPendingDraft() =
+        verifyOldPullRequestCommentIgnored(failure = true)
+
+    @Test
+    fun sentPullRequestCommentDoesNotEraseTextTypedWhileTheRequestWasPending() = runTest(dispatcher) {
+        val pending = PendingResult<GithubIssueComment>()
+        val issues = object : GithubIssuesRepository by FakeIssuesRepository() {
+            override suspend fun addComment(owner: String, name: String, number: Int, draft: GithubIssueCommentDraft) =
+                pending.await()
+        }
+        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, FakePullRequestsRepository(), issues, TestGithubRepositoryDetailsRepository())
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.CommentChanged("Sent comment"))
+        viewModel.onAction(PullRequestDetailAction.SubmitComment)
+        runCurrent()
+        viewModel.onAction(PullRequestDetailAction.CommentChanged("Next draft"))
+        val sent = viewModel.state.value.comments.single().copy(id = 999, body = "Sent comment")
+        pending.complete(Result.success(sent))
+        advanceUntilIdle()
+
+        assertEquals("Next draft", viewModel.state.value.commentDraft)
+        assertEquals(sent, viewModel.state.value.comments.last())
+        assertFalse(viewModel.state.value.isSubmittingComment)
+    }
+
+    @Test
+    fun previousAccountsReviewAndMergeDoNotChangeTheCurrentPullRequest() = runTest(dispatcher) {
+        val oldReview = PendingResult<GithubPullRequestReview>()
+        val oldMerge = PendingResult<GithubMergeResult>()
+        val pullRequests = object : GithubPullRequestsRepository by FakePullRequestsRepository() {
+            override suspend fun submitReview(owner: String, name: String, number: Int, draft: GithubPullRequestReviewDraft) =
+                oldReview.await()
+            override suspend fun merge(owner: String, name: String, number: Int, draft: GithubMergeDraft) =
+                oldMerge.await()
+        }
+        val details = TestGithubRepositoryDetailsRepository()
+        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, pullRequests, FakeIssuesRepository(), details)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        val reviewTemplate = viewModel.state.value.reviews.single()
+        viewModel.onAction(PullRequestDetailAction.ReviewBodyChanged("Old review"))
+        viewModel.onAction(PullRequestDetailAction.SubmitReview(GithubReviewEvent.APPROVE))
+        viewModel.onAction(PullRequestDetailAction.Merge(GithubMergeMethod.SQUASH))
+        runCurrent()
+        assertTrue(viewModel.state.value.isSubmittingReview)
+        assertTrue(viewModel.state.value.isMerging)
+
+        details.viewerRole = GithubCollaboratorRole.READ
+        viewModel.onSessionChanged(signedInSession("reader", 2))
+        assertEquals("Old review", viewModel.state.value.reviewBody)
+        viewModel.onAction(PullRequestDetailAction.ReviewBodyChanged("Current review draft"))
+        advanceUntilIdle()
+        val current = viewModel.state.value
+        assertFalse(current.isSubmittingReview)
+        assertFalse(current.isMerging)
+        oldReview.complete(Result.success(reviewTemplate.copy(id = 999, body = "Old review")))
+        oldMerge.complete(Result.success(GithubMergeResult("old-merge", true, "Merged")))
+        advanceUntilIdle()
+
+        assertEquals(current, viewModel.state.value)
+        assertEquals("Current review draft", viewModel.state.value.reviewBody)
+        assertFalse(viewModel.state.value.pullRequest?.isMerged == true)
+    }
+
+    private fun verifyOldPullRequestCommentIgnored(failure: Boolean) = runTest(dispatcher) {
+        val oldComment = PendingResult<GithubIssueComment>()
+        val newComment = PendingResult<GithubIssueComment>()
+        var requests = 0
+        val issues = object : GithubIssuesRepository by FakeIssuesRepository() {
+            override suspend fun addComment(owner: String, name: String, number: Int, draft: GithubIssueCommentDraft) =
+                if (++requests == 1) oldComment.await() else newComment.await()
+        }
+        val details = TestGithubRepositoryDetailsRepository()
+        val viewModel = PullRequestDetailViewModel("openai", "codex", 1, FakePullRequestsRepository(), issues, details)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        val commentTemplate = viewModel.state.value.comments.single()
+        viewModel.onAction(PullRequestDetailAction.CommentChanged("Old account draft"))
+        viewModel.onAction(PullRequestDetailAction.SubmitComment)
+        runCurrent()
+        assertTrue(viewModel.state.value.isSubmittingComment)
+
+        details.viewerRole = GithubCollaboratorRole.READ
+        viewModel.onSessionChanged(signedInSession("reader", 2))
+        assertEquals("Old account draft", viewModel.state.value.commentDraft)
+        assertFalse(viewModel.state.value.isSubmittingComment)
+        viewModel.onAction(PullRequestDetailAction.CommentChanged("New account draft"))
+        viewModel.onAction(PullRequestDetailAction.SubmitComment)
+        runCurrent()
+        val current = viewModel.state.value
+        assertTrue(current.isSubmittingComment)
+        assertEquals(2, requests)
+
+        oldComment.complete(
+            if (failure) Result.failure(IllegalStateException("old request failed"))
+            else Result.success(commentTemplate.copy(id = 998, body = "Old account draft", author = user("joyins")))
+        )
+        advanceUntilIdle()
+        assertEquals(current, viewModel.state.value)
+
+        val submitted = commentTemplate.copy(id = 999, body = "New account draft", author = user("reader"))
+        newComment.complete(Result.success(submitted))
+        advanceUntilIdle()
+        assertEquals("", viewModel.state.value.commentDraft)
+        assertEquals(listOf(commentTemplate, submitted), viewModel.state.value.comments)
+        assertFalse(viewModel.state.value.isSubmittingComment)
+        assertFalse(viewModel.state.value.commentSubmitError)
+    }
+
+    private class PendingResult<T> {
+        private var continuation: Continuation<Result<T>>? = null
+
+        suspend fun await(): Result<T> = suspendCoroutine { pending ->
+            check(continuation == null)
+            continuation = pending
+        }
+
+        fun complete(result: Result<T>) {
+            checkNotNull(continuation).resume(result)
+            continuation = null
+        }
     }
 
     private class FakePullRequestsRepository : GithubPullRequestsRepository {
@@ -502,6 +711,15 @@ class PullRequestsViewModelTest {
         ) =
             Result.success(GithubPage<GithubIssue>(emptyList(), null))
 
+        override suspend fun searchInRepository(
+            owner: String,
+            name: String,
+            text: String,
+            query: GithubIssueListQuery,
+            page: Int,
+            perPage: Int
+        ) = Result.success(GithubPage<GithubIssue>(emptyList(), null))
+
         override suspend fun issue(owner: String, name: String, number: Int) =
             Result.failure<GithubIssue>(UnsupportedOperationException())
 
@@ -655,9 +873,9 @@ class PullRequestsViewModelTest {
             milestone = milestone
         )
 
-        fun signedInSession(login: String) = GithubSession.SignedIn(
+        fun signedInSession(login: String, id: Long = 1) = GithubSession.SignedIn(
             GithubAccount(
-                id = 1,
+                id = id,
                 login = login,
                 name = null,
                 bio = null,

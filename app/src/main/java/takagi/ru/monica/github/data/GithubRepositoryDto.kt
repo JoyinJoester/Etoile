@@ -2,8 +2,11 @@ package takagi.ru.monica.github.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubRepositoryDetails
+import takagi.ru.monica.github.domain.GithubRepositoryFeatures
+import takagi.ru.monica.github.domain.GithubRepositorySettings
 
 @Serializable
 data class GithubRepositoryDto(
@@ -24,9 +27,25 @@ data class GithubRepositoryDto(
     val license: GithubRepositoryLicenseDto? = null,
     val topics: List<String> = emptyList(),
     val archived: Boolean = false,
-    val fork: Boolean = false
+    val fork: Boolean = false,
+    @SerialName("has_issues") val hasIssues: Boolean = true,
+    @SerialName("has_wiki") val hasWiki: Boolean = true,
+    @SerialName("has_projects") val hasProjects: Boolean = true,
+    val permissions: GithubRepositoryPermissionsDto? = null
 ) {
-    fun toDomain() = GithubRepository(id, name, fullName, description, language, stars, updatedAt, isPrivate, htmlUrl)
+    // GitHub echoes an empty string once a description is cleared; "no description" is the same state.
+    fun toDomain() = GithubRepository(
+        id, name, fullName, description?.takeIf(String::isNotBlank), language, stars, updatedAt, isPrivate, htmlUrl
+    )
+
+    fun toFeatures() = GithubRepositoryFeatures(hasIssues, hasWiki, hasProjects)
+
+    fun toSettings() = GithubRepositorySettings(
+        isPrivate = isPrivate,
+        isArchived = archived,
+        features = toFeatures(),
+        description = toDomain().description
+    )
 
     fun toDetails() = GithubRepositoryDetails(
         repository = toDomain(),
@@ -39,8 +58,28 @@ data class GithubRepositoryDto(
         license = license?.spdxId?.takeUnless { it == "NOASSERTION" } ?: license?.name,
         topics = topics,
         isArchived = archived,
-        isFork = fork
+        isFork = fork,
+        viewerRole = permissions?.toRole() ?: GithubCollaboratorRole.UNKNOWN,
+        features = toFeatures()
     )
+}
+
+@Serializable
+data class GithubRepositoryPermissionsDto(
+    val pull: Boolean = false,
+    val triage: Boolean = false,
+    val push: Boolean = false,
+    val maintain: Boolean = false,
+    val admin: Boolean = false
+) {
+    fun toRole(): GithubCollaboratorRole = when {
+        admin -> GithubCollaboratorRole.ADMIN
+        maintain -> GithubCollaboratorRole.MAINTAIN
+        push -> GithubCollaboratorRole.WRITE
+        triage -> GithubCollaboratorRole.TRIAGE
+        pull -> GithubCollaboratorRole.READ
+        else -> GithubCollaboratorRole.UNKNOWN
+    }
 }
 
 @Serializable

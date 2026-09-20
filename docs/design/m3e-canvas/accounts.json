@@ -1,0 +1,1147 @@
+{
+  "title": "Etoile · 账户与设置",
+  "brief": "保留三种独立视觉风格，账户与语言操作具有完整标签。 示例数据仅用于布局。Nothing 是默认风格；本画布专门设计可切换的 Material 3 Expressive 模式，Miuix 另行保留。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": false,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "signin",
+      "name": "登录 GitHub",
+      "x": 0,
+      "y": 0,
+      "note": "浏览公开内容无需登录。授权、设备代码和令牌是三种已有入口。"
+    },
+    {
+      "id": "accounts",
+      "name": "管理账户",
+      "x": 492,
+      "y": 0,
+      "note": "当前账户有明确选中标记。删除需要确认具体账号；旋转设备后确认对象不变。"
+    },
+    {
+      "id": "settings",
+      "name": "设置",
+      "x": 984,
+      "y": 0,
+      "note": "外观与语言各有独立页面。入口显示当前选择；返回保留选择与导航位置。"
+    },
+    {
+      "id": "appearance",
+      "name": "外观",
+      "x": 1476,
+      "y": 0,
+      "note": "设计风格、明暗模式与配色在同一页面。选择立即预览；Nothing 保持默认并固定单色，M3E 与 Miuix 支持配色。全页滚动，大字体的配色网格改为单列。"
+    },
+    {
+      "id": "language",
+      "name": "语言",
+      "x": 0,
+      "y": 972,
+      "note": "语言单独成页。原生应用保存后立即应用，重建页面时保留导航栈；使用语言本名方便找回选择。"
+    },
+    {
+      "id": "public-profile",
+      "name": "开发者",
+      "x": 492,
+      "y": 972,
+      "note": "公开身份、关注关系和仓库分层展示；长简介自然换行。"
+    },
+    {
+      "id": "connections",
+      "name": "关注者",
+      "x": 984,
+      "y": 972,
+      "note": "使用一致的用户行；分页、空状态和重试出现在列表末尾。"
+    },
+    {
+      "id": "organizations",
+      "name": "组织",
+      "x": 1476,
+      "y": 972,
+      "note": "组织名称优先，说明次之；打开组织的公开资料。"
+    },
+    {
+      "id": "stars",
+      "name": "星标收藏",
+      "x": 0,
+      "y": 1944,
+      "note": "标签过滤、管理与批量选择有明确入口。批量操作期间显示数量并保留选择。"
+    },
+    {
+      "id": "labels",
+      "name": "管理标签",
+      "x": 492,
+      "y": 1944,
+      "note": "长标签列表独立滚动，新增字段和保存按钮始终能到达。删除与重命名就地反馈。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "signin-group-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "signin-item-1",
+          "kind": "topAppBar",
+          "label": "登录 GitHub",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "signin-group-2",
+      "x": 16,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "signin-item-2",
+          "kind": "card",
+          "label": "连接你的 GitHub",
+          "icon": "person",
+          "variant": "filled",
+          "supporting": "同步仓库、通知与收藏",
+          "noImage": true,
+          "size": 380,
+          "size2": 160,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "signin-group-3",
+      "x": 16,
+      "y": 288,
+      "axis": "x",
+      "items": [
+        {
+          "id": "signin-item-3",
+          "kind": "button",
+          "label": "通过 GitHub 登录",
+          "icon": "login",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "signin-group-4",
+      "x": 16,
+      "y": 376,
+      "axis": "y",
+      "items": [
+        {
+          "id": "signin-row-4-0",
+          "kind": "listItem",
+          "label": "使用设备代码",
+          "supporting": "在浏览器完成授权",
+          "icon": "devices",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "signin-row-4-1",
+          "kind": "listItem",
+          "label": "使用个人访问令牌",
+          "supporting": "输入后在本机保存",
+          "icon": "key",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "signin-row-4-2",
+          "kind": "listItem",
+          "label": "已有账户",
+          "supporting": "管理已保存的账户",
+          "icon": "manage_accounts",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "accounts",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "accounts-group-1",
+      "x": 492,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "accounts-item-1",
+          "kind": "topAppBar",
+          "label": "管理账户",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "accounts-group-2",
+      "x": 508,
+      "y": 112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "accounts-row-2-0",
+          "kind": "listItem",
+          "label": "etoile-developer",
+          "supporting": "当前账户",
+          "icon": "check_circle",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "accounts-row-2-1",
+          "kind": "listItem",
+          "label": "etoile-reviewer",
+          "supporting": "点击切换",
+          "icon": "person",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "accounts-group-3",
+      "x": 508,
+      "y": 296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "accounts-item-3",
+          "kind": "button",
+          "label": "添加账户",
+          "icon": "add",
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "signin",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "accounts-group-4",
+      "x": 508,
+      "y": 376,
+      "axis": "x",
+      "items": [
+        {
+          "id": "accounts-item-4",
+          "kind": "text",
+          "label": "移除账户前会再次确认",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "settings-group-1",
+      "x": 984,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "settings-item-1",
+          "kind": "topAppBar",
+          "label": "设置",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "settings-group-2",
+      "x": 1000,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "settings-item-2",
+          "kind": "text",
+          "label": "外观与语言",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "settings-group-3",
+      "x": 1000,
+      "y": 152,
+      "axis": "y",
+      "items": [
+        {
+          "id": "settings-row-3-0",
+          "kind": "listItem",
+          "label": "外观",
+          "supporting": "Material 3 Expressive · 跟随系统 · 默认配色",
+          "icon": "palette",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "appearance",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "settings-row-3-1",
+          "kind": "listItem",
+          "label": "语言",
+          "supporting": "跟随系统",
+          "icon": "language",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "language",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-1",
+      "x": 1476,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-1",
+          "kind": "topAppBar",
+          "label": "外观",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-2",
+      "x": 1492,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-2",
+          "kind": "card",
+          "label": "Material 3 Expressive",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "设计风格、明暗模式和配色",
+          "noImage": true,
+          "size": 380,
+          "size2": 80,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-3",
+      "x": 1492,
+      "y": 208,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-3",
+          "kind": "text",
+          "label": "设计风格",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-4",
+      "x": 1492,
+      "y": 244,
+      "axis": "y",
+      "items": [
+        {
+          "id": "appearance-row-4-0",
+          "kind": "listItem",
+          "label": "Nothing",
+          "supporting": "默认主视觉",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "appearance-row-4-1",
+          "kind": "listItem",
+          "label": "Material 3 Expressive",
+          "supporting": "当前预览",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "appearance-row-4-2",
+          "kind": "listItem",
+          "label": "Miuix",
+          "supporting": "独立视觉风格",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-5",
+      "x": 1492,
+      "y": 488,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-5",
+          "kind": "text",
+          "label": "明暗模式",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-6",
+      "x": 1492,
+      "y": 524,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-chip-6-0",
+          "kind": "chip",
+          "label": "跟随系统",
+          "icon": null,
+          "variant": "filled",
+          "checked": true
+        },
+        {
+          "id": "appearance-chip-6-1",
+          "kind": "chip",
+          "label": "浅色",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        },
+        {
+          "id": "appearance-chip-6-2",
+          "kind": "chip",
+          "label": "深色",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-7",
+      "x": 1492,
+      "y": 584,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-7",
+          "kind": "text",
+          "label": "配色",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-8",
+      "x": 1492,
+      "y": 620,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-8",
+          "kind": "button",
+          "label": "默认",
+          "icon": null,
+          "variant": "tonal",
+          "size": 184,
+          "x": 16,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-9",
+      "x": 1688,
+      "y": 620,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-9",
+          "kind": "button",
+          "label": "海洋蓝",
+          "icon": null,
+          "variant": "outlined",
+          "size": 184,
+          "x": 212,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-10",
+      "x": 1492,
+      "y": 684,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-10",
+          "kind": "button",
+          "label": "日落橙",
+          "icon": null,
+          "variant": "outlined",
+          "size": 184,
+          "x": 16,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-11",
+      "x": 1688,
+      "y": 684,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-11",
+          "kind": "button",
+          "label": "森林绿",
+          "icon": null,
+          "variant": "outlined",
+          "size": 184,
+          "x": 212,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-12",
+      "x": 1492,
+      "y": 748,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-12",
+          "kind": "button",
+          "label": "科技紫",
+          "icon": null,
+          "variant": "outlined",
+          "size": 184,
+          "x": 16,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-13",
+      "x": 1688,
+      "y": 748,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-13",
+          "kind": "button",
+          "label": "MIUI 蓝",
+          "icon": null,
+          "variant": "outlined",
+          "size": 184,
+          "x": 212,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "appearance-group-14",
+      "x": 1492,
+      "y": 812,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-item-14",
+          "kind": "button",
+          "label": "Nothing",
+          "icon": null,
+          "variant": "outlined",
+          "size": 184,
+          "x": 16,
+          "note": "在原生应用中立即应用配色，并更新页面顶部预览。"
+        }
+      ]
+    },
+    {
+      "id": "language-group-1",
+      "x": 0,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "language-item-1",
+          "kind": "topAppBar",
+          "label": "语言",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "language-group-2",
+      "x": 16,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "language-item-2",
+          "kind": "text",
+          "label": "选择应用显示语言，更改后立即生效。",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "language-group-3",
+      "x": 16,
+      "y": 1132,
+      "axis": "y",
+      "items": [
+        {
+          "id": "language-row-3-0",
+          "kind": "listItem",
+          "label": "跟随系统",
+          "supporting": "",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "language-row-3-1",
+          "kind": "listItem",
+          "label": "English",
+          "supporting": "",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "language-row-3-2",
+          "kind": "listItem",
+          "label": "中文",
+          "supporting": "",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "language-row-3-3",
+          "kind": "listItem",
+          "label": "Tiếng Việt",
+          "supporting": "",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "language-row-3-4",
+          "kind": "listItem",
+          "label": "日本語",
+          "supporting": "",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "language-row-3-5",
+          "kind": "listItem",
+          "label": "Русский",
+          "supporting": "",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "public-profile-group-1",
+      "x": 492,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-item-1",
+          "kind": "topAppBar",
+          "label": "开发者",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "public-profile-group-2",
+      "x": 508,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-item-2",
+          "kind": "card",
+          "label": "Etoile 开发者",
+          "icon": "person",
+          "variant": "filled",
+          "supporting": "@etoile · 开源 Android 工具",
+          "noImage": true,
+          "size": 380,
+          "size2": 148,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "public-profile-group-3",
+      "x": 508,
+      "y": 1248,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-item-3",
+          "kind": "button",
+          "label": "关注",
+          "icon": null,
+          "variant": "filled",
+          "size": 380,
+          "note": "登录后操作，等待服务端响应再更新状态。"
+        }
+      ]
+    },
+    {
+      "id": "public-profile-group-4",
+      "x": 508,
+      "y": 1328,
+      "axis": "y",
+      "items": [
+        {
+          "id": "public-profile-row-4-0",
+          "kind": "listItem",
+          "label": "关注者",
+          "supporting": "查看公开关注者",
+          "icon": "group",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "connections",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "public-profile-row-4-1",
+          "kind": "listItem",
+          "label": "公开仓库",
+          "supporting": "查看与搜索仓库",
+          "icon": "folder",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "public-profile-row-4-2",
+          "kind": "listItem",
+          "label": "组织",
+          "supporting": "查看所属组织",
+          "icon": "public",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "organizations",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "connections-group-1",
+      "x": 984,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "connections-item-1",
+          "kind": "topAppBar",
+          "label": "关注者",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "connections-group-2",
+      "x": 1000,
+      "y": 1084,
+      "axis": "y",
+      "items": [
+        {
+          "id": "connections-row-2-0",
+          "kind": "listItem",
+          "label": "etoile-developer",
+          "supporting": "Android 与开源工具",
+          "icon": "person",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "connections-row-2-1",
+          "kind": "listItem",
+          "label": "design-maintainer",
+          "supporting": "Material 设计与组件",
+          "icon": "person",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-group-1",
+      "x": 1476,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-item-1",
+          "kind": "topAppBar",
+          "label": "组织",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-group-2",
+      "x": 1492,
+      "y": 1084,
+      "axis": "y",
+      "items": [
+        {
+          "id": "organizations-row-2-0",
+          "kind": "listItem",
+          "label": "Etoile Community",
+          "supporting": "开源工具与协作",
+          "icon": "public",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "organizations-row-2-1",
+          "kind": "listItem",
+          "label": "Android Developers",
+          "supporting": "Android 项目",
+          "icon": "public",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stars-group-1",
+      "x": 0,
+      "y": 1944,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-item-1",
+          "kind": "topAppBar",
+          "label": "星标收藏",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "stars-group-2",
+      "x": 16,
+      "y": 2048,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-item-2",
+          "kind": "searchBar",
+          "label": "搜索星标仓库",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "stars-group-3",
+      "x": 16,
+      "y": 2120,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-chip-3-0",
+          "kind": "chip",
+          "label": "全部",
+          "icon": null,
+          "variant": "filled",
+          "checked": true
+        },
+        {
+          "id": "stars-chip-3-1",
+          "kind": "chip",
+          "label": "Android",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        },
+        {
+          "id": "stars-chip-3-2",
+          "kind": "chip",
+          "label": "设计",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "stars-group-4",
+      "x": 16,
+      "y": 2176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-item-4",
+          "kind": "button",
+          "label": "管理标签",
+          "icon": "label",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "labels",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stars-group-5",
+      "x": 16,
+      "y": 2260,
+      "axis": "y",
+      "items": [
+        {
+          "id": "stars-row-5-0",
+          "kind": "listItem",
+          "label": "lnkiai / m3e-canvas",
+          "supporting": "设计 · TypeScript",
+          "icon": "star",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "stars-row-5-1",
+          "kind": "listItem",
+          "label": "android / compose-samples",
+          "supporting": "Android · Kotlin",
+          "icon": "star",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "labels-group-1",
+      "x": 492,
+      "y": 1944,
+      "axis": "x",
+      "items": [
+        {
+          "id": "labels-item-1",
+          "kind": "topAppBar",
+          "label": "管理标签",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "labels-group-2",
+      "x": 508,
+      "y": 2056,
+      "axis": "y",
+      "items": [
+        {
+          "id": "labels-row-2-0",
+          "kind": "listItem",
+          "label": "Android",
+          "supporting": "12 个仓库",
+          "icon": "label",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "labels-row-2-1",
+          "kind": "listItem",
+          "label": "设计",
+          "supporting": "8 个仓库",
+          "icon": "label",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "labels-row-2-2",
+          "kind": "listItem",
+          "label": "稍后阅读",
+          "supporting": "5 个仓库",
+          "icon": "label",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "labels-group-3",
+      "x": 508,
+      "y": 2304,
+      "axis": "x",
+      "items": [
+        {
+          "id": "labels-item-3",
+          "kind": "textField",
+          "label": "新标签名称",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "labels-group-4",
+      "x": 508,
+      "y": 2392,
+      "axis": "x",
+      "items": [
+        {
+          "id": "labels-item-4",
+          "kind": "button",
+          "label": "创建标签",
+          "icon": "add",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    }
+  ]
+}

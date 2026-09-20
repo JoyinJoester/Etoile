@@ -73,10 +73,15 @@ abstract class BaseMonicaActivity : FragmentActivity() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 settingsManager.settingsFlow.collect { settings ->
+                    val languageChanged = cachedSettings?.let { it.language != settings.language } == true
                     cachedSettings = settings
                     
                     // 更新截图保护
                     applyScreenshotProtection(settings.screenshotProtectionEnabled)
+
+                    // Recreate after persistence so every window receives the new locale.
+                    // Android restores the current page and its navigation back stack.
+                    if (languageChanged) recreate()
                 }
             }
         }

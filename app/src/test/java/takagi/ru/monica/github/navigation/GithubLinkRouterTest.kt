@@ -5,6 +5,18 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class GithubLinkRouterTest {
+    @org.junit.Test fun discussionLinksRouteWithoutSwallowingOtherPages() {
+        org.junit.Assert.assertEquals(GithubLinkDestination.Discussions("owner/repo"),
+            GithubLinkRouter.parse("https://github.com/owner/repo/discussions"))
+        org.junit.Assert.assertEquals(GithubLinkDestination.Discussion("owner/repo", 12),
+            GithubLinkRouter.parse("https://github.com/owner/repo/discussions/12"))
+        for (path in listOf("new", "0", "2147483648", "12/edit", "categories/help")) {
+            org.junit.Assert.assertNull(GithubLinkRouter.parse("https://github.com/owner/repo/discussions/$path"))
+        }
+        org.junit.Assert.assertNull(GithubLinkRouter.parse("https://github.com/owner/repo/discussions?discussions_q=help"))
+        org.junit.Assert.assertNull(GithubLinkRouter.parse("https://example.com/owner/repo/discussions/12"))
+    }
+
     @Test
     fun parsesNativeRepositoryAndWorkItemLinks() {
         assertEquals(

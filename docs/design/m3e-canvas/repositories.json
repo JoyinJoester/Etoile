@@ -1,0 +1,1066 @@
+{
+  "title": "Etoile · 仓库与代码",
+  "brief": "仓库身份和操作清晰分层；代码、README、发布说明有稳定的阅读宽度。 示例数据仅用于布局。Nothing 是默认风格；本画布专门设计可切换的 Material 3 Expressive 模式，Miuix 另行保留。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": false,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "repository",
+      "name": "Etoile",
+      "x": 0,
+      "y": 0,
+      "note": "所有入口对应真实路由。手机先概览和操作，再 README；宽屏将概览与 README 分开。"
+    },
+    {
+      "id": "files",
+      "name": "文件",
+      "x": 492,
+      "y": 0,
+      "note": "分支选择和路径面包屑在列表顶部。长路径可横向滚动；二进制与超大文件提供明确的打开方式。"
+    },
+    {
+      "id": "reader",
+      "name": "README.md",
+      "x": 984,
+      "y": 0,
+      "note": "Markdown 使用正文尺度；代码支持双向滚动与选择。切换原文和预览不改变当前仓库上下文。"
+    },
+    {
+      "id": "refs",
+      "name": "分支与标签",
+      "x": 1476,
+      "y": 0,
+      "note": "两个数据集分别加载、分页和重试。没有匹配时保留搜索与清除入口。"
+    },
+    {
+      "id": "releases",
+      "name": "发布版本",
+      "x": 0,
+      "y": 972,
+      "note": "状态标签区分正式版、预发布和草稿；有权限才展示管理动作。"
+    },
+    {
+      "id": "release",
+      "name": "Etoile 0.1",
+      "x": 492,
+      "y": 972,
+      "note": "文件快捷入口跳到下载区。完整文件名、架构、大小与下载动作分行，长名称不能挤走按钮。"
+    },
+    {
+      "id": "assets",
+      "name": "下载文件",
+      "x": 984,
+      "y": 972,
+      "note": "所有名称完整换行；点击下载交给现有下载流程。错误、取消和再次尝试就地反馈。"
+    },
+    {
+      "id": "commits",
+      "name": "提交记录",
+      "x": 1476,
+      "y": 972,
+      "note": "提交标题优先，作者、时间和短 SHA 为次级信息。"
+    },
+    {
+      "id": "commit",
+      "name": "提交详情",
+      "x": 0,
+      "y": 1944,
+      "note": "文件名独占一行。补丁可展开、折叠与横向滚动；二进制文件明确说明没有文本差异。"
+    },
+    {
+      "id": "repository-wide",
+      "name": "Etoile",
+      "x": 1968,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "note": "仓库双栏最多 1200dp。左栏概览与操作，右栏 README。大字体时按可读宽度回到单栏。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "repository-group-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-item-1",
+          "kind": "topAppBar",
+          "label": "Etoile",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-group-2",
+      "x": 16,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-item-2",
+          "kind": "card",
+          "label": "Etoile / android",
+          "icon": "folder",
+          "variant": "filled",
+          "supporting": "GitHub 工作空间，支持 Nothing、M3E 与 Miuix。",
+          "noImage": true,
+          "size": 380,
+          "size2": 128,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "repository-group-3",
+      "x": 16,
+      "y": 248,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-item-3",
+          "kind": "button",
+          "label": "浏览代码",
+          "icon": "code",
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-group-4",
+      "x": 16,
+      "y": 320,
+      "axis": "y",
+      "items": [
+        {
+          "id": "repository-row-4-0",
+          "kind": "listItem",
+          "label": "分支与标签",
+          "supporting": "main",
+          "icon": "account_tree",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "refs",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-row-4-1",
+          "kind": "listItem",
+          "label": "发布版本",
+          "supporting": "版本说明与下载",
+          "icon": "new_releases",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "releases",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-row-4-2",
+          "kind": "listItem",
+          "label": "提交记录",
+          "supporting": "查看最近改动",
+          "icon": "history",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "commits",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-group-5",
+      "x": 16,
+      "y": 564,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-item-5",
+          "kind": "card",
+          "label": "README",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "项目介绍与使用说明；相对链接使用当前仓库解析。",
+          "noImage": true,
+          "size": 380,
+          "size2": 172,
+          "action": {
+            "to": "reader",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "files-group-1",
+      "x": 492,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "files-item-1",
+          "kind": "topAppBar",
+          "label": "文件",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "files-group-2",
+      "x": 508,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "files-item-2",
+          "kind": "button",
+          "label": "main · 切换分支或标签",
+          "icon": "account_tree",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "refs",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "files-group-3",
+      "x": 508,
+      "y": 184,
+      "axis": "x",
+      "items": [
+        {
+          "id": "files-item-3",
+          "kind": "text",
+          "label": "Etoile / android /",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "files-group-4",
+      "x": 508,
+      "y": 224,
+      "axis": "y",
+      "items": [
+        {
+          "id": "files-row-4-0",
+          "kind": "listItem",
+          "label": "app",
+          "supporting": "目录",
+          "icon": "folder",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "files-row-4-1",
+          "kind": "listItem",
+          "label": "docs",
+          "supporting": "目录",
+          "icon": "folder",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "files-row-4-2",
+          "kind": "listItem",
+          "label": "README.md",
+          "supporting": "项目说明",
+          "icon": "description",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "reader",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "files-row-4-3",
+          "kind": "listItem",
+          "label": "build.gradle",
+          "supporting": "构建配置",
+          "icon": "code",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "reader",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "reader-group-1",
+      "x": 984,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-item-1",
+          "kind": "topAppBar",
+          "label": "README.md",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "reader-group-2",
+      "x": 1000,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-item-2",
+          "kind": "text",
+          "label": "Etoile / android · main",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "reader-group-3",
+      "x": 1000,
+      "y": 144,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-chip-3-0",
+          "kind": "chip",
+          "label": "预览",
+          "icon": null,
+          "variant": "filled",
+          "checked": true
+        },
+        {
+          "id": "reader-chip-3-1",
+          "kind": "chip",
+          "label": "原文",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "reader-group-4",
+      "x": 1000,
+      "y": 204,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-item-4",
+          "kind": "card",
+          "label": "Etoile",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "在 Android 上浏览项目、处理通知、审查代码。\n\n三种可切换的视觉风格，使用同一份账户和仓库数据。",
+          "noImage": true,
+          "size": 380,
+          "size2": 260
+        }
+      ]
+    },
+    {
+      "id": "reader-group-5",
+      "x": 1000,
+      "y": 488,
+      "axis": "y",
+      "items": [
+        {
+          "id": "reader-row-5-0",
+          "kind": "listItem",
+          "label": "快速开始",
+          "supporting": "阅读安装与登录说明",
+          "icon": "menu_book",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "reader-row-5-1",
+          "kind": "listItem",
+          "label": "下载最新版本",
+          "supporting": "打开发布版本",
+          "icon": "download",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "releases",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "refs-group-1",
+      "x": 1476,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "refs-item-1",
+          "kind": "topAppBar",
+          "label": "分支与标签",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "refs-group-2",
+      "x": 1492,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "refs-item-2",
+          "kind": "searchBar",
+          "label": "搜索分支或标签",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "refs-group-3",
+      "x": 1476,
+      "y": 176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "refs-item-3",
+          "kind": "tabs",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "label": "分支"
+            },
+            {
+              "label": "标签"
+            }
+          ],
+          "selected": 0
+        }
+      ]
+    },
+    {
+      "id": "refs-group-4",
+      "x": 1492,
+      "y": 248,
+      "axis": "y",
+      "items": [
+        {
+          "id": "refs-row-4-0",
+          "kind": "listItem",
+          "label": "main",
+          "supporting": "默认分支 · 受保护",
+          "icon": "account_tree",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "refs-row-4-1",
+          "kind": "listItem",
+          "label": "feature/expressive-layout",
+          "supporting": "最近更新",
+          "icon": "account_tree",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "refs-row-4-2",
+          "kind": "listItem",
+          "label": "release/0.1",
+          "supporting": "发布分支",
+          "icon": "account_tree",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "releases-group-1",
+      "x": 0,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "releases-item-1",
+          "kind": "topAppBar",
+          "label": "发布版本",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "releases-group-2",
+      "x": 16,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "releases-item-2",
+          "kind": "text",
+          "label": "Etoile / android",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "releases-group-3",
+      "x": 16,
+      "y": 1124,
+      "axis": "y",
+      "items": [
+        {
+          "id": "releases-row-3-0",
+          "kind": "listItem",
+          "label": "Etoile 0.1",
+          "supporting": "最新发布 · 3 个文件",
+          "icon": "new_releases",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "release",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "releases-row-3-1",
+          "kind": "listItem",
+          "label": "Etoile 0.1 preview",
+          "supporting": "预发布 · 2 个文件",
+          "icon": "science",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "release",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "release-group-1",
+      "x": 492,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-item-1",
+          "kind": "topAppBar",
+          "label": "Etoile 0.1",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "release-group-2",
+      "x": 508,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-item-2",
+          "kind": "text",
+          "label": "正式版 · main",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "release-group-3",
+      "x": 508,
+      "y": 1116,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-item-3",
+          "kind": "button",
+          "label": "查看下载文件",
+          "icon": "download",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "assets",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "release-group-4",
+      "x": 508,
+      "y": 1196,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-item-4",
+          "kind": "card",
+          "label": "更新内容",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "改进页面分组、宽屏布局与大字体阅读体验。\n\n修复通知、代码和发布页的布局细节。",
+          "noImage": true,
+          "size": 380,
+          "size2": 240
+        }
+      ]
+    },
+    {
+      "id": "release-group-5",
+      "x": 508,
+      "y": 1464,
+      "axis": "y",
+      "items": [
+        {
+          "id": "release-row-5-0",
+          "kind": "listItem",
+          "label": "下载文件",
+          "supporting": "按设备架构选择 APK",
+          "icon": "download",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "assets",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "assets-group-1",
+      "x": 984,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "assets-item-1",
+          "kind": "topAppBar",
+          "label": "下载文件",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "assets-group-2",
+      "x": 1000,
+      "y": 1084,
+      "axis": "y",
+      "items": [
+        {
+          "id": "assets-row-2-0",
+          "kind": "listItem",
+          "label": "Etoile-Android-arm64-v8a.apk",
+          "supporting": "arm64-v8a · APK",
+          "icon": "android",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "assets-row-2-1",
+          "kind": "listItem",
+          "label": "Etoile-Android-armeabi-v7a.apk",
+          "supporting": "armeabi-v7a · APK",
+          "icon": "android",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "assets-row-2-2",
+          "kind": "listItem",
+          "label": "Source code",
+          "supporting": "zip · 源码",
+          "icon": "folder_zip",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "commits-group-1",
+      "x": 1476,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "commits-item-1",
+          "kind": "topAppBar",
+          "label": "提交记录",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "commits-group-2",
+      "x": 1492,
+      "y": 1084,
+      "axis": "y",
+      "items": [
+        {
+          "id": "commits-row-2-0",
+          "kind": "listItem",
+          "label": "完善 M3E 页面布局",
+          "supporting": "etoile · 2 小时前 · 1a2b3c4",
+          "icon": "commit",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "commit",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "commits-row-2-1",
+          "kind": "listItem",
+          "label": "修复搜索状态恢复",
+          "supporting": "etoile · 昨天 · 5d6e7f8",
+          "icon": "commit",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "commit",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "commit-group-1",
+      "x": 0,
+      "y": 1944,
+      "axis": "x",
+      "items": [
+        {
+          "id": "commit-item-1",
+          "kind": "topAppBar",
+          "label": "提交详情",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "commit-group-2",
+      "x": 16,
+      "y": 2048,
+      "axis": "x",
+      "items": [
+        {
+          "id": "commit-item-2",
+          "kind": "card",
+          "label": "完善 M3E 页面布局",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "etoile · 1a2b3c4 · 4 个文件",
+          "noImage": true,
+          "size": 380,
+          "size2": 124
+        }
+      ]
+    },
+    {
+      "id": "commit-group-3",
+      "x": 16,
+      "y": 2196,
+      "axis": "y",
+      "items": [
+        {
+          "id": "commit-row-3-0",
+          "kind": "listItem",
+          "label": "GithubNavChrome.kt",
+          "supporting": "+24 −12 · 查看差异",
+          "icon": "code",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "commit-row-3-1",
+          "kind": "listItem",
+          "label": "ProfileScreen.kt",
+          "supporting": "+36 −20 · 查看差异",
+          "icon": "code",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "commit-group-4",
+      "x": 16,
+      "y": 2364,
+      "axis": "x",
+      "items": [
+        {
+          "id": "commit-item-4",
+          "kind": "card",
+          "label": "代码差异",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "+  自适应导航与内容宽度\n−  固定宽度布局",
+          "noImage": true,
+          "size": 380,
+          "size2": 236,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "repository-wide-group-1",
+      "x": 1968,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-wide-item-1",
+          "kind": "topAppBar",
+          "label": "Etoile",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          },
+          "size": 1280
+        }
+      ]
+    },
+    {
+      "id": "repository-wide-group-2",
+      "x": 2000,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-wide-item-2",
+          "kind": "card",
+          "label": "Etoile / android",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "你的 Android GitHub 工作空间",
+          "noImage": true,
+          "size": 336,
+          "size2": 156,
+          "x": 32,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "repository-wide-group-3",
+      "x": 2000,
+      "y": 284,
+      "axis": "y",
+      "items": [
+        {
+          "id": "repository-wide-row-3-0",
+          "kind": "listItem",
+          "label": "浏览代码",
+          "supporting": "main",
+          "icon": "code",
+          "variant": "filled",
+          "size": 336,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-wide-row-3-1",
+          "kind": "listItem",
+          "label": "分支与标签",
+          "supporting": "切换上下文",
+          "icon": "account_tree",
+          "variant": "filled",
+          "size": 336,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "refs",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-wide-row-3-2",
+          "kind": "listItem",
+          "label": "发布版本",
+          "supporting": "版本说明与文件",
+          "icon": "new_releases",
+          "variant": "filled",
+          "size": 336,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "releases",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-wide-row-3-3",
+          "kind": "listItem",
+          "label": "提交记录",
+          "supporting": "最近更改",
+          "icon": "history",
+          "variant": "filled",
+          "size": 336,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "commits",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-wide-group-4",
+      "x": 2368,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-wide-item-4",
+          "kind": "card",
+          "label": "README",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "安装、登录与使用说明。保持适合阅读的行长；文档和代码单独滚动。",
+          "noImage": true,
+          "size": 832,
+          "size2": 588,
+          "x": 400
+        }
+      ]
+    }
+  ]
+}

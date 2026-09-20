@@ -20,12 +20,14 @@ data class OrganizationsUiState(
     val nextPage: Int? = null,
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
+    val isRefreshing: Boolean = false,
     val error: Boolean = false
 ) {
-    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isLoadingMore
+    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
 }
 
 sealed interface OrganizationsAction {
+    data object Refresh : OrganizationsAction
     data object Retry : OrganizationsAction
     data object LoadMore : OrganizationsAction
 }
@@ -36,6 +38,7 @@ class OrganizationsViewModel(
     private val _state = MutableStateFlow(OrganizationsUiState())
     val state: StateFlow<OrganizationsUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
+    private var failedReset = true
 
     init {
         load(reset = true)
@@ -43,21 +46,26 @@ class OrganizationsViewModel(
 
     fun onAction(action: OrganizationsAction) {
         when (action) {
-            OrganizationsAction.Retry -> load(reset = _state.value.items.isEmpty())
+            OrganizationsAction.Refresh -> load(reset = true, refreshing = true)
+            OrganizationsAction.Retry -> load(
+                reset = failedReset,
+                refreshing = failedReset && _state.value.items.isNotEmpty()
+            )
             OrganizationsAction.LoadMore -> load(reset = false)
         }
     }
 
-    private fun load(reset: Boolean) {
+    private fun load(reset: Boolean, refreshing: Boolean = false) {
         val current = _state.value
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
         _state.update {
             it.copy(
-                items = if (reset) emptyList() else it.items,
-                isLoading = reset,
+                items = if (reset && !refreshing) emptyList() else it.items,
+                isLoading = reset && !refreshing,
                 isLoadingMore = !reset,
+                isRefreshing = refreshing,
                 error = false
             )
         }
@@ -70,12 +78,14 @@ class OrganizationsViewModel(
                             nextPage = page.nextPage,
                             isLoading = false,
                             isLoadingMore = false,
+                            isRefreshing = false,
                             error = false
                         )
                     }
                 },
                 onFailure = {
-                    _state.update { it.copy(isLoading = false, isLoadingMore = false, error = true) }
+                    failedReset = reset
+                    _state.update { it.copy(isLoading = false, isLoadingMore = false, isRefreshing = false, error = true) }
                 }
             )
         }

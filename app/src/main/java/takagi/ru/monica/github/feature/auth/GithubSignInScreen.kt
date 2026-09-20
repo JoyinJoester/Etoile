@@ -2,6 +2,11 @@ package takagi.ru.monica.github.feature.auth
 
 import android.annotation.SuppressLint
 import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.webkit.CookieManager
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.animation.AnimatedContent
@@ -22,6 +27,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,7 +39,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -56,6 +62,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +72,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.toClipEntry
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -77,12 +85,16 @@ import androidx.compose.ui.viewinterop.AndroidView
 import java.text.DateFormat
 import java.util.Date
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubSectionHeader
+import takagi.ru.monica.github.component.GithubTechnicalLabel
 import takagi.ru.monica.github.design.GithubExpressiveMotion
 import takagi.ru.monica.github.design.GithubExpressiveShapes
+import takagi.ru.monica.github.navigation.GithubLoginNavigation
+import takagi.ru.monica.github.navigation.GithubLoginNavigationPolicy
 
 @Composable
 fun GithubSignInScreen(
@@ -90,24 +102,84 @@ fun GithubSignInScreen(
     onAction: (GithubSessionAction) -> Unit,
     onOpenUrl: (String) -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenBrowser: ((String) -> Boolean)? = null
 ) {
-    val deviceFlowUnavailable = state.deviceSignIn is GithubDeviceSignInUiState.Unavailable
-    var tokenFormExpanded by rememberSaveable { mutableStateOf(deviceFlowUnavailable) }
+    val browserFlowAvailable = state.browserSignIn !is GithubBrowserSignInUiState.Unavailable
+    val interactiveFlowUnavailable = !browserFlowAvailable &&
+        state.deviceSignIn is GithubDeviceSignInUiState.Unavailable
+    var tokenFormExpanded by rememberSaveable { mutableStateOf(interactiveFlowUnavailable) }
     var inAppWebSignIn by rememberSaveable { mutableStateOf(false) }
+    var externalSignIn by rememberSaveable { mutableStateOf(true) }
+    var browserOpenFailed by rememberSaveable { mutableStateOf(false) }
+    var notificationPosted by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val openBrowser: (String) -> Unit = { url ->
+        externalSignIn = true
+        inAppWebSignIn = false
+        browserOpenFailed = !(onOpenBrowser?.invoke(url) ?: GithubSignInBrowser.open(context, url))
+    }
     val webWaiting = state.deviceSignIn as? GithubDeviceSignInUiState.Waiting
-    BackHandler(enabled = inAppWebSignIn) { inAppWebSignIn = false }
+    val browserOpening = state.browserSignIn as? GithubBrowserSignInUiState.Opening
+    val browserWaiting = state.browserSignIn as? GithubBrowserSignInUiState.Waiting
+    val browserAuthorizationUrl = browserOpening?.authorizationUrl ?: browserWaiting?.authorizationUrl
+    val closeSignIn = {
+        onAction(GithubSessionAction.ClearForm)
+        onBack()
+    }
+    BackHandler {
+        if (inAppWebSignIn) inAppWebSignIn = false else closeSignIn()
+    }
+
+    LaunchedEffect(browserOpening?.authorizationUrl) {
+        val url = browserOpening?.authorizationUrl ?: return@LaunchedEffect
+        // Consume the launch state before leaving the app, preventing reopen loops on return.
+        onAction(GithubSessionAction.BrowserSignInOpened)
+        if (externalSignIn) openBrowser(url) else inAppWebSignIn = true
+    }
+
+    LaunchedEffect(webWaiting?.userCode, webWaiting?.expiresAtEpochMillis, externalSignIn) {
+        val waiting = webWaiting
+        notificationPosted = if (externalSignIn && waiting != null) {
+            GithubDeviceCodeNotification.show(context, waiting.userCode, waiting.expiresAtEpochMillis)
+        } else {
+            GithubDeviceCodeNotification.cancel(context)
+            false
+        }
+    }
+    DisposableEffect(context) {
+        onDispose { GithubDeviceCodeNotification.cancel(context) }
+    }
+
+    // A callback can arrive through Android's intent route as well as from
+    // WebView navigation. Dismiss the embedded page once verification starts;
+    // otherwise a failed callback could reveal an unrelated device-flow page.
+    LaunchedEffect(state.browserSignIn) {
+        if (state.browserSignIn is GithubBrowserSignInUiState.Verifying ||
+            state.browserSignIn is GithubBrowserSignInUiState.Failed
+        ) {
+            inAppWebSignIn = false
+        }
+    }
+
+    LaunchedEffect(state.deviceSignIn) {
+        if (!browserFlowAvailable &&
+            (state.deviceSignIn is GithubDeviceSignInUiState.Verifying ||
+                state.deviceSignIn is GithubDeviceSignInUiState.Failed ||
+                state.deviceSignIn is GithubDeviceSignInUiState.Idle)
+        ) {
+            inAppWebSignIn = false
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
     GithubDetailScaffold(
         title = stringResource(R.string.github_sign_in),
         subtitle = stringResource(R.string.github_sign_in_description),
         backContentDescription = stringResource(R.string.github_back),
-        onBack = {
-            onAction(GithubSessionAction.ClearForm)
-            onBack()
-        },
-        modifier = modifier
+        onBack = closeSignIn,
+        modifier = modifier,
+        contentMaxWidth = takagi.ru.monica.github.design.GithubAdaptiveLayout.formMaxWidth
     ) { padding ->
         Column(
             modifier = Modifier
@@ -116,21 +188,54 @@ fun GithubSignInScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
-            if (deviceFlowUnavailable) {
+            if (interactiveFlowUnavailable) {
                 DeviceFlowUnavailableNotice()
                 Spacer(Modifier.height(12.dp))
                 TokenSignInForm(state = state, onAction = onAction)
             } else {
-                DeviceSignInCard(
-                    deviceSignIn = state.deviceSignIn,
-                    onStart = {
-                        onAction(GithubSessionAction.StartDeviceSignIn)
-                        inAppWebSignIn = true
-                    },
-                    onCancel = { onAction(GithubSessionAction.CancelDeviceSignIn) },
-                    onOpenUrl = onOpenUrl,
-                    onOpenInApp = { inAppWebSignIn = true }
-                )
+                if (browserFlowAvailable) {
+                    BrowserSignInCard(
+                        browserSignIn = state.browserSignIn,
+                        enabled = !state.isSubmitting && !state.isAccountActionRunning,
+                        onStart = {
+                            externalSignIn = true
+                            browserOpenFailed = false
+                            onAction(GithubSessionAction.StartBrowserSignIn)
+                        },
+                        onStartInApp = {
+                            externalSignIn = false
+                            browserOpenFailed = false
+                            onAction(GithubSessionAction.StartBrowserSignIn)
+                        },
+                        onCancel = { onAction(GithubSessionAction.CancelBrowserSignIn) },
+                        onReopen = { browserAuthorizationUrl?.let(openBrowser) },
+                        onOpenInApp = { externalSignIn = false; browserOpenFailed = false; inAppWebSignIn = true }
+                    )
+                } else {
+                    DeviceSignInCard(
+                        deviceSignIn = state.deviceSignIn,
+                        enabled = !state.isSubmitting && !state.isAccountActionRunning,
+                        onStart = {
+                            externalSignIn = true
+                            browserOpenFailed = false
+                            onAction(GithubSessionAction.StartDeviceSignIn)
+                        },
+                        onStartInApp = {
+                            externalSignIn = false
+                            browserOpenFailed = false
+                            onAction(GithubSessionAction.StartDeviceSignIn)
+                            inAppWebSignIn = true
+                        },
+                        onCancel = { onAction(GithubSessionAction.CancelDeviceSignIn) },
+                        onOpenUrl = openBrowser,
+                        notificationPosted = notificationPosted,
+                        onOpenInApp = { externalSignIn = false; browserOpenFailed = false; inAppWebSignIn = true }
+                    )
+                }
+                if (browserOpenFailed) {
+                    Text(stringResource(R.string.github_login_browser_unavailable),
+                        color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp))
+                }
                 SignInDivider()
                 TextButton(
                     onClick = { tokenFormExpanded = !tokenFormExpanded },
@@ -157,10 +262,15 @@ fun GithubSignInScreen(
             Spacer(Modifier.height(28.dp))
         }
     }
-    if (inAppWebSignIn) {
-        GithubDeviceLoginWebView(
-            userCode = webWaiting?.userCode,
-            url = webWaiting?.verificationUri,
+    if (inAppWebSignIn && (browserAuthorizationUrl != null || !browserFlowAvailable)) {
+        GithubLoginWebView(
+            userCode = if (browserAuthorizationUrl != null) null else webWaiting?.userCode,
+            url = browserAuthorizationUrl ?: webWaiting?.verificationUri,
+            onOAuthCallback = { callbackUrl ->
+                inAppWebSignIn = false
+                onAction(GithubSessionAction.BrowserSignInCallback(callbackUrl))
+            },
+            onOpenExternal = onOpenUrl,
             onClose = { inAppWebSignIn = false }
         )
     }
@@ -168,11 +278,125 @@ fun GithubSignInScreen(
 }
 
 @Composable
+private fun BrowserSignInCard(
+    browserSignIn: GithubBrowserSignInUiState,
+    enabled: Boolean,
+    onStart: () -> Unit,
+    onStartInApp: () -> Unit,
+    onCancel: () -> Unit,
+    onReopen: () -> Unit,
+    onOpenInApp: () -> Unit
+) {
+    val failed = browserSignIn as? GithubBrowserSignInUiState.Failed
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = GithubExpressiveShapes.prominent,
+        color = if (failed == null) MaterialTheme.colorScheme.primaryContainer
+        else MaterialTheme.colorScheme.errorContainer
+    ) {
+        val enterFade = GithubExpressiveMotion.standardTween<Float>()
+        val exitFade = GithubExpressiveMotion.quickTween<Float>()
+        AnimatedContent(
+            targetState = browserSignIn,
+            transitionSpec = { fadeIn(enterFade) togetherWith fadeOut(exitFade) },
+            label = "github-browser-sign-in"
+        ) { targetState ->
+            when (targetState) {
+                GithubBrowserSignInUiState.Idle -> BrowserSignInIdle(onStart, onStartInApp, enabled)
+                is GithubBrowserSignInUiState.Opening -> DeviceSignInProgress(
+                    title = stringResource(R.string.github_browser_sign_in_opening),
+                    description = stringResource(R.string.github_browser_sign_in_opening_description)
+                )
+                is GithubBrowserSignInUiState.Waiting -> BrowserSignInWaiting(
+                    onCancel = onCancel,
+                    onReopen = onReopen,
+                    onOpenInApp = onOpenInApp
+                )
+                GithubBrowserSignInUiState.Verifying -> DeviceSignInProgress(
+                    title = stringResource(R.string.github_device_sign_in_verifying),
+                    description = stringResource(R.string.github_device_sign_in_verifying_description)
+                )
+                is GithubBrowserSignInUiState.Failed -> BrowserSignInFailure(targetState.error, onStart, onStartInApp, enabled)
+                GithubBrowserSignInUiState.Unavailable -> Unit
+            }
+        }
+    }
+}
+
+@Composable
+private fun BrowserSignInIdle(onStart: () -> Unit, onStartInApp: () -> Unit, enabled: Boolean) {
+    Column(modifier = Modifier.padding(22.dp)) {
+        Text(
+            text = stringResource(R.string.github_login_method_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Text(
+            text = stringResource(R.string.github_login_web_description),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)
+        )
+        GithubLoginMethodButtons(onStart, onStartInApp, enabled)
+    }
+}
+
+@Composable
+private fun BrowserSignInWaiting(onCancel: () -> Unit, onReopen: () -> Unit, onOpenInApp: () -> Unit) {
+    Column(modifier = Modifier.padding(22.dp)) {
+        Text(
+            text = stringResource(R.string.github_browser_sign_in_waiting),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+        Text(
+            text = stringResource(R.string.github_login_web_waiting),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
+        )
+        GithubLoginMethodButtons(onReopen, onOpenInApp, true)
+        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.cancel)) }
+    }
+}
+
+@Composable
+private fun BrowserSignInFailure(error: GithubBrowserSignInError, onRetry: () -> Unit, onRetryInApp: () -> Unit, enabled: Boolean) {
+    Column(modifier = Modifier.padding(22.dp)) {
+        Text(
+            text = stringResource(R.string.github_device_sign_in_failed_title),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onErrorContainer
+        )
+        Text(
+            text = stringResource(
+                when (error) {
+                    GithubBrowserSignInError.DENIED -> R.string.github_browser_sign_in_denied
+                    GithubBrowserSignInError.INVALID_CALLBACK -> R.string.github_browser_sign_in_invalid_callback
+                    GithubBrowserSignInError.REQUEST_FAILED -> R.string.github_device_sign_in_request_failed
+                    GithubBrowserSignInError.VERIFICATION_FAILED -> R.string.github_device_sign_in_verification_failed
+                }
+            ),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onErrorContainer,
+            modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)
+        )
+        GithubLoginMethodButtons(onRetry, onRetryInApp, enabled)
+    }
+}
+
+@Composable
 private fun DeviceSignInCard(
     deviceSignIn: GithubDeviceSignInUiState,
+    enabled: Boolean,
     onStart: () -> Unit,
+    onStartInApp: () -> Unit,
     onCancel: () -> Unit,
     onOpenUrl: (String) -> Unit,
+    notificationPosted: Boolean,
     onOpenInApp: () -> Unit
 ) {
     val failed = deviceSignIn as? GithubDeviceSignInUiState.Failed
@@ -185,29 +409,31 @@ private fun DeviceSignInCard(
             MaterialTheme.colorScheme.errorContainer
         }
     ) {
+        val enterFade = GithubExpressiveMotion.standardTween<Float>()
+        val exitFade = GithubExpressiveMotion.quickTween<Float>()
         AnimatedContent(
             targetState = deviceSignIn,
-            transitionSpec = {
-                fadeIn(GithubExpressiveMotion.standardTween()) togetherWith
-                    fadeOut(GithubExpressiveMotion.quickTween())
-            },
+            transitionSpec = { fadeIn(enterFade) togetherWith fadeOut(exitFade) },
             label = "github-device-sign-in"
         ) { targetState ->
             when (targetState) {
-                GithubDeviceSignInUiState.Idle -> DeviceSignInIdle(onStart)
+                GithubDeviceSignInUiState.Idle -> DeviceSignInIdle(onStart, onStartInApp, enabled)
                 GithubDeviceSignInUiState.Requesting -> DeviceSignInProgress(
                     title = stringResource(R.string.github_device_sign_in_preparing),
                     description = stringResource(R.string.github_device_sign_in_preparing_description)
                 )
                 is GithubDeviceSignInUiState.Waiting -> DeviceSignInWaitingCompact(
+                    waiting = targetState,
                     onCancel = onCancel,
-                    onReopen = onOpenInApp
+                    onReopen = onOpenInApp,
+                    onOpenBrowser = { onOpenUrl(targetState.verificationUri) },
+                    notificationPosted = notificationPosted
                 )
                 GithubDeviceSignInUiState.Verifying -> DeviceSignInProgress(
                     title = stringResource(R.string.github_device_sign_in_verifying),
                     description = stringResource(R.string.github_device_sign_in_verifying_description)
                 )
-                is GithubDeviceSignInUiState.Failed -> DeviceSignInFailure(targetState.error, onStart)
+                is GithubDeviceSignInUiState.Failed -> DeviceSignInFailure(targetState.error, onStart, onStartInApp, enabled)
                 GithubDeviceSignInUiState.Unavailable -> Unit
             }
         }
@@ -215,27 +441,21 @@ private fun DeviceSignInCard(
 }
 
 @Composable
-private fun DeviceSignInIdle(onStart: () -> Unit) {
+private fun DeviceSignInIdle(onStart: () -> Unit, onStartInApp: () -> Unit, enabled: Boolean) {
     Column(modifier = Modifier.padding(22.dp)) {
         Text(
-            text = stringResource(R.string.github_sign_in_in_app),
+            text = stringResource(R.string.github_login_method_title),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onPrimaryContainer
         )
         Text(
-            text = stringResource(R.string.github_sign_in_in_app_description),
+            text = stringResource(R.string.github_login_device_description),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = Modifier.padding(top = 6.dp, bottom = 18.dp)
         )
-        Button(
-            onClick = onStart,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = GithubExpressiveShapes.control
-        ) {
-            Text(stringResource(R.string.github_sign_in))
-        }
+        GithubLoginMethodButtons(onStart, onStartInApp, enabled)
     }
 }
 
@@ -261,41 +481,50 @@ private fun DeviceSignInProgress(title: String, description: String) {
 
 @Composable
 private fun DeviceSignInWaitingCompact(
+    waiting: GithubDeviceSignInUiState.Waiting,
     onCancel: () -> Unit,
-    onReopen: () -> Unit
+    onReopen: () -> Unit,
+    onOpenBrowser: () -> Unit,
+    notificationPosted: Boolean
 ) {
-    Column(modifier = Modifier.padding(22.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            CircularProgressIndicator(modifier = Modifier.size(28.dp), strokeWidth = 3.dp)
-            Text(
-                text = stringResource(R.string.github_device_code_waiting),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.weight(1f)
-            )
-            TextButton(onClick = onCancel) {
-                Text(stringResource(R.string.cancel))
+    val context = LocalContext.current
+    var copied by remember(waiting.userCode) { mutableStateOf(false) }
+    LaunchedEffect(copied) { if (copied) { delay(3000); copied = false } }
+    Column(modifier = Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(R.string.github_login_code_page_title), style = MaterialTheme.typography.titleLarge)
+        Text(stringResource(R.string.github_login_code_instructions), style = MaterialTheme.typography.bodyMedium)
+        Surface(onClick = {
+            GithubDeviceCodeNotification.copy(context, waiting.userCode)
+            copied = true
+        }, modifier = Modifier.fillMaxWidth(), shape = GithubExpressiveShapes.control,
+            color = MaterialTheme.colorScheme.surface) {
+            Column(Modifier.padding(16.dp)) {
+                Text(stringResource(if (copied) R.string.github_device_code_copied else R.string.github_login_code_tap_copy),
+                    style = MaterialTheme.typography.labelMedium)
+                Text(waiting.userCode, style = MaterialTheme.typography.headlineMedium, fontFamily = FontFamily.Monospace)
             }
         }
-        TextButton(
-            onClick = onReopen,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.Default.Public, contentDescription = null)
-            Text(
-                text = stringResource(R.string.github_sign_in_in_app),
-                modifier = Modifier.padding(start = 8.dp)
-            )
+        if (notificationPosted) Text(stringResource(R.string.github_login_notification_sent), style = MaterialTheme.typography.bodySmall)
+        GithubLoginMethodButtons(onOpenBrowser, onReopen, true)
+        TextButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.cancel)) }
+    }
+}
+
+@Composable
+private fun GithubLoginMethodButtons(onBrowser: () -> Unit, onEmbedded: () -> Unit, enabled: Boolean) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Button(onClick = onBrowser, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = GithubExpressiveShapes.control) {
+            Text(stringResource(R.string.github_login_external))
+        }
+        OutlinedButton(onClick = onEmbedded, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+            shape = GithubExpressiveShapes.control) {
+            Text(stringResource(R.string.github_login_embedded))
         }
     }
 }
 @Composable
-private fun DeviceSignInFailure(error: GithubDeviceSignInError, onRetry: () -> Unit) {
+private fun DeviceSignInFailure(error: GithubDeviceSignInError, onRetry: () -> Unit, onRetryInApp: () -> Unit, enabled: Boolean) {
     Column(modifier = Modifier.padding(22.dp)) {
         Text(
             text = stringResource(R.string.github_device_sign_in_failed_title),
@@ -316,13 +545,7 @@ private fun DeviceSignInFailure(error: GithubDeviceSignInError, onRetry: () -> U
             color = MaterialTheme.colorScheme.onErrorContainer,
             modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)
         )
-        OutlinedButton(
-            onClick = onRetry,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
-            shape = GithubExpressiveShapes.control
-        ) {
-            Text(stringResource(R.string.github_retry))
-        }
+        GithubLoginMethodButtons(onRetry, onRetryInApp, enabled)
     }
 }
 
@@ -406,7 +629,7 @@ private fun TokenSignInForm(
         Spacer(Modifier.height(16.dp))
         Button(
             onClick = { onAction(GithubSessionAction.SignIn) },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             enabled = state.tokenInput.isNotBlank() && !state.isSubmitting,
             shape = GithubExpressiveShapes.control
         ) {
@@ -425,180 +648,4 @@ private fun TokenSignInForm(
             }
         }
     }
-}
-
-@SuppressLint("SetJavaScriptEnabled")
-@Composable
-private fun GithubDeviceLoginWebView(
-    userCode: String?,
-    url: String?,
-    onClose: () -> Unit
-) {
-    var progress by remember { mutableStateOf(0) }
-    var currentUrl by remember { mutableStateOf("") }
-    var canGoBack by remember { mutableStateOf(false) }
-    var canGoForward by remember { mutableStateOf(false) }
-    var webView by remember { mutableStateOf<WebView?>(null) }
-    var injectedFor by remember { mutableStateOf<String?>(null) }
-
-    // 设备码就绪后，若已停留在设备码页则立即补注入
-    LaunchedEffect(userCode, currentUrl) {
-        val view = webView ?: return@LaunchedEffect
-        if (userCode != null && injectedFor != userCode &&
-            currentUrl.contains("github.com/login/device")
-        ) {
-            injectDeviceCode(view, userCode)
-            injectedFor = userCode
-        }
-    }
-
-    BackHandler {
-        val view = webView
-        if (view != null && view.canGoBack()) view.goBack() else onClose()
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        AndroidView(
-            factory = { context ->
-                WebView(context).apply {
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    webViewClient = object : WebViewClient() {
-                        override fun doUpdateVisitedHistory(view: WebView, url: String?, isReload: Boolean) {
-                            super.doUpdateVisitedHistory(view, url, isReload)
-                            currentUrl = url.orEmpty()
-                            canGoBack = view.canGoBack()
-                            canGoForward = view.canGoForward()
-                        }
-
-                        override fun onPageFinished(view: WebView, url: String?) {
-                            super.onPageFinished(view, url)
-                            currentUrl = url.orEmpty()
-                            if (userCode != null && injectedFor != userCode &&
-                                url.orEmpty().contains("github.com/login/device")
-                            ) {
-                                injectDeviceCode(view, userCode)
-                                injectedFor = userCode
-                            }
-                            // OAuth 授权页自动点"授权"，减少一次手动点击
-                            if (url.orEmpty().contains("login/oauth/authorize")) {
-                                view.evaluateJavascript(AUTO_AUTHORIZE_JS, null)
-                            }
-                        }
-                    }
-                    webChromeClient = object : android.webkit.WebChromeClient() {
-                        override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                            progress = newProgress
-                        }
-                    }
-                    WebView.setWebContentsDebuggingEnabled(false)
-                    loadUrl(url ?: "https://github.com/login/device")
-                    webView = this
-                }
-            },
-            update = { view ->
-                // url 从 null（请求中）变为就绪时重定向到设备码页
-                if (url != null && currentUrl.isEmpty()) {
-                    view.loadUrl(url)
-                }
-            },
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        )
-        if (progress < 100) {
-            LinearProgressIndicator(
-                progress = { progress / 100f },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .statusBarsPadding()
-            )
-        }
-        if (userCode == null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        }
-        // 底部悬浮工具栏（Monica Steam 风格）。
-        // 形状取全局 MaterialTheme.shapes.extraLarge：Material=28dp 圆角、
-        // Nothing=16dp 利落圆角、Miuix=squircle，自动适配三种设计。
-        Surface(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(horizontal = 28.dp)
-                .navigationBarsPadding()
-                .padding(bottom = 20.dp),
-            shape = MaterialTheme.shapes.extraLarge,
-            tonalElevation = 3.dp,
-            shadowElevation = 12.dp,
-            color = MaterialTheme.colorScheme.surfaceContainerHighest,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-        ) {
-            Row(
-                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                IconButton(
-                    onClick = { webView?.goBack() },
-                    enabled = canGoBack,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.github_web_back))
-                }
-                IconButton(
-                    onClick = { webView?.goForward() },
-                    enabled = canGoForward,
-                    modifier = Modifier.size(48.dp)
-                ) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = stringResource(R.string.github_web_forward))
-                }
-                IconButton(onClick = { webView?.reload() }, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
-                }
-                IconButton(onClick = onClose, modifier = Modifier.size(48.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.github_web_sign_in_close))
-                }
-            }
-        }
-    }
-}
-
-private val AUTO_AUTHORIZE_JS = """
-        (function() {
-          try {
-            var button = document.querySelector('button[name="authorize"], input[name="authorize"], button[value="authorize"]');
-            if (button) { button.click(); }
-          } catch (e) {}
-        })();
-    """.trimIndent()
-
-// 在 GitHub 设备码页自动填入一次性代码并提交，用户只需完成登录与授权
-private fun injectDeviceCode(view: WebView, userCode: String) {
-    val safeCode = userCode.filter { it.isLetterOrDigit() || it == '-' }
-    if (safeCode.isEmpty()) return
-    val js = """
-        (function() {
-          try {
-            var input = document.querySelector('input[name="otp"]') ||
-                        document.querySelector('input[name="user_code"]') ||
-                        document.querySelector('input[autocomplete="one-time-code"]');
-            if (input && !input.value) {
-              input.value = '$safeCode';
-              input.dispatchEvent(new Event('input', { bubbles: true }));
-              var form = input.closest('form');
-              if (form) { form.submit(); }
-            }
-          } catch (e) {}
-        })();
-    """.trimIndent()
-    view.evaluateJavascript(js, null)
 }

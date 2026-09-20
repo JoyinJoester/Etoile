@@ -1,10 +1,13 @@
 package takagi.ru.monica.github.feature.actions
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +31,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,20 +54,30 @@ import takagi.ru.monica.github.domain.GithubWorkflowState
 internal fun ActionsWorkflowRow(
     workflow: GithubWorkflow,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    canManage: Boolean = false,
     isUpdating: Boolean = false,
     hasError: Boolean = false,
     onEnabledChanged: (Boolean) -> Unit = {},
     isDispatching: Boolean = false,
     hasDispatchError: Boolean = false,
-    onDispatch: (String, Map<String, String>) -> Unit = { _, _ -> },
-    modifier: Modifier = Modifier
+    onDispatch: (String, Map<String, String>) -> Unit = { _, _ -> }
 ) {
-    var dispatchOpen by remember { mutableStateOf(false) }
+    val workflowAccessibilityName = workflow.name.ifBlank { stringResource(R.string.github_unnamed_workflow) }
+    var dispatchOpen by androidx.compose.runtime.saveable.rememberSaveable(workflow.id) { mutableStateOf(false) }
+    val workflowToggleDescription = stringResource(R.string.github_actions_toggle_workflow, workflow.name)
+    var dispatchRef by androidx.compose.runtime.saveable.rememberSaveable(workflow.id) { mutableStateOf("main") }
+    var dispatchInputs by androidx.compose.runtime.saveable.rememberSaveable(workflow.id) { mutableStateOf("") }
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp)
+        modifier = modifier.fillMaxWidth().padding(vertical = 14.dp)
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                .clickable(role = Role.Button, onClick = onClick)
+                .semantics {
+                    contentDescription = workflowAccessibilityName
+                }
+        ) {
                 Text(
                     text = workflow.name.ifBlank { stringResource(R.string.github_unnamed_workflow) },
                     style = MaterialTheme.typography.titleMedium,
@@ -74,21 +90,26 @@ internal fun ActionsWorkflowRow(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 5.dp),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
                 )
-            }
-            Spacer(Modifier.width(10.dp))
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             WorkflowStateBadge(workflow.state)
+            Spacer(Modifier.weight(1f))
             Switch(
                 checked = workflow.state == GithubWorkflowState.ACTIVE,
                 onCheckedChange = onEnabledChanged,
-                enabled = !isUpdating,
-                modifier = Modifier.padding(start = 4.dp)
+                enabled = canManage && !isUpdating,
+                thumbContent = null,
+                modifier = Modifier.padding(start = 4.dp).semantics {
+                    contentDescription = workflowToggleDescription
+                }
             )
             IconButton(
                 onClick = { dispatchOpen = true },
-                enabled = workflow.state == GithubWorkflowState.ACTIVE && !isDispatching,
+                enabled = canManage && workflow.state == GithubWorkflowState.ACTIVE && !isDispatching,
                 modifier = Modifier.padding(start = 2.dp)
             ) {
                 Icon(
@@ -126,6 +147,10 @@ internal fun ActionsWorkflowRow(
     }
     if (dispatchOpen) {
         WorkflowDispatchDialog(
+            ref = dispatchRef,
+            inputsText = dispatchInputs,
+            onRefChanged = { dispatchRef = it },
+            onInputsChanged = { dispatchInputs = it },
             isSubmitting = isDispatching,
             onDismiss = { if (!isDispatching) dispatchOpen = false },
             onSubmit = { ref, inputs ->
@@ -138,29 +163,39 @@ internal fun ActionsWorkflowRow(
 
 @Composable
 private fun WorkflowDispatchDialog(
+    ref: String,
+    inputsText: String,
+    onRefChanged: (String) -> Unit,
+    onInputsChanged: (String) -> Unit,
     isSubmitting: Boolean,
     onDismiss: () -> Unit,
     onSubmit: (String, Map<String, String>) -> Unit
 ) {
-    var ref by remember { mutableStateOf("main") }
-    var inputsText by remember { mutableStateOf("") }
+    val parsedInputs = remember(inputsText) { parseWorkflowDispatchInputs(inputsText) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.github_actions_dispatch)) },
         text = {
-            Column {
+            Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                 OutlinedTextField(
                     value = ref,
-                    onValueChange = { ref = it },
+                    onValueChange = onRefChanged,
                     enabled = !isSubmitting,
                     singleLine = true,
                     label = { Text(stringResource(R.string.github_actions_ref)) }
                 )
                 OutlinedTextField(
                     value = inputsText,
-                    onValueChange = { inputsText = it },
+                    onValueChange = onInputsChanged,
                     enabled = !isSubmitting,
                     minLines = 3,
+                    maxLines = 8,
+                    isError = parsedInputs.invalidLine != null,
+                    supportingText = {
+                        parsedInputs.invalidLine?.let { line ->
+                            Text(stringResource(R.string.github_actions_inputs_invalid, line))
+                        }
+                    },
                     label = { Text(stringResource(R.string.github_actions_inputs_hint)) },
                     modifier = Modifier.padding(top = 10.dp)
                 )
@@ -169,16 +204,9 @@ private fun WorkflowDispatchDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    val inputs = inputsText.lineSequence()
-                        .mapNotNull { line ->
-                            val separator = line.indexOf('=')
-                            if (separator <= 0) null
-                            else line.substring(0, separator).trim() to line.substring(separator + 1).trim()
-                        }
-                        .toMap()
-                    onSubmit(ref, inputs)
+                    onSubmit(ref.trim(), parsedInputs.values)
                 },
-                enabled = !isSubmitting && ref.isNotBlank()
+                enabled = !isSubmitting && ref.isNotBlank() && parsedInputs.invalidLine == null
             ) { Text(stringResource(R.string.github_run)) }
         },
         dismissButton = {
@@ -196,7 +224,9 @@ internal fun WorkflowRunRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 14.dp)
+        modifier = modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 14.dp)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             GithubActionsStatusBadge(run.status, run.conclusion)
@@ -264,14 +294,16 @@ internal fun ActionsJobRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 13.dp)
+        modifier = modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 13.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             GithubActionsStatusBadge(job.status, job.conclusion)
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = job.name,
+                    text = job.name.ifBlank { stringResource(R.string.github_unnamed_job) },
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 2,

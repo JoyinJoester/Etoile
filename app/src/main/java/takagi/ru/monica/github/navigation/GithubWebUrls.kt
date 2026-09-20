@@ -24,6 +24,15 @@ object GithubWebUrls {
 
     fun userFollowing(login: String): String = userTab(login, "following")
 
+    fun discussions(): String = baseUrl.newBuilder().addPathSegment("discussions").build().toString()
+
+    fun userProjects(login: String): String = baseUrl.newBuilder()
+        .addPathSegment("users")
+        .addPathSegment(login)
+        .addPathSegment("projects")
+        .build()
+        .toString()
+
     /** Normalizes a profile-provided website and rejects non-web schemes. */
     fun external(value: String): String? {
         val normalized = value.trim().let { raw ->
@@ -55,6 +64,13 @@ object GithubWebUrls {
 
     fun issue(fullName: String, number: Int): String = build(fullName, "issues", number.toString())
 
+    fun newIssue(fullName: String, templateFileName: String? = null): String =
+        build(fullName, "issues", "new").toHttpUrl().newBuilder().apply {
+            templateFileName?.let { addQueryParameter("template", it) }
+        }.build().toString()
+
+    fun issueTemplateChooser(fullName: String): String = build(fullName, "issues", "new", "choose")
+
     fun pullRequests(fullName: String): String = build(fullName, "pulls")
 
     fun pullRequest(fullName: String, number: Int): String = build(fullName, "pull", number.toString())
@@ -67,7 +83,21 @@ object GithubWebUrls {
     fun repositoryCollaboratorsSettings(fullName: String): String = build(fullName, "settings", "access")
     fun repositoryWebhooksSettings(fullName: String): String = build(fullName, "settings", "hooks")
 
+    fun repositoryWebhookSettings(fullName: String, webhookId: Long): String =
+        build(fullName, "settings", "hooks", webhookId.toString())
+
     fun releases(fullName: String): String = build(fullName, "releases")
+
+    fun tags(fullName: String): String = build(fullName, "tags")
+
+    fun compare(fullName: String, base: String, head: String): String {
+        val builder = baseUrl.newBuilder()
+        fullName.split('/').filter(String::isNotBlank).forEach(builder::addPathSegment)
+        builder.addPathSegment("compare")
+        // Branch names may contain '/', so the range goes in as several segments and only
+        // the dots keep the comparison meaning.
+        return builder.addPathSegments("$base...$head").build().toString()
+    }
 
     fun commits(fullName: String, ref: String): String = build(fullName, "commits", ref)
 
@@ -81,21 +111,26 @@ object GithubWebUrls {
         target: String
     ): String {
         val normalized = target.trim()
-        if (normalized.startsWith("https://") || normalized.startsWith("http://")) return normalized
+        // Explicit URI schemes belong to the external URI handler, not the repository tree.
+        if (Regex("^[A-Za-z][A-Za-z0-9+.-]*:").containsMatchIn(normalized)) return normalized
+        if (normalized.startsWith("//")) return "https:$normalized"
         if (normalized.startsWith('/')) {
             return ("https://github.com$normalized".toHttpUrlOrNull()?.toString()) ?: repository(fullName)
         }
-        if (normalized.startsWith('#')) {
+        if (normalized.isEmpty() || normalized.startsWith('#') || normalized.startsWith('?')) {
             val current = if (sourcePath.isBlank()) repository(fullName) else blob(fullName, ref, sourcePath)
-            return current.toHttpUrl().newBuilder().fragment(normalized.drop(1)).build().toString()
+            return current.toHttpUrl().resolve(normalized)?.toString() ?: current
         }
 
-        val fragment = normalized.substringAfter('#', missingDelimiterValue = "").ifBlank { null }
-        val targetPath = normalized.substringBefore('#').substringBefore('?')
         val sourceDirectory = sourcePath.substringBeforeLast('/', missingDelimiterValue = "")
-        val resolvedPath = normalizePath(listOf(sourceDirectory, targetPath).filter(String::isNotBlank).joinToString("/"))
-        return blob(fullName, ref, resolvedPath).toHttpUrl().newBuilder()
-            .fragment(fragment)
+        // Resolve on a repository-root URL so ../ cannot consume the owner or ref.
+        // HttpUrl retains existing escaping, queries, and fragments in the target.
+        val directory = baseUrl.newBuilder().addPathSegments(sourceDirectory).addPathSegment("").build()
+        val resolved = directory.resolve(normalized) ?: return repository(fullName)
+        return blob(fullName, ref, "").toHttpUrl().newBuilder()
+            .addEncodedPathSegments(resolved.encodedPath.removePrefix("/"))
+            .encodedQuery(resolved.encodedQuery)
+            .encodedFragment(resolved.encodedFragment)
             .build()
             .toString()
     }
@@ -120,15 +155,4 @@ object GithubWebUrls {
         .build()
         .toString()
 
-    private fun normalizePath(path: String): String {
-        val segments = ArrayDeque<String>()
-        path.split('/').forEach { segment ->
-            when (segment) {
-                "", "." -> Unit
-                ".." -> if (segments.isNotEmpty()) segments.removeLast()
-                else -> segments.addLast(segment)
-            }
-        }
-        return segments.joinToString("/")
-    }
 }

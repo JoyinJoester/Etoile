@@ -22,13 +22,16 @@ data class RepositoryWebhooksUiState(
     val nextPage: Int? = null,
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
-    val error: Boolean = false
+    val isRefreshing: Boolean = false,
+    val error: Boolean = false,
+    val failedPage: Int? = null
 ) {
     val fullName: String get() = "$owner/$name"
-    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isLoadingMore
+    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
 }
 
 sealed interface RepositoryWebhooksAction {
+    data object Refresh : RepositoryWebhooksAction
     data object Retry : RepositoryWebhooksAction
     data object LoadMore : RepositoryWebhooksAction
 }
@@ -48,22 +51,25 @@ class RepositoryWebhooksViewModel(
 
     fun onAction(action: RepositoryWebhooksAction) {
         when (action) {
-            RepositoryWebhooksAction.Retry -> load(reset = _state.value.items.isEmpty())
+            RepositoryWebhooksAction.Refresh -> load(reset = true, refreshing = true)
+            RepositoryWebhooksAction.Retry -> load(reset = _state.value.failedPage == 1 || _state.value.items.isEmpty())
             RepositoryWebhooksAction.LoadMore -> load(reset = false)
         }
     }
 
-    private fun load(reset: Boolean) {
+    private fun load(reset: Boolean, refreshing: Boolean = false) {
         val current = _state.value
         if (!reset && !current.canLoadMore) return
         val page = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
         _state.update {
             it.copy(
-                items = if (reset) emptyList() else it.items,
-                isLoading = reset,
+                items = if (reset && !refreshing && current.failedPage != 1) emptyList() else it.items,
+                isLoading = reset && !refreshing,
                 isLoadingMore = !reset,
-                error = false
+                isRefreshing = refreshing,
+                error = false,
+                failedPage = null
             )
         }
         loadJob = viewModelScope.launch {
@@ -75,12 +81,14 @@ class RepositoryWebhooksViewModel(
                             nextPage = result.nextPage,
                             isLoading = false,
                             isLoadingMore = false,
-                            error = false
+                            isRefreshing = false,
+                            error = false,
+                            failedPage = null
                         )
                     }
                 },
                 onFailure = {
-                    _state.update { it.copy(isLoading = false, isLoadingMore = false, error = true) }
+                    _state.update { it.copy(isLoading = false, isLoadingMore = false, isRefreshing = false, error = true, failedPage = page) }
                 }
             )
         }

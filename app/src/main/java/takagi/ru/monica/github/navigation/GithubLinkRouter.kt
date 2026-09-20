@@ -5,6 +5,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 /** Destinations that can be opened inside the native GitHub experience. */
 sealed interface GithubLinkDestination {
     data class Repository(val fullName: String) : GithubLinkDestination
+    data class Discussions(val fullName: String) : GithubLinkDestination
+    data class Discussion(val fullName: String, val number: Int) : GithubLinkDestination
     data class Issue(val fullName: String, val number: Int) : GithubLinkDestination
     data class PullRequest(val fullName: String, val number: Int) : GithubLinkDestination
     data class ActionsRun(val fullName: String, val runId: Long) : GithubLinkDestination
@@ -52,6 +54,10 @@ object GithubLinkRouter {
         val releaseTag = segments.drop(4).joinToString("/").takeIf { it.isValidReleaseTag() }
         val commitSha = segments.getOrNull(3)?.takeIf { it.isValidCommitSha() }
         return when {
+            kind == "discussions" && segments.size == 3 && parsed.query == null ->
+                GithubLinkDestination.Discussions(fullName)
+            kind == "discussions" && segments.size == 4 && number.isValidIssueNumber() ->
+                GithubLinkDestination.Discussion(fullName, number!!.toInt())
             kind == "issues" && number.isValidIssueNumber() ->
                 GithubLinkDestination.Issue(fullName, number!!.toInt())
             kind == "pull" && number.isValidIssueNumber() ->

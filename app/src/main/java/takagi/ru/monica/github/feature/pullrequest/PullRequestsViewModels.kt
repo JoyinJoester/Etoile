@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubIssueComment
 import takagi.ru.monica.github.domain.GithubIssueCommentDraft
 import takagi.ru.monica.github.domain.GithubIssueLabel
@@ -29,6 +31,7 @@ import takagi.ru.monica.github.domain.GithubPullRequestState
 import takagi.ru.monica.github.domain.GithubPullRequestsRepository
 import takagi.ru.monica.github.domain.GithubListSort
 import takagi.ru.monica.github.domain.GithubReactionContent
+import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
 import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.github.domain.GithubSortDirection
 import takagi.ru.monica.github.domain.GithubUserSummary
@@ -272,11 +275,39 @@ data class PullRequestDetailUiState(
     val reviewersValidationError: Boolean = false,
     val reviewersUpdateError: Boolean = false,
     val viewerLogin: String? = null,
+    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN,
     val reactionBusyCommentIds: Set<Long> = emptySet(),
     val reactionErrorCommentIds: Set<Long> = emptySet(),
     val activeReactions: Map<Long, Set<GithubReactionContent>> = emptyMap()
 ) {
     val fullName: String get() = "$owner/$name"
+
+    private val isSignedIn: Boolean get() = viewerLogin != null
+
+    private val isAuthor: Boolean
+        get() = viewerLogin != null && viewerLogin == pullRequest?.author?.login
+
+    /** Labels, assignees and milestones only need triage, not push. */
+    val canTriage: Boolean get() = isSignedIn && viewerRole.canTriage
+
+    /** Requesting reviewers is a collaborator action. */
+    val canRequestReviewers: Boolean get() = isSignedIn && viewerRole.canTriage
+
+    /** Authors may edit their own title and body without repository access. */
+    val canEditContent: Boolean get() = isSignedIn && (isAuthor || viewerRole.canTriage)
+
+    /** Authors may close or reopen their own pull request. */
+    val canChangeState: Boolean get() = isSignedIn && (isAuthor || viewerRole.canTriage)
+
+    /** Locking a thread is a moderation action reserved for collaborators. */
+    val canLock: Boolean get() = isSignedIn && viewerRole.canTriage
+
+    /** Merging always requires push access, even for the author. */
+    val canMerge: Boolean get() = isSignedIn && viewerRole.canPush
+
+    /** True when at least one management action is available to the viewer. */
+    val canManage: Boolean get() = canTriage || canEditContent || canChangeState || canLock
+
     val canLoadMoreFiles: Boolean get() = nextFilesPage != null && !isLoadingFiles && !isLoadingMoreFiles
     val canLoadMoreReviews: Boolean get() = nextReviewsPage != null && !isLoadingReviews && !isLoadingMoreReviews
     val canLoadMoreReviewComments: Boolean get() = nextReviewCommentsPage != null && !isLoadingReviewComments && !isLoadingMoreReviewComments
@@ -327,11 +358,13 @@ class PullRequestDetailViewModel(
     private val name: String,
     private val number: Int,
     private val pullRequestsRepository: GithubPullRequestsRepository,
-    private val issuesRepository: GithubIssuesRepository
+    private val issuesRepository: GithubIssuesRepository,
+    private val detailsRepository: GithubRepositoryDetailsRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(PullRequestDetailUiState(owner, name, number))
     val state: StateFlow<PullRequestDetailUiState> = _state.asStateFlow()
     private var pullRequestJob: Job? = null
+    private var viewerRoleJob: Job? = null
     private var filesJob: Job? = null
     private var reviewsJob: Job? = null
     private var reviewCommentsJob: Job? = null
@@ -350,6 +383,8 @@ class PullRequestDetailViewModel(
     private var milestoneUpdateJob: Job? = null
     private var reviewersUpdateJob: Job? = null
     private val reactionJobs = mutableMapOf<Long, Job>()
+    private var viewerAccountId: Long? = null
+    private var sessionRevision = 0L
 
     init {
         loadPullRequest()
@@ -372,7 +407,7 @@ class PullRequestDetailViewModel(
             PullRequestDetailAction.LoadMoreReviewComments -> loadReviewComments(reset = false)
             PullRequestDetailAction.LoadMoreComments -> loadComments(reset = false)
             is PullRequestDetailAction.ReviewBodyChanged ->
-                if (action.body.length <= GithubPullRequestReviewDraft.MAX_BODY_LENGTH) {
+                if (!_state.value.isSubmittingReview && action.body.length <= GithubPullRequestReviewDraft.MAX_BODY_LENGTH) {
                     _state.update {
                         it.copy(reviewBody = action.body, reviewValidationError = false, reviewSubmitError = false)
                     }
@@ -408,17 +443,76 @@ class PullRequestDetailViewModel(
     }
 
     fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login == _state.value.viewerLogin) return
+        val account = (session as? GithubSession.SignedIn)?.account
+        val login = account?.login
+        if (account?.id == viewerAccountId && login == _state.value.viewerLogin) return
+        viewerAccountId = account?.id
+        sessionRevision++
+        viewerRoleJob?.cancel()
+        reviewJob?.cancel()
+        commentJob?.cancel()
+        mergeJob?.cancel()
+        stateJob?.cancel()
+        contentUpdateJob?.cancel()
+        lockJob?.cancel()
+        labelsUpdateJob?.cancel()
+        assigneesUpdateJob?.cancel()
+        milestoneUpdateJob?.cancel()
+        reviewersUpdateJob?.cancel()
         reactionJobs.values.forEach { it.cancel() }
         reactionJobs.clear()
         _state.update {
             it.copy(
                 viewerLogin = login,
+                viewerRole = GithubCollaboratorRole.UNKNOWN,
+                isSubmittingReview = false,
+                reviewValidationError = false,
+                reviewSubmitError = false,
+                isSubmittingComment = false,
+                commentValidationError = false,
+                commentSubmitError = false,
+                isMerging = false,
+                mergeError = false,
+                mergeValidationError = false,
+                mergeResult = null,
+                isUpdatingState = false,
+                stateUpdateError = false,
+                isUpdatingContent = false,
+                contentValidationError = false,
+                contentUpdateError = false,
+                isUpdatingLock = false,
+                lockUpdateError = false,
+                isUpdatingLabels = false,
+                labelsUpdateError = false,
+                isUpdatingAssignees = false,
+                assigneesUpdateError = false,
+                isUpdatingMilestone = false,
+                milestoneUpdateError = false,
+                isUpdatingReviewers = false,
+                reviewersValidationError = false,
+                reviewersUpdateError = false,
                 reactionBusyCommentIds = emptySet(),
                 reactionErrorCommentIds = emptySet(),
                 activeReactions = emptyMap()
             )
+        }
+        loadViewerRole(signedIn = login != null)
+    }
+
+    private fun loadViewerRole(signedIn: Boolean) {
+        viewerRoleJob?.cancel()
+        val revision = sessionRevision
+        if (!signedIn) {
+            _state.update { it.copy(viewerRole = GithubCollaboratorRole.UNKNOWN) }
+            return
+        }
+        viewerRoleJob = viewModelScope.launch {
+            val role = detailsRepository.details(owner, name)
+                .getOrNull()
+                ?.viewerRole
+                ?: GithubCollaboratorRole.UNKNOWN
+            if (!isActive || revision != sessionRevision) return@launch
+            _state.update { it.copy(viewerRole = role) }
         }
     }
 
@@ -595,8 +689,11 @@ class PullRequestDetailViewModel(
             it.copy(isSubmittingReview = true, reviewValidationError = false, reviewSubmitError = false)
         }
         reviewJob?.cancel()
+        val revision = sessionRevision
         reviewJob = viewModelScope.launch {
-            pullRequestsRepository.submitReview(owner, name, number, draft).fold(
+            val result = pullRequestsRepository.submitReview(owner, name, number, draft)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { review ->
                     _state.update {
                         it.copy(
@@ -615,8 +712,9 @@ class PullRequestDetailViewModel(
     }
 
     private fun submitComment() {
-        if (_state.value.isSubmittingComment || _state.value.pullRequest?.isLocked == true) return
-        val draft = GithubIssueCommentDraft.fromInput(_state.value.commentDraft).getOrElse {
+        val state = _state.value
+        if (state.isSubmittingComment || state.pullRequest?.isLocked == true) return
+        val draft = GithubIssueCommentDraft.fromInput(state.commentDraft).getOrElse {
             _state.update { it.copy(commentValidationError = true, commentSubmitError = false) }
             return
         }
@@ -624,13 +722,16 @@ class PullRequestDetailViewModel(
             it.copy(isSubmittingComment = true, commentValidationError = false, commentSubmitError = false)
         }
         commentJob?.cancel()
+        val revision = sessionRevision
         commentJob = viewModelScope.launch {
-            issuesRepository.addComment(owner, name, number, draft).fold(
+            val result = issuesRepository.addComment(owner, name, number, draft)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { comment ->
                     _state.update {
                         it.copy(
                             comments = (it.comments + comment).distinctBy(GithubIssueComment::id),
-                            commentDraft = "",
+                            commentDraft = if (it.commentDraft == state.commentDraft) "" else it.commentDraft,
                             isSubmittingComment = false,
                             commentSubmitError = false
                         )
@@ -645,6 +746,7 @@ class PullRequestDetailViewModel(
 
     private fun merge(method: GithubMergeMethod, commitTitle: String, commitMessage: String) {
         val pullRequest = _state.value.pullRequest ?: return
+        if (!_state.value.canMerge) return
         if (_state.value.isMerging || pullRequest.isMerged || pullRequest.state == GithubPullRequestState.CLOSED) return
         val draft = GithubMergeDraft.fromInput(
             method = method,
@@ -666,8 +768,11 @@ class PullRequestDetailViewModel(
             )
         }
         mergeJob?.cancel()
+        val revision = sessionRevision
         mergeJob = viewModelScope.launch {
-            pullRequestsRepository.merge(owner, name, number, draft).fold(
+            val result = pullRequestsRepository.merge(owner, name, number, draft)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         state.copy(
@@ -691,6 +796,7 @@ class PullRequestDetailViewModel(
 
     private fun toggleState() {
         val current = _state.value.pullRequest ?: return
+        if (!_state.value.canChangeState) return
         if (_state.value.isUpdatingState || current.isMerged) return
         val target = if (current.state == GithubPullRequestState.OPEN) {
             GithubPullRequestState.CLOSED
@@ -699,8 +805,11 @@ class PullRequestDetailViewModel(
         }
         _state.update { it.copy(isUpdatingState = true, stateUpdateError = false) }
         stateJob?.cancel()
+        val revision = sessionRevision
         stateJob = viewModelScope.launch {
-            pullRequestsRepository.updateState(owner, name, number, target).fold(
+            val result = pullRequestsRepository.updateState(owner, name, number, target)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { pullRequest ->
                     _state.update {
                         it.copy(pullRequest = pullRequest, isUpdatingState = false, stateUpdateError = false)
@@ -714,7 +823,7 @@ class PullRequestDetailViewModel(
     }
 
     private fun updateContent(title: String, body: String) {
-        if (_state.value.isUpdatingContent) return
+        if (!_state.value.canEditContent || _state.value.isUpdatingContent) return
         val draft = GithubPullRequestDraft.fromInput(title, body).getOrElse {
             _state.update {
                 it.copy(contentValidationError = true, contentUpdateError = false)
@@ -729,8 +838,11 @@ class PullRequestDetailViewModel(
             )
         }
         contentUpdateJob?.cancel()
+        val revision = sessionRevision
         contentUpdateJob = viewModelScope.launch {
-            pullRequestsRepository.updateContent(owner, name, number, draft).fold(
+            val result = pullRequestsRepository.updateContent(owner, name, number, draft)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { pullRequest ->
                     _state.update {
                         it.copy(
@@ -749,12 +861,15 @@ class PullRequestDetailViewModel(
 
     private fun toggleLock() {
         val current = _state.value.pullRequest ?: return
-        if (_state.value.isUpdatingLock) return
+        if (!_state.value.canLock || _state.value.isUpdatingLock) return
         val target = !current.isLocked
         _state.update { it.copy(isUpdatingLock = true, lockUpdateError = false) }
         lockJob?.cancel()
+        val revision = sessionRevision
         lockJob = viewModelScope.launch {
-            issuesRepository.updateIssueLock(owner, name, number, target).fold(
+            val result = issuesRepository.updateIssueLock(owner, name, number, target)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { issue ->
                     _state.update { state ->
                         state.copy(
@@ -811,11 +926,14 @@ class PullRequestDetailViewModel(
     }
 
     private fun updateLabels(names: List<String>) {
-        if (_state.value.isUpdatingLabels) return
+        if (!_state.value.canTriage || _state.value.isUpdatingLabels) return
         _state.update { it.copy(isUpdatingLabels = true, labelsUpdateError = false) }
         labelsUpdateJob?.cancel()
+        val revision = sessionRevision
         labelsUpdateJob = viewModelScope.launch {
-            issuesRepository.updateIssueLabels(owner, name, number, names).fold(
+            val result = issuesRepository.updateIssueLabels(owner, name, number, names)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { issue ->
                     _state.update { state ->
                         state.copy(
@@ -878,11 +996,14 @@ class PullRequestDetailViewModel(
     }
 
     private fun updateAssignees(logins: List<String>) {
-        if (_state.value.isUpdatingAssignees) return
+        if (!_state.value.canTriage || _state.value.isUpdatingAssignees) return
         _state.update { it.copy(isUpdatingAssignees = true, assigneesUpdateError = false) }
         assigneesUpdateJob?.cancel()
+        val revision = sessionRevision
         assigneesUpdateJob = viewModelScope.launch {
-            issuesRepository.updateIssueAssignees(owner, name, number, logins).fold(
+            val result = issuesRepository.updateIssueAssignees(owner, name, number, logins)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { issue ->
                     _state.update { state ->
                         state.copy(
@@ -945,11 +1066,14 @@ class PullRequestDetailViewModel(
     }
 
     private fun updateMilestone(number: Int?) {
-        if (_state.value.isUpdatingMilestone) return
+        if (!_state.value.canTriage || _state.value.isUpdatingMilestone) return
         _state.update { it.copy(isUpdatingMilestone = true, milestoneUpdateError = false) }
         milestoneUpdateJob?.cancel()
+        val revision = sessionRevision
         milestoneUpdateJob = viewModelScope.launch {
-            issuesRepository.updateIssueMilestone(owner, name, this@PullRequestDetailViewModel.number, number).fold(
+            val result = issuesRepository.updateIssueMilestone(owner, name, this@PullRequestDetailViewModel.number, number)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { issue ->
                     _state.update { state ->
                         state.copy(
@@ -968,7 +1092,7 @@ class PullRequestDetailViewModel(
 
     private fun updateRequestedReviewers(logins: List<String>) {
         val pullRequest = _state.value.pullRequest ?: return
-        if (_state.value.isUpdatingReviewers) return
+        if (!_state.value.canRequestReviewers || _state.value.isUpdatingReviewers) return
         val update = GithubRequestedReviewersUpdate.fromInput(
             current = pullRequest.requestedReviewers.map(GithubUserSummary::login),
             requested = logins
@@ -992,8 +1116,11 @@ class PullRequestDetailViewModel(
             )
         }
         reviewersUpdateJob?.cancel()
+        val revision = sessionRevision
         reviewersUpdateJob = viewModelScope.launch {
-            pullRequestsRepository.updateRequestedReviewers(owner, name, number, update).fold(
+            val result = pullRequestsRepository.updateRequestedReviewers(owner, name, number, update)
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { updated ->
                     _state.update { state ->
                         state.copy(
@@ -1022,14 +1149,17 @@ class PullRequestDetailViewModel(
             )
         }
         reactionJobs[action.commentId]?.cancel()
+        val revision = sessionRevision
         reactionJobs[action.commentId] = viewModelScope.launch {
-            issuesRepository.toggleCommentReaction(
+            val result = issuesRepository.toggleCommentReaction(
                 owner = owner,
                 name = name,
                 commentId = action.commentId,
                 content = action.content,
                 viewerLogin = viewerLogin
-            ).fold(
+            )
+            if (!isActive || revision != sessionRevision) return@launch
+            result.fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         val updatedComments = state.comments.map { comment ->
@@ -1080,7 +1210,8 @@ class PullRequestDetailViewModel(
         private val name: String,
         private val number: Int,
         private val pullRequestsRepository: GithubPullRequestsRepository,
-        private val issuesRepository: GithubIssuesRepository
+        private val issuesRepository: GithubIssuesRepository,
+        private val detailsRepository: GithubRepositoryDetailsRepository
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
@@ -1090,7 +1221,8 @@ class PullRequestDetailViewModel(
                 name,
                 number,
                 pullRequestsRepository,
-                issuesRepository
+                issuesRepository,
+                detailsRepository
             ) as T
         }
     }

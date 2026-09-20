@@ -5,11 +5,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -20,6 +22,9 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -33,6 +38,7 @@ import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Public
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.FilterChip
@@ -44,10 +50,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -58,17 +68,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import takagi.ru.monica.R
+import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.design.GithubExpressiveMotion
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.design.GithubExpressiveSizes
@@ -83,7 +101,8 @@ fun GithubUserLink(
     modifier: Modifier = Modifier,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
     color: Color = MaterialTheme.colorScheme.primary,
-    avatarUrl: String? = null
+    avatarUrl: String? = null,
+    maxLines: Int = 1
 ) {
     val navigate = LocalGithubUserNavigator.current
     Row(
@@ -98,7 +117,7 @@ fun GithubUserLink(
             text = login,
             color = color,
             style = style,
-            maxLines = 1,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis
         )
     }
@@ -117,19 +136,18 @@ fun GithubUserMetadataLine(
 ) {
     FlowRow(
         modifier = modifier,
-        verticalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         if (prefix.isNotEmpty()) {
-            Text(prefix, style = style, color = color, maxLines = 1)
+            Text(prefix.trim(), style = style, color = color)
         }
         GithubUserLink(login = login, style = style, avatarUrl = avatarUrl)
         if (suffix.isNotEmpty()) {
             Text(
-                text = suffix,
+                text = suffix.trim(),
                 style = style,
-                color = color,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                color = color
             )
         }
     }
@@ -146,6 +164,7 @@ fun GithubModalBottomSheet(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.surface,
+        shape = GithubExpressiveShapes.prominent,
         content = content
     )
 }
@@ -188,14 +207,19 @@ fun GithubDetailScaffold(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     actions: @Composable RowScope.() -> Unit = {},
+    contentMaxWidth: Dp = GithubAdaptiveLayout.contentMaxWidth,
+    snackbarHostState: SnackbarHostState? = null,
     content: @Composable (PaddingValues) -> Unit
 ) {
+    val separateSubtitle = subtitle != null && LocalDensity.current.fontScale > 1.2f
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets.safeDrawing,
+        snackbarHost = { if (snackbarHostState != null) SnackbarHost(snackbarHostState) },
         topBar = {
-            Column {
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 TopAppBar(
+                    modifier = Modifier.widthIn(max = contentMaxWidth).fillMaxWidth(),
                     navigationIcon = {
                         IconButton(onClick = onBack) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = backContentDescription)
@@ -203,8 +227,13 @@ fun GithubDetailScaffold(
                     },
                     title = {
                         Column {
-                            Text(title, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                            subtitle?.let {
+                            Text(
+                                title,
+                                style = MaterialTheme.typography.titleLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            subtitle?.takeUnless { separateSubtitle }?.let {
                                 Text(
                                     text = it,
                                     style = MaterialTheme.typography.labelMedium,
@@ -220,14 +249,57 @@ fun GithubDetailScaffold(
                         containerColor = MaterialTheme.colorScheme.background
                     )
                 )
+                if (separateSubtitle) {
+                    Text(
+                        text = subtitle.orEmpty(),
+                        modifier = Modifier.widthIn(max = contentMaxWidth).fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
                 GithubServiceStatusNotices(
-                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
+                    modifier = Modifier.widthIn(max = contentMaxWidth)
+                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp)
                 )
             }
         },
         containerColor = MaterialTheme.colorScheme.background,
-        content = content
+        content = { padding ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                Box(Modifier.widthIn(max = contentMaxWidth).fillMaxSize()) {
+                    content(padding)
+                }
+            }
+        }
     )
+}
+
+/** Toolbar refresh action sharing the accessible touch target of the other actions. */
+@Composable
+fun GithubRefreshButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    IconButton(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier
+            .sizeIn(
+                minWidth = GithubExpressiveSizes.minimumTouchTarget,
+                minHeight = GithubExpressiveSizes.minimumTouchTarget
+            )
+            .then(modifier)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Refresh,
+            contentDescription = stringResource(R.string.github_web_refresh),
+            modifier = Modifier.size(GithubExpressiveSizes.standardIcon)
+        )
+    }
 }
 
 @Composable
@@ -258,21 +330,40 @@ fun GithubSectionHeader(
     modifier: Modifier = Modifier,
     action: String? = null,
     onAction: (() -> Unit)? = null,
-    compact: Boolean = false
+    compact: Boolean = false,
+    actionEnabled: Boolean = true
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(top = if (compact) 16.dp else 24.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+    BoxWithConstraints(
+        modifier = modifier.fillMaxWidth().padding(top = if (compact) 16.dp else 24.dp, bottom = 8.dp)
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.weight(1f)
-        )
-        if (action != null && onAction != null) {
-            TextButton(onClick = onAction, contentPadding = PaddingValues(horizontal = 8.dp)) {
-                Text(action, style = MaterialTheme.typography.labelLarge)
+        val heading: @Composable (Modifier) -> Unit = { textModifier ->
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = textModifier.semantics { heading() }
+            )
+        }
+        val actionContent: @Composable () -> Unit = {
+            if (action != null && onAction != null) {
+                TextButton(
+                    onClick = onAction,
+                    enabled = actionEnabled,
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    Text(action, style = MaterialTheme.typography.labelLarge)
+                }
+            }
+        }
+        if (action != null && (maxWidth < 340.dp || LocalDensity.current.fontScale > 1.3f)) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                heading(Modifier.fillMaxWidth())
+                Box(Modifier.align(Alignment.End)) { actionContent() }
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                heading(Modifier.weight(1f))
+                actionContent()
             }
         }
     }
@@ -359,18 +450,40 @@ fun GithubSearchField(
     onValueChange: (String) -> Unit,
     label: String,
     modifier: Modifier = Modifier,
-    trailingIcon: (@Composable () -> Unit)? = null
+    trailingIcon: (@Composable () -> Unit)? = null,
+    compact: Boolean = false
 ) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth(),
-        singleLine = true,
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        trailingIcon = trailingIcon,
-        label = { Text(label) },
-        shape = GithubExpressiveShapes.control
-    )
+    if (compact) {
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier.fillMaxWidth(),
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = trailingIcon,
+            placeholder = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+            shape = GithubExpressiveShapes.control,
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent
+            )
+        )
+    } else {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = modifier.fillMaxWidth(),
+            singleLine = true,
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = trailingIcon,
+            label = { Text(label) },
+            shape = GithubExpressiveShapes.control
+        )
+    }
 }
 
 @Composable
@@ -378,6 +491,7 @@ fun GithubMessageState(
     title: String,
     modifier: Modifier = Modifier,
     color: Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    description: String? = null,
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null
 ) {
@@ -386,6 +500,14 @@ fun GithubMessageState(
         horizontalAlignment = Alignment.Start
     ) {
         Text(title, style = MaterialTheme.typography.bodyLarge, color = color)
+        description?.takeIf(String::isNotBlank)?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+        }
         if (actionLabel != null && onAction != null) {
             TextButton(onClick = onAction, contentPadding = PaddingValues(horizontal = 0.dp, vertical = 8.dp)) {
                 Text(actionLabel)
@@ -412,6 +534,22 @@ fun GithubEmptyState(
     actionLabel: String? = null,
     onAction: (() -> Unit)? = null
 ) {
+    if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        Column(
+            modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 32.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            description?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            if (actionLabel != null && onAction != null) {
+                Button(onClick = onAction) { Text(actionLabel) }
+            }
+        }
+        return
+    }
     Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 36.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -459,6 +597,13 @@ fun GithubEmptyState(
 fun GithubCenteredProgress(
     modifier: Modifier = Modifier
 ) {
+    if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        GithubTechnicalLabel(
+            text = "[${stringResource(R.string.github_loading)}]",
+            modifier = modifier.fillMaxWidth().padding(vertical = 24.dp)
+        )
+        return
+    }
     Box(
         modifier = modifier.fillMaxWidth().padding(vertical = 32.dp),
         contentAlignment = Alignment.Center
@@ -476,6 +621,9 @@ fun GithubRepositoryRow(
     updatedFallback: String,
     modifier: Modifier = Modifier,
     trailingContent: (@Composable () -> Unit)? = null,
+    leadingContent: (@Composable () -> Unit)? = null,
+    showDivider: Boolean = true,
+    onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -489,10 +637,23 @@ fun GithubRepositoryRow(
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .heightIn(min = 56.dp)
             .scale(scale)
-            .clickable(interactionSource = interaction, indication = null, onClick = onClick)
+            .combinedClickable(
+                interactionSource = interaction,
+                indication = null,
+                onLongClick = onLongClick,
+                onClick = onClick,
+                role = Role.Button
+            )
             .padding(vertical = 15.dp)
     ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leadingContent != null) {
+                leadingContent()
+                Spacer(Modifier.width(10.dp))
+            }
+            Column(modifier = Modifier.weight(1f)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = if (repository.isPrivate) Icons.Default.Lock else Icons.Default.Public,
@@ -536,7 +697,11 @@ fun GithubRepositoryRow(
             }
             Text(githubRelativeTimeOrElse(repository.updatedAt, updatedFallback), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        HorizontalDivider(modifier = Modifier.padding(top = 15.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+            }
+        }
+        if (showDivider) {
+            HorizontalDivider(modifier = Modifier.padding(top = 15.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+        }
     }
 }
 
@@ -548,42 +713,42 @@ fun GithubPreferenceRow(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
-    val containerColor by animateColorAsState(
-        targetValue = MaterialTheme.colorScheme.surfaceContainerLow,
-        animationSpec = GithubExpressiveMotion.standardTween(),
-        label = "preferenceColor"
-    )
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .sizeIn(minHeight = GithubExpressiveSizes.minimumTouchTarget)
-            .clickable(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(40.dp).background(containerColor, GithubExpressiveShapes.compact),
-            contentAlignment = Alignment.Center
+    val material = LocalDesignStyle.current == DesignStyle.MATERIAL
+    BoxWithConstraints(modifier = modifier.fillMaxWidth()) {
+        val stacked = value.isNotBlank() &&
+            ((maxWidth / LocalDensity.current.fontScale.coerceAtLeast(1f) < 280.dp && title.length + value.length > 12) || value.length > 18)
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(horizontal = if (material) 16.dp else 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Box(
+                modifier = Modifier.size(if (material) 32.dp else 40.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp))
+            }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Medium)
+                if (stacked) {
+                    Text(value, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            if (!stacked && value.isNotBlank()) {
+                Spacer(Modifier.width(12.dp))
+                Text(value, style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.widthIn(max = 128.dp), maxLines = 1,
+                    overflow = TextOverflow.Ellipsis)
+            }
+            Spacer(Modifier.width(8.dp))
+            Icon(Icons.Default.ChevronRight, contentDescription = null,
+                tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
         }
-        Spacer(Modifier.width(12.dp))
-        Text(
-            title,
-            style = MaterialTheme.typography.bodyLarge,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.weight(1f),
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            value,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.outline, modifier = Modifier.padding(start = 8.dp).size(18.dp))
     }
 }
 
@@ -598,37 +763,78 @@ fun GithubMetadataRow(
             text = value,
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
         )
     }
 ) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier.size(38.dp).background(
-                MaterialTheme.colorScheme.secondaryContainer,
-                GithubExpressiveShapes.compact
-            ),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier = Modifier.size(19.dp)
-            )
+    if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        val fontScale = LocalDensity.current.fontScale
+        BoxWithConstraints(modifier = modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+            if (maxWidth / fontScale < 300.dp) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(title, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(modifier = Modifier.fillMaxWidth(), content = valueContent)
+                }
+            } else {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.Top) {
+                    Text(
+                        title,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(0.35f)
+                    )
+                    Row(modifier = Modifier.weight(0.65f), content = valueContent)
+                }
+            }
         }
-        Spacer(Modifier.width(12.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.weight(1f)
-        )
-        valueContent()
+        return
+    }
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    BoxWithConstraints(modifier = modifier.fillMaxWidth().padding(vertical = 9.dp)) {
+        val stacked = maxWidth / fontScale < 320.dp
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier.size(38.dp).background(
+                    MaterialTheme.colorScheme.secondaryContainer,
+                    GithubExpressiveShapes.compact
+                ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(19.dp)
+                )
+            }
+            if (stacked) {
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), content = valueContent)
+                }
+            } else {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(0.4f)
+                )
+                Row(
+                    modifier = Modifier.weight(0.6f),
+                    horizontalArrangement = Arrangement.End,
+                    content = valueContent
+                )
+            }
+        }
     }
 }
 

@@ -1,5 +1,9 @@
 package takagi.ru.monica.github.feature.organizations
 
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +26,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Public
 import takagi.ru.monica.R
@@ -30,6 +38,7 @@ import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
+import takagi.ru.monica.github.component.GithubPullToRefreshBox
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubOrganization
 
@@ -43,6 +52,7 @@ fun OrganizationsScreen(
     modifier: Modifier = Modifier
 ) {
     GithubDetailScaffold(
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = stringResource(R.string.github_organizations),
         subtitle = stringResource(R.string.github_organizations_subtitle),
         backContentDescription = stringResource(R.string.github_back),
@@ -54,14 +64,20 @@ fun OrganizationsScreen(
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        GithubPullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onAction(OrganizationsAction.Refresh) },
+            enabled = !state.isLoading && !state.isLoadingMore,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+          Column(modifier = Modifier.fillMaxSize()) {
             GithubListLoadingState(
                 isLoading = state.isLoading,
                 hasItems = state.items.isNotEmpty(),
                 row = GithubSkeletonRow.LIST,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
-            LazyColumn(
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
             ) {
@@ -71,7 +87,7 @@ fun OrganizationsScreen(
                         onClick = { onOpenOrganization(organization) }
                     )
                 }
-                item(key = "list-status") {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
                         itemCount = state.items.size,
                         isInitialLoading = state.isLoading,
@@ -86,6 +102,7 @@ fun OrganizationsScreen(
                     )
                 }
             }
+          }
         }
     }
 }
@@ -99,7 +116,11 @@ private fun OrganizationRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable(role = Role.Button, onClick = onClick)
+            .heightIn(min = 56.dp)
+            .semantics(mergeDescendants = true) {
+                contentDescription = organization.login
+            }
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

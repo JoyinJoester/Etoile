@@ -4,12 +4,12 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-import com.google.android.material.color.utilities.DynamicColor
-import com.google.android.material.color.utilities.DynamicScheme
-import com.google.android.material.color.utilities.Hct
-import com.google.android.material.color.utilities.MaterialDynamicColors
-import com.google.android.material.color.utilities.TonalPalette
-import com.google.android.material.color.utilities.Variant
+import com.materialkolor.dynamiccolor.DynamicColor
+import com.materialkolor.scheme.DynamicScheme
+import com.materialkolor.hct.Hct
+import com.materialkolor.dynamiccolor.MaterialDynamicColors
+import com.materialkolor.palettes.TonalPalette
+import com.materialkolor.scheme.Variant
 
 private fun Long.toArgbInt(): Int = toInt()
 

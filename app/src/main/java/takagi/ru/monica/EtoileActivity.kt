@@ -19,7 +19,7 @@ class EtoileActivity : BaseMonicaActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        pendingGithubUrl.value = intent?.data?.toString()?.takeIf { GithubLinkRouter.parse(it) != null }
+        pendingGithubUrl.value = intent?.data?.toString()?.takeIf(::isSupportedIncomingUrl)
         setContent {
             val settings by settingsManager.settingsFlow.collectAsState(initial = AppSettings())
             val githubUrl by pendingGithubUrl.collectAsState()
@@ -43,8 +43,12 @@ class EtoileActivity : BaseMonicaActivity() {
                     settings = settings,
                     settingsManager = settingsManager,
                     initialGithubUrl = githubUrl,
+                    onExit = { finish() },
                     onGithubUrlConsumed = { url ->
                         if (pendingGithubUrl.value == url) pendingGithubUrl.value = null
+                        if (intent?.data?.toString() == url) {
+                            setIntent(Intent(intent).setData(null))
+                        }
                     }
                 )
             }
@@ -54,6 +58,13 @@ class EtoileActivity : BaseMonicaActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        pendingGithubUrl.value = intent.data?.toString()?.takeIf { GithubLinkRouter.parse(it) != null }
+        pendingGithubUrl.value = intent.data?.toString()?.takeIf(::isSupportedIncomingUrl)
+    }
+
+    private fun isSupportedIncomingUrl(url: String): Boolean {
+        val uri = runCatching { android.net.Uri.parse(url) }.getOrNull() ?: return false
+        val isOAuthCallback = uri.scheme.equals("etoile", ignoreCase = true) &&
+            uri.host.equals("oauth", ignoreCase = true)
+        return isOAuthCallback || GithubLinkRouter.parse(url) != null
     }
 }

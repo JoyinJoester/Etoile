@@ -70,14 +70,13 @@ class GithubApiRepositorySearchRepositoryTest {
     }
 
     @Test
-    fun searchUsesCachedPageWhenGithubReturnsNotModified() = runTest {
+    fun repeatedSearchUsesFreshCachedPageWithoutAnotherRequest() = runTest {
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
                 .setHeader("ETag", "\"search-v1\"")
                 .setBody(SEARCH_JSON)
         )
-        server.enqueue(MockResponse().setResponseCode(304))
         val cache = TestGithubCacheStore()
         val repository = GithubApiRepositorySearchRepository(
             requests = GithubAuthenticatedRequests(FakeTokenStore()),
@@ -90,8 +89,7 @@ class GithubApiRepositorySearchRepositoryTest {
         val second = repository.search("compose").getOrThrow()
 
         assertEquals(first.items, second.items)
-        server.takeRequest()
-        assertEquals("\"search-v1\"", server.takeRequest().getHeader("If-None-Match"))
+        assertEquals(1, server.requestCount)
     }
 
     private class FakeTokenStore : GithubTokenStore {

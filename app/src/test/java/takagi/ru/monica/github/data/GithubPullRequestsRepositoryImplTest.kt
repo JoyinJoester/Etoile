@@ -1,6 +1,8 @@
 package takagi.ru.monica.github.data
 
 import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.*
+import takagi.ru.monica.github.domain.GithubCreatePullRequestDraft
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -23,6 +25,86 @@ import takagi.ru.monica.github.domain.GithubReviewState
 import takagi.ru.monica.github.domain.GithubSortDirection
 
 class GithubPullRequestsRepositoryImplTest {
+    @Test fun comparisonResolvesTheExplicitForkBeforeComparingItsCommit() = runTest {
+        val sha = "a".repeat(40)
+        server.enqueue(MockResponse().setBody("""{"sha":"$sha"}"""))
+        server.enqueue(MockResponse().setBody("""{"status":"ahead","ahead_by":1,"behind_by":0,"total_commits":1,"files":[]}"""))
+        assertEquals(1, repository().compare("upstream", "project", "main", "alice:feature/mobile", "renamed-fork").getOrThrow().aheadBy)
+        val resolve = server.takeRequest()
+        assertEquals(listOf("repos", "alice", "renamed-fork", "commits", "feature/mobile"), resolve.requestUrl!!.pathSegments)
+        assertEquals("GET", resolve.method)
+        val compare = server.takeRequest()
+        assertEquals(listOf("repos", "upstream", "project", "compare", "main...$sha"), compare.requestUrl!!.pathSegments)
+    }
+
+    @Test fun inaccessibleOrMalformedForkDoesNotFallBackToAnotherSource() = runTest {
+        server.enqueue(MockResponse().setResponseCode(404))
+        assertTrue(repository().compare("upstream", "project", "main", "alice:feature", "private-fork").isFailure)
+        assertEquals(1, server.requestCount)
+        server.enqueue(MockResponse().setBody("""{"sha":"feature"}"""))
+        assertTrue(repository().compare("upstream", "project", "main", "alice:feature", "fork").isFailure)
+        assertEquals(2, server.requestCount)
+        assertTrue(repository().compare("upstream", "project", "main", "feature", "fork").isFailure)
+        assertEquals(2, server.requestCount)
+    }
+    @Test fun comparisonEncodesBranchNamesAndMapsFiles() = runTest {
+        server.enqueue(MockResponse().setBody("""{"status":"diverged","ahead_by":2,"behind_by":1,"total_commits":2,"files":$FILES_JSON}"""))
+        val result = repository().compare("openai", "codex", "release/stable", "alice:feature/mobile").getOrThrow()
+        assertEquals(2, result.aheadBy)
+        assertEquals(1, result.behindBy)
+        assertEquals("app/Main.kt", result.files.single().filename)
+        assertFalse(result.fileLimitReached)
+        val request = server.takeRequest()
+        assertEquals("GET", request.method)
+        assertEquals("release/stable...alice:feature/mobile", request.requestUrl!!.pathSegments.last())
+        assertEquals("1", request.requestUrl!!.queryParameter("page"))
+        assertEquals("1", request.requestUrl!!.queryParameter("per_page"))
+        assertTrue(request.path!!.contains("%2F"))
+        assertTrue(repository().compare("openai", "codex", "main", "main").isFailure)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun comparisonReportsFileLimitAndPermissionFailure() = runTest {
+        val file = Json.parseToJsonElement(FILES_JSON).jsonArray.first()
+        val files = JsonArray(List(300) { file })
+        server.enqueue(MockResponse().setBody("""{"status":"ahead","ahead_by":1,"behind_by":0,"total_commits":1,"files":$files}"""))
+        assertTrue(repository().compare("openai", "codex", "main", "feature").getOrThrow().fileLimitReached)
+        assertEquals("1", server.takeRequest().requestUrl!!.queryParameter("per_page"))
+        server.enqueue(MockResponse().setBody("""{"status":"ahead","ahead_by":1,"behind_by":0,"total_commits":1,"files":[]}"""))
+        assertTrue(repository().compare("openai", "codex", "main", "feature", perPage = 500).isSuccess)
+        assertEquals("100", server.takeRequest().requestUrl!!.queryParameter("per_page"))
+        server.enqueue(MockResponse().setResponseCode(404))
+        assertTrue(repository().compare("openai", "codex", "main", "missing").isFailure)
+    }
+    @Test fun createsDraftPullRequestWithExplicitForkAndMaintainerSettings() = runTest {
+        server.enqueue(MockResponse().setResponseCode(201).setBody(PULL_REQUEST_JSON))
+        val draft = GithubCreatePullRequestDraft.fromInput(" New PR ", "Description", "main", "alice:feature/mobile", true, true, "fork").getOrThrow()
+        val created = repository().create("openai", "codex", draft).getOrThrow()
+        assertEquals(7, created.number)
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/repos/openai/codex/pulls", request.path)
+        val payload = Json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertEquals("New PR", payload.getValue("title").jsonPrimitive.content)
+        assertEquals("Description", payload.getValue("body").jsonPrimitive.content)
+        assertEquals("main", payload.getValue("base").jsonPrimitive.content)
+        assertEquals("alice:feature/mobile", payload.getValue("head").jsonPrimitive.content)
+        assertEquals("fork", payload.getValue("head_repo").jsonPrimitive.content)
+        assertTrue(payload.getValue("draft").jsonPrimitive.boolean)
+        assertTrue(payload.getValue("maintainer_can_modify").jsonPrimitive.boolean)
+    }
+
+    @Test fun creatingDoesNotReportSuccessOnValidationOrPermissionErrors() = runTest {
+        val draft = GithubCreatePullRequestDraft.fromInput("Title", "", "main", "feature").getOrThrow()
+        for (status in listOf(403, 422)) {
+            server.enqueue(MockResponse().setResponseCode(status).setBody("""{"message":"rejected"}"""))
+            val result = repository().create("openai", "codex", draft)
+            assertTrue(result.exceptionOrNull() is GithubApiException)
+            val payload = Json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+            assertFalse(payload.containsKey("head_repo"))
+            assertFalse(payload.getValue("maintainer_can_modify").jsonPrimitive.boolean)
+        }
+    }
     private lateinit var server: MockWebServer
 
     @Before

@@ -2,6 +2,7 @@
 agp = "8.13.2"
 kotlin = "2.4.10"
 coreKtx = "1.10.1"
+browser = "1.9.0"
 kotlinxSerialization = "1.9.0"
 junit = "4.13.2"
 lifecycleRuntimeKtx = "2.8.7"
@@ -17,9 +18,12 @@ coroutines = "1.10.2"
 datastore = "1.0.0"
 fragment = "1.6.2"
 material = "1.11.0"
+materialColorUtilities = "2.0.2"
+snakeyaml = "2.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "browser" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
@@ -47,6 +51,8 @@ androidx-datastore-preferences = { group = "androidx.datastore", name = "datasto
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 androidx-fragment-ktx = { group = "androidx.fragment", name = "fragment-ktx", version.ref = "fragment" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+material-color-utilities = { group = "com.materialkolor", name = "material-color-utilities", version.ref = "materialColorUtilities" }
+snakeyaml = { group = "org.yaml", name = "snakeyaml", version.ref = "snakeyaml" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

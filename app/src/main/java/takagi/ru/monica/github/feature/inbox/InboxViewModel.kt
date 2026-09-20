@@ -16,12 +16,15 @@ import takagi.ru.monica.github.domain.GithubNotificationsRepository
 import takagi.ru.monica.github.domain.mergeItems
 import takagi.ru.monica.github.domain.GithubSession
 
-enum class InboxFilter { ALL, MENTIONS, REVIEWS }
+enum class InboxFilter { UNREAD, MENTIONS, REVIEWS, READ }
+
+/** Only the read view needs threads the server marks as read, so it needs a different query. */
+val InboxFilter.includeRead: Boolean get() = this == InboxFilter.READ
 
 @Immutable
 data class InboxUiState(
     val items: List<GithubNotification> = emptyList(),
-    val selectedFilter: InboxFilter = InboxFilter.ALL,
+    val selectedFilter: InboxFilter = InboxFilter.UNREAD,
     val unreadIds: Set<String> = emptySet(),
     val nextPage: Int? = null,
     val isLoading: Boolean = false,
@@ -34,18 +37,18 @@ data class InboxUiState(
     val triageBusyIds: Set<String> = emptySet(),
     val triageErrorIds: Set<String> = emptySet()
 ) {
+    // unreadIds is the single source of read state: it also drives the row dot and optimistic
+    // marking, so a thread leaves the unread views the moment it is opened.
+    private val unreadItems: List<GithubNotification>
+        get() = items.filter { it.id in unreadIds }
+
     val visibleItems: List<GithubNotification>
         get() = when (selectedFilter) {
-            InboxFilter.ALL -> items
-            InboxFilter.MENTIONS -> items.filter { it.reason == GithubNotificationReason.MENTION }
-            InboxFilter.REVIEWS -> items.filter { it.reason == GithubNotificationReason.REVIEW_REQUESTED }
+            InboxFilter.UNREAD -> unreadItems
+            InboxFilter.MENTIONS -> unreadItems.filter { it.reason == GithubNotificationReason.MENTION }
+            InboxFilter.REVIEWS -> unreadItems.filter { it.reason == GithubNotificationReason.REVIEW_REQUESTED }
+            InboxFilter.READ -> items.filterNot { it.id in unreadIds }
         }
-
-    val needsAttentionCount: Int
-        get() = items.count { it.reason == GithubNotificationReason.REVIEW_REQUESTED || it.reason == GithubNotificationReason.ASSIGN }
-
-    val assignedCount: Int
-        get() = items.count { it.reason == GithubNotificationReason.ASSIGN }
 
     val canLoadMore: Boolean
         get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
@@ -71,8 +74,11 @@ class InboxViewModel(
     private var loadJob: Job? = null
     private val triageJobs = mutableMapOf<String, Job>()
     private var sessionLogin: String? = null
+    private var sessionRevision = 0L
 
     fun onSessionChanged(session: GithubSession) {
+        sessionRevision++
+        loadJob?.cancel()
         when (session) {
             GithubSession.Loading -> {
                 cancelTriageJobs()
@@ -121,7 +127,11 @@ class InboxViewModel(
 
     fun onAction(action: InboxAction) {
         when (action) {
-            is InboxAction.SelectFilter -> _state.update { it.copy(selectedFilter = action.filter) }
+            is InboxAction.SelectFilter -> {
+                val reloadRequired = _state.value.selectedFilter.includeRead != action.filter.includeRead
+                _state.update { it.copy(selectedFilter = action.filter) }
+                if (reloadRequired) refresh(preserveExisting = false)
+            }
             is InboxAction.OpenNotification -> markRead(action.id)
             is InboxAction.MarkDone -> triage(action.id) { repository.markDone(action.id) }
             is InboxAction.Unsubscribe -> triage(action.id) {
@@ -141,6 +151,7 @@ class InboxViewModel(
         val current = _state.value
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
+        val includeRead = current.selectedFilter.includeRead
         loadJob?.cancel()
         _state.update {
             it.copy(
@@ -157,7 +168,7 @@ class InboxViewModel(
             )
         }
         loadJob = viewModelScope.launch {
-            repository.notifications(page = requestedPage).fold(
+            repository.notifications(page = requestedPage, includeRead = includeRead).fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         val pageUnreadIds = page.items
@@ -192,13 +203,20 @@ class InboxViewModel(
 
     private fun markRead(id: String) {
         if (id !in _state.value.unreadIds) return
+        val revision = sessionRevision
         _state.update { it.copy(unreadIds = it.unreadIds - id) }
         viewModelScope.launch {
             repository.markRead(id).fold(
-                onSuccess = { _state.update { it.copy(actionError = false) } },
+                onSuccess = {
+                    if (revision == sessionRevision) _state.update { it.copy(actionError = false) }
+                },
                 onFailure = {
+                    if (revision != sessionRevision) return@fold
                     _state.update { state ->
-                        state.copy(unreadIds = state.unreadIds + id, actionError = true)
+                        state.copy(
+                            unreadIds = if (state.items.any { it.id == id }) state.unreadIds + id else state.unreadIds,
+                            actionError = true
+                        )
                     }
                 }
             )
@@ -206,15 +224,22 @@ class InboxViewModel(
     }
 
     private fun markAllRead() {
+        val revision = sessionRevision
         val previous = _state.value.unreadIds
         if (previous.isEmpty()) return
         _state.update { it.copy(unreadIds = emptySet()) }
         viewModelScope.launch {
             repository.markAllRead().fold(
-                onSuccess = { _state.update { it.copy(actionError = false) } },
+                onSuccess = {
+                    if (revision == sessionRevision) _state.update { it.copy(actionError = false) }
+                },
                 onFailure = {
+                    if (revision != sessionRevision) return@fold
                     _state.update { state ->
-                        state.copy(unreadIds = previous, actionError = true)
+                        state.copy(
+                            unreadIds = state.unreadIds + previous.intersect(state.items.map { it.id }.toSet()),
+                            actionError = true
+                        )
                     }
                 }
             )

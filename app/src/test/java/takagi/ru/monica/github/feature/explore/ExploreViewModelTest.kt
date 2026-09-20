@@ -1,11 +1,14 @@
 package takagi.ru.monica.github.feature.explore
 
+import androidx.lifecycle.SavedStateHandle
+
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -24,6 +27,11 @@ import takagi.ru.monica.github.domain.GithubIssueSearchResult
 import takagi.ru.monica.github.domain.GithubIssueSearchType
 import takagi.ru.monica.github.domain.GithubIssueState
 import takagi.ru.monica.github.domain.GithubUserSummary
+import takagi.ru.monica.github.domain.GithubAccount
+import takagi.ru.monica.github.domain.GithubSession
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ExploreViewModelTest {
@@ -40,6 +48,60 @@ class ExploreViewModelTest {
     }
 
     @Test
+    fun restoredQueryLoadsFirstPageInsteadOfDefaultRecommendations() = runTest(dispatcher) {
+        val fake = FakeSearchRepository { _, _ -> Result.success(GithubPage(emptyList(), null)) }
+        val handle = SavedStateHandle()
+        val original = ExploreViewModel(fake, savedStateHandle = handle)
+        original.onAction(ExploreAction.QueryChanged(" language:kotlin stars:>1000 "))
+        advanceUntilIdle()
+        fake.queries.clear()
+        val restoredHandle = SavedStateHandle(handle.keys().associateWith { handle.get<Any?>(it) })
+        val restored = ExploreViewModel(fake, savedStateHandle = restoredHandle)
+        advanceUntilIdle()
+        assertEquals(" language:kotlin stars:>1000 ", restored.state.value.query)
+        assertEquals(listOf("language:kotlin stars:>1000" to 1), fake.queries)
+    }
+
+    @Test
+    fun restoredEmptyUserSearchDoesNotRequestRepositoryRecommendations() = runTest(dispatcher) {
+        val fake = FakeSearchRepository { _, _ -> Result.success(GithubPage(emptyList(), null)) }
+        val handle = SavedStateHandle(mapOf("searchKind" to "USERS"))
+        val restored = ExploreViewModel(fake, savedStateHandle = handle)
+        advanceUntilIdle()
+        assertEquals(ExploreSearchKind.USERS, restored.state.value.searchKind)
+        assertFalse(restored.state.value.isLoading)
+        assertTrue(fake.queries.isEmpty())
+    }
+
+    @Test
+    fun topicSelectionSurvivesRecreation() = runTest(dispatcher) {
+        val fake = FakeSearchRepository { _, _ -> Result.success(GithubPage(emptyList(), null)) }
+        val handle = SavedStateHandle()
+        val original = ExploreViewModel(fake, savedStateHandle = handle)
+        original.onAction(ExploreAction.TopicSelected(ExploreTopic.COMPOSE))
+        advanceUntilIdle()
+        fake.queries.clear()
+        val restored = ExploreViewModel(fake, savedStateHandle = SavedStateHandle(
+            handle.keys().associateWith { handle.get<Any?>(it) }
+        ))
+        advanceUntilIdle()
+        assertEquals(ExploreTopic.COMPOSE, restored.state.value.selectedTopic)
+        assertEquals(listOf(ExploreTopic.COMPOSE.query() to 1), fake.queries)
+    }
+
+    @Test
+    fun obsoleteSavedFiltersFallBackWithoutDiscardingQuery() = runTest(dispatcher) {
+        val fake = FakeSearchRepository { _, _ -> Result.success(GithubPage(emptyList(), null)) }
+        val restored = ExploreViewModel(fake, savedStateHandle = SavedStateHandle(mapOf(
+            "query" to "compose", "searchKind" to "REMOVED_KIND", "topic" to "REMOVED_TOPIC"
+        )))
+        advanceUntilIdle()
+        assertEquals(ExploreSearchKind.REPOSITORIES, restored.state.value.searchKind)
+        assertEquals(ExploreTopic.FOR_YOU, restored.state.value.selectedTopic)
+        assertEquals(listOf("compose" to 1), fake.queries)
+    }
+
+    @Test
     fun defaultTopicLoadsRealCuratedRepositories() = runTest(dispatcher) {
         val expected = repository(id = 7, fullName = "android/nowinandroid")
         val fake = FakeSearchRepository { _, _ -> Result.success(GithubPage(listOf(expected), null)) }
@@ -47,7 +109,11 @@ class ExploreViewModelTest {
         val viewModel = ExploreViewModel(fake)
         advanceUntilIdle()
 
-        assertEquals(listOf("stars:>1000 sort:stars-desc" to 1), fake.queries)
+        // FOR_YOU 跟踪近 30 天冒出的新星仓库：created:>date stars:>50 sort:stars-desc
+        val (query, page) = fake.queries.single()
+        assertTrue("expected a created:> date filter, got: $query", query.startsWith("created:>"))
+        assertTrue(query.endsWith("stars:>50 sort:stars-desc"))
+        assertEquals(1, page)
         assertEquals(listOf(expected), viewModel.state.value.repositories)
         assertTrue(viewModel.state.value.isCurated)
     }
@@ -175,6 +241,184 @@ class ExploreViewModelTest {
         assertTrue(viewModel.state.value.users.isEmpty())
         assertTrue(viewModel.state.value.code.isEmpty())
     }
+
+    @Test
+    fun switchingAccountsClearsPrivateResultsAndReloadsThePreservedQuery() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(repository, savedStateHandle = SavedStateHandle(mapOf("query" to " compose ")))
+        viewModel.onSessionChanged(signedIn(1, "alice"))
+        runCurrent()
+        repository.requests[0].complete(listOf(repository(1, "alice/private-compose").copy(isPrivate = true)), 2)
+        runCurrent()
+
+        viewModel.onSessionChanged(signedIn(2, "bob"))
+        assertEquals(" compose ", viewModel.state.value.query)
+        assertEquals(ExploreSearchKind.REPOSITORIES, viewModel.state.value.searchKind)
+        assertTrue(viewModel.state.value.repositories.isEmpty())
+        assertEquals(null, viewModel.state.value.nextPage)
+        assertTrue(viewModel.state.value.isLoading)
+        runCurrent()
+        assertEquals(listOf("compose" to 1, "compose" to 1), repository.requests.map { it.query to it.page })
+        repository.requests[1].complete(listOf(repository(2, "bob/compose")))
+        runCurrent()
+        assertEquals(listOf("bob/compose"), viewModel.state.value.repositories.map { it.fullName })
+    }
+
+    @Test
+    fun logoutClearsPrivateResultsAndDiscardsLatePaginationFromTheOldAccount() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(repository, savedStateHandle = SavedStateHandle(mapOf("query" to "compose")))
+        viewModel.onSessionChanged(signedIn(1, "alice"))
+        runCurrent()
+        repository.requests[0].complete(listOf(repository(1, "alice/private-compose").copy(isPrivate = true)), 2)
+        runCurrent()
+        viewModel.onAction(ExploreAction.LoadMore)
+        runCurrent()
+
+        viewModel.onSessionChanged(GithubSession.SignedOut)
+        assertTrue(viewModel.state.value.repositories.isEmpty())
+        assertEquals(null, viewModel.state.value.nextPage)
+        assertFalse(viewModel.state.value.isLoadingMore)
+        runCurrent()
+        repository.requests[2].complete(listOf(repository(3, "public/compose")))
+        runCurrent()
+        repository.requests[1].complete(listOf(repository(2, "alice/another-private").copy(isPrivate = true)), 3)
+        runCurrent()
+
+        assertEquals(listOf("public/compose"), viewModel.state.value.repositories.map { it.fullName })
+        assertEquals("compose", viewModel.state.value.query)
+        assertEquals(null, viewModel.state.value.nextPage)
+        assertFalse(viewModel.state.value.error)
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun lateFirstPageFromTheOldAccountCannotReplaceCurrentResults() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(repository)
+        viewModel.onSessionChanged(signedIn(1, "alice"))
+        runCurrent()
+        viewModel.onSessionChanged(signedIn(2, "bob"))
+        runCurrent()
+        repository.requests[1].complete(listOf(repository(2, "bob/current")))
+        runCurrent()
+        repository.requests[0].complete(listOf(repository(1, "alice/previous")))
+        runCurrent()
+
+        assertEquals(listOf("bob/current"), viewModel.state.value.repositories.map { it.fullName })
+        assertFalse(viewModel.state.value.isLoading)
+        assertFalse(viewModel.state.value.error)
+    }
+
+    @Test
+    fun unresolvedSessionPausesRequestsAndResumesTheSelectedTopic() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(repository)
+        viewModel.onSessionChanged(GithubSession.Loading)
+        viewModel.onAction(ExploreAction.TopicSelected(ExploreTopic.COMPOSE))
+        runCurrent()
+        assertTrue(repository.requests.isEmpty())
+        assertTrue(viewModel.state.value.repositories.isEmpty())
+
+        val session = signedIn(1, "alice")
+        viewModel.onSessionChanged(session)
+        runCurrent()
+        assertEquals(ExploreTopic.COMPOSE.query(), repository.requests.single().query)
+        repository.requests[0].complete(listOf(repository(1, "android/compose")))
+        runCurrent()
+        viewModel.onSessionChanged(session.copy(account = session.account.copy(followers = 2)))
+        runCurrent()
+        assertEquals(1, repository.requests.size)
+        assertEquals(ExploreTopic.COMPOSE, viewModel.state.value.selectedTopic)
+    }
+
+    @Test
+    fun switchingToRepositoryScopeShowsLoadingThroughoutTheDebounceAndRequest() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(
+            repository,
+            FakeGlobalSearchRepository(),
+            SavedStateHandle(mapOf("query" to "codex", "searchKind" to "USERS"))
+        )
+        advanceUntilIdle()
+        assertFalse(viewModel.state.value.isLoading)
+
+        viewModel.onAction(ExploreAction.SearchKindSelected(ExploreSearchKind.REPOSITORIES))
+        assertTrue(viewModel.state.value.isLoading)
+        assertTrue(viewModel.state.value.users.isEmpty())
+        advanceTimeBy(349)
+        assertTrue(viewModel.state.value.isLoading)
+        assertTrue(repository.requests.isEmpty())
+        advanceTimeBy(1)
+        runCurrent()
+        assertEquals("codex", repository.requests.single().query)
+        assertTrue(viewModel.state.value.isLoading)
+        repository.requests[0].complete(listOf(repository(42, "openai/codex")))
+        runCurrent()
+        assertFalse(viewModel.state.value.isLoading)
+        assertEquals(listOf("openai/codex"), viewModel.state.value.repositories.map { it.fullName })
+    }
+
+    @Test
+    fun lateFailureFromCancelledQueryDoesNotReplaceNewResultsWithAnError() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(repository)
+        viewModel.onAction(ExploreAction.QueryChanged("old"))
+        advanceTimeBy(350)
+        runCurrent()
+        viewModel.onAction(ExploreAction.QueryChanged("new"))
+        advanceTimeBy(350)
+        runCurrent()
+        repository.requests[1].complete(listOf(repository(2, "public/new")))
+        runCurrent()
+        repository.requests[0].fail()
+        runCurrent()
+
+        assertEquals("new", viewModel.state.value.query)
+        assertEquals(listOf("public/new"), viewModel.state.value.repositories.map { it.fullName })
+        assertFalse(viewModel.state.value.error)
+        assertFalse(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun lateRepositoryResponseCannotPopulateTheSelectedUserScope() = runTest(dispatcher) {
+        val repository = ControlledSearchRepository()
+        val viewModel = ExploreViewModel(repository, FakeGlobalSearchRepository())
+        runCurrent()
+        viewModel.onAction(ExploreAction.SearchKindSelected(ExploreSearchKind.USERS))
+        viewModel.onAction(ExploreAction.QueryChanged("joy"))
+        advanceTimeBy(350)
+        runCurrent()
+        repository.requests[0].complete(listOf(repository(1, "previous/repository")))
+        runCurrent()
+
+        assertEquals(ExploreSearchKind.USERS, viewModel.state.value.searchKind)
+        assertEquals(listOf("joyins"), viewModel.state.value.users.map { it.login })
+        assertTrue(viewModel.state.value.repositories.isEmpty())
+        assertFalse(viewModel.state.value.error)
+    }
+
+    private class ControlledSearchRepository : GithubRepositorySearchRepository {
+        val requests = mutableListOf<PendingSearch>()
+
+        // Allows old callbacks to arrive after cancellation, including an in-flight pagination request.
+        override suspend fun search(query: String, page: Int, perPage: Int): Result<GithubPage<GithubRepository>> =
+            suspendCoroutine { requests += PendingSearch(query, page, it) }
+    }
+
+    private class PendingSearch(
+        val query: String,
+        val page: Int,
+        private val continuation: Continuation<Result<GithubPage<GithubRepository>>>
+    ) {
+        fun complete(items: List<GithubRepository>, nextPage: Int? = null) =
+            continuation.resume(Result.success(GithubPage(items, nextPage)))
+        fun fail() = continuation.resume(Result.failure(IllegalStateException("offline")))
+    }
+
+    private fun signedIn(id: Long, login: String) = GithubSession.SignedIn(
+        GithubAccount(id, login, login, null, "https://avatars.example/$login", "https://github.com/$login", 1, 1, 1)
+    )
 
     private class FakeSearchRepository(
         private val result: suspend (String, Int) -> Result<GithubPage<GithubRepository>>

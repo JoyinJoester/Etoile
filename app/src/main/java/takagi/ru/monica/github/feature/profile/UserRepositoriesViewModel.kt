@@ -20,12 +20,14 @@ data class UserRepositoriesUiState(
     val nextPage: Int? = null,
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
+    val isRefreshing: Boolean = false,
     val error: Boolean = false
 ) {
-    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isLoadingMore
+    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
 }
 
 sealed interface UserRepositoriesAction {
+    data object Refresh : UserRepositoriesAction
     data object Retry : UserRepositoriesAction
     data object LoadMore : UserRepositoriesAction
 }
@@ -36,6 +38,7 @@ class UserRepositoriesViewModel(
     private val _state = MutableStateFlow(UserRepositoriesUiState())
     val state: StateFlow<UserRepositoriesUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
+    private var failedReset = true
 
     init {
         load(reset = true)
@@ -43,21 +46,26 @@ class UserRepositoriesViewModel(
 
     fun onAction(action: UserRepositoriesAction) {
         when (action) {
-            UserRepositoriesAction.Retry -> load(reset = _state.value.items.isEmpty())
+            UserRepositoriesAction.Refresh -> load(reset = true, refreshing = true)
+            UserRepositoriesAction.Retry -> load(
+                reset = failedReset,
+                refreshing = failedReset && _state.value.items.isNotEmpty()
+            )
             UserRepositoriesAction.LoadMore -> load(reset = false)
         }
     }
 
-    private fun load(reset: Boolean) {
+    private fun load(reset: Boolean, refreshing: Boolean = false) {
         val current = _state.value
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
         _state.update {
             it.copy(
-                items = if (reset) emptyList() else it.items,
-                isLoading = reset,
+                items = if (reset && !refreshing) emptyList() else it.items,
+                isLoading = reset && !refreshing,
                 isLoadingMore = !reset,
+                isRefreshing = refreshing,
                 error = false
             )
         }
@@ -70,12 +78,14 @@ class UserRepositoriesViewModel(
                             nextPage = page.nextPage,
                             isLoading = false,
                             isLoadingMore = false,
+                            isRefreshing = false,
                             error = false
                         )
                     }
                 },
                 onFailure = {
-                    _state.update { it.copy(isLoading = false, isLoadingMore = false, error = true) }
+                    failedReset = reset
+                    _state.update { it.copy(isLoading = false, isLoadingMore = false, isRefreshing = false, error = true) }
                 }
             )
         }

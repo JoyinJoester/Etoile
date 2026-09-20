@@ -63,6 +63,21 @@ class CommitsViewModelTest {
     }
 
     @Test
+    fun refreshKeepsExistingCommitsAndUsesRefreshRepositoryPath() = runTest(dispatcher) {
+        val repository = FakeCommitsRepository()
+        val viewModel = CommitsViewModel("openai", "codex", "main", repository)
+        advanceUntilIdle()
+
+        viewModel.onAction(CommitsAction.Refresh)
+        assertTrue(viewModel.state.value.isRefreshing)
+        advanceUntilIdle()
+
+        assertEquals(listOf(1), repository.refreshRequests)
+        assertEquals(1, viewModel.state.value.items.size)
+        assertFalse(viewModel.state.value.isRefreshing)
+    }
+
+    @Test
     fun detailLoadsCommitAndFileChanges() = runTest(dispatcher) {
         val repository = FakeCommitsRepository()
         val viewModel = CommitDetailViewModel("openai", "codex", SHA_PREFIX + "9", repository)
@@ -76,6 +91,7 @@ class CommitsViewModelTest {
     private class FakeCommitsRepository : GithubCommitsRepository {
         val requests = mutableListOf<Pair<String, Int>>()
         val detailShas = mutableListOf<String>()
+        val refreshRequests = mutableListOf<Int>()
         var failSecondPage = false
 
         override suspend fun commits(
@@ -95,6 +111,17 @@ class CommitsViewModelTest {
                     nextPage = if (page == 1) 2 else null
                 )
             )
+        }
+
+        override suspend fun refreshCommits(
+            owner: String,
+            name: String,
+            ref: String,
+            page: Int,
+            perPage: Int
+        ): Result<GithubPage<GithubCommit>> {
+            refreshRequests += page
+            return commits(owner, name, ref, page, perPage)
         }
 
         override suspend fun commit(owner: String, name: String, sha: String): Result<GithubCommitDetails> {

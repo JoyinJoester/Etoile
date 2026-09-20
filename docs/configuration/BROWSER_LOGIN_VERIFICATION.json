@@ -1,0 +1,54 @@
+{
+  "date": "2026-09-17",
+  "build": "15",
+  "unitTests": {
+    "tests": 430,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 113
+  },
+  "nativeChecks": [
+    {
+      "check": "Device flow shows a copyable code before browser launch; no permission request or notification when denied",
+      "result": "PASS"
+    },
+    {
+      "check": "The same device authorization can open in the embedded WebView",
+      "result": "PASS"
+    },
+    {
+      "check": "Granted notification permission posts a notification; tapping it copies the code and dismisses it",
+      "result": "PASS"
+    },
+    {
+      "check": "Completing the device flow removes its notification",
+      "result": "PASS"
+    },
+    {
+      "check": "Configured OAuth has no code page or notification; reopening preserves the authorization request",
+      "result": "PASS"
+    },
+    {
+      "check": "Browser launch failure remains recoverable through the embedded choice",
+      "result": "PASS"
+    },
+    {
+      "check": "The device code remains reachable at 320dp and 150 percent font size",
+      "result": "PASS"
+    }
+  ],
+  "installedBrowserCheck": {
+    "result": "PASS",
+    "browser": "com.android.chrome/org.chromium.chrome.browser.customtabs.CustomTabActivity",
+    "scope": "Public GitHub device page opened; no account authentication or code submission"
+  },
+  "arm64IncreaseBytes": 22355,
+  "apkNames": [
+    "Etoile-Android-armeabi-v7a-0.1.0-26091701-15.APK",
+    "Etoile-Android-arm64-v8a-0.1.0-26091701-15.APK"
+  ]
+}

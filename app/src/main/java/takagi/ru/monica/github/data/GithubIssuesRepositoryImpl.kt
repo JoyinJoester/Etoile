@@ -71,6 +71,59 @@ class GithubIssuesRepositoryImpl(
         }
     }
 
+    override suspend fun searchInRepository(
+        owner: String,
+        name: String,
+        text: String,
+        query: GithubIssueListQuery,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubIssue>> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val size = perPage.coerceIn(1, 100)
+            val number = page.coerceAtLeast(1)
+            val url = baseUrl.toHttpUrl().newBuilder()
+                .addPathSegment("search")
+                .addPathSegment("issues")
+                .addQueryParameter("q", searchText(owner, name, text, query.state))
+                .addQueryParameter("sort", query.sort.name.lowercase())
+                .addQueryParameter("order", query.direction.name.lowercase())
+                .addQueryParameter("per_page", size.toString())
+                .addQueryParameter("page", number.toString())
+                .build()
+            val cacheKey = GithubCacheKeys.endpoint("issues-search", requests.cacheScope(), url.toString())
+            cachedGet.execute(
+                client = client,
+                cacheKey = cacheKey,
+                request = { etag ->
+                    requests.optionalBuilder(url.toString()).get().withCacheValidator(etag).build()
+                },
+                decode = { body, linkHeader ->
+                    val response = json.decodeFromString(IssueSearchResponse.serializer(), body)
+                    GithubPage(
+                        items = response.items.filter { it.pullRequest == null }.map(GithubIssueDto::toDomain),
+                        nextPage = GithubPagination.nextPage(linkHeader)
+                            ?: if (number * size < response.totalCount) number + 1 else null
+                    )
+                }
+            )
+        }
+    }
+
+    /** GitHub rejects a search string over 256 characters, so the keywords give way to the qualifiers. */
+    private fun searchText(
+        owner: String,
+        name: String,
+        text: String,
+        state: GithubIssueState
+    ): String {
+        val qualifiers = "repo:$owner/$name is:issue state:${state.name.lowercase()}"
+        val keywords = text.trim().replace(SEARCH_WHITESPACE, " ")
+            .take((MAX_SEARCH_LENGTH - qualifiers.length - 1).coerceAtLeast(0))
+            .trim()
+        return if (keywords.isEmpty()) qualifiers else "$qualifiers $keywords"
+    }
+
     override suspend fun issue(owner: String, name: String, number: Int): Result<GithubIssue> =
         withContext(Dispatchers.IO) {
             githubRunCatching {
@@ -129,13 +182,13 @@ class GithubIssuesRepositoryImpl(
         draft: GithubIssueDraft
     ): Result<GithubIssue> = withContext(Dispatchers.IO) {
         githubRunCatching {
-            val payload = json.encodeToString(CreateIssueRequest(draft.title, draft.body))
+            val payload = json.encodeToString(CreateIssueRequest(draft.title, draft.body, draft.labels, draft.assignees))
                 .toRequestBody(JSON_MEDIA_TYPE)
             val request = requests.builder(endpoint(owner, name, "issues").toString())
                 .post(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubIssueDto.serializer(),
@@ -159,7 +212,7 @@ class GithubIssuesRepositoryImpl(
                 .patch(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubIssueDto.serializer(), response.body?.string().orEmpty()
@@ -181,13 +234,40 @@ class GithubIssuesRepositoryImpl(
                 .post(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubIssueCommentDto.serializer(),
                         response.body?.string().orEmpty()
                     ).toDomain()
                 }
+            }
+        }
+    }
+
+    override suspend fun editComment(owner: String, name: String, commentId: Long,
+        draft: GithubIssueCommentDraft): Result<GithubIssueComment> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            require(commentId > 0)
+            val request = requests.builder(endpoint(owner, name, "issues", "comments", commentId.toString()).toString())
+                .patch(json.encodeToString(CreateCommentRequest(draft.body)).toRequestBody(JSON_MEDIA_TYPE)).build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.invalidateAfter {
+                    json.decodeFromString(GithubIssueCommentDto.serializer(), response.body?.string().orEmpty()).toDomain()
+                }
+            }
+        }
+    }
+
+    override suspend fun deleteComment(owner: String, name: String, commentId: Long): Result<Unit> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            require(commentId > 0)
+            val request = requests.builder(endpoint(owner, name, "issues", "comments", commentId.toString()).toString())
+                .delete().build()
+            client.newCall(request).execute().use { response ->
+                if (response.code != 204) throw GithubApiException.of(response)
+                cacheStore.invalidateAfter { Unit }
             }
         }
     }
@@ -210,7 +290,7 @@ class GithubIssuesRepositoryImpl(
             )
             val reactionsRequest = requests.builder(reactionsUrl.toString()).get().build()
             val viewerReaction = client.newCall(reactionsRequest).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 json.decodeFromString(
                     ListSerializer(GithubReactionDto.serializer()),
                     response.body?.string().orEmpty()
@@ -228,7 +308,7 @@ class GithubIssuesRepositoryImpl(
                         .toString()
                 ).delete().build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw GithubApiException(response.code)
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         GithubReactionToggle(content, active = false, reactionId = viewerReaction.id)
                     }
@@ -238,7 +318,7 @@ class GithubIssuesRepositoryImpl(
                     .toRequestBody(JSON_MEDIA_TYPE)
                 val request = requests.builder(reactionsUrl.toString()).post(body).build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw GithubApiException(response.code)
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         val created = json.decodeFromString(
                             GithubReactionDto.serializer(),
@@ -264,7 +344,7 @@ class GithubIssuesRepositoryImpl(
                 .patch(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubIssueDto.serializer(),
@@ -291,7 +371,7 @@ class GithubIssuesRepositoryImpl(
                 requests.builder(url).delete().build()
             }
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
             }
             cacheStore.clear()
             issue(owner, name, number).getOrThrow()
@@ -341,7 +421,7 @@ class GithubIssuesRepositoryImpl(
                 .put(payload.toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
             }
             cacheStore.clear()
             issue(owner, name, number).getOrThrow()
@@ -391,7 +471,7 @@ class GithubIssuesRepositoryImpl(
                 .patch(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubIssueDto.serializer(), response.body?.string().orEmpty()
@@ -447,7 +527,7 @@ class GithubIssuesRepositoryImpl(
                 .patch(payload)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
                         GithubIssueDto.serializer(), response.body?.string().orEmpty()
@@ -466,7 +546,12 @@ class GithubIssuesRepositoryImpl(
             .build()
 
     @Serializable
-    private data class CreateIssueRequest(val title: String, val body: String?)
+    private data class CreateIssueRequest(
+        val title: String,
+        val body: String?,
+        val labels: List<String> = emptyList(),
+        val assignees: List<String> = emptyList()
+    )
 
     @Serializable
     private data class CreateCommentRequest(val body: String)
@@ -476,6 +561,12 @@ class GithubIssuesRepositoryImpl(
 
     @Serializable
     private data class UpdateIssueStateRequest(val state: String)
+
+    @Serializable
+    private data class IssueSearchResponse(
+        @SerialName("total_count") val totalCount: Int = 0,
+        val items: List<GithubIssueDto> = emptyList()
+    )
 
     @Serializable
     private data class GithubIssueDto(
@@ -601,5 +692,7 @@ class GithubIssuesRepositoryImpl(
 
     private companion object {
         val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
+        val SEARCH_WHITESPACE = Regex("\\s+")
+        const val MAX_SEARCH_LENGTH = 256
     }
 }

@@ -13,6 +13,12 @@ data object GithubSignInRoute
 data object GithubSettingsRoute
 
 @Serializable
+data object GithubAppearanceRoute
+
+@Serializable
+data object GithubLanguageRoute
+
+@Serializable
 data object GithubAccountsRoute
 
 @Serializable
@@ -22,7 +28,25 @@ data object GithubStarredRoute
 data object GithubUserRepositoriesRoute
 
 @Serializable
+data object GithubCreateRepositoryRoute
+
+@Serializable
 data object GithubOrganizationsRoute
+
+@Serializable
+data class GithubRepositoryDiscussionsRoute(val fullName: String) {
+    val owner: String get() = fullName.substringBefore('/')
+    val name: String get() = fullName.substringAfter('/')
+}
+
+@Serializable
+data class GithubDiscussionRoute(
+    val fullName: String,
+    val number: Int
+) {
+    val owner: String get() = fullName.substringBefore('/')
+    val name: String get() = fullName.substringAfter('/')
+}
 
 // kind is stored as its name: navigation restores enum route arguments
 // reflectively via Class.forName, which R8 renaming breaks.
@@ -41,6 +65,9 @@ data class GithubUserFollowersRoute(val login: String)
 
 @Serializable
 data class GithubUserFollowingRoute(val login: String)
+
+@Serializable
+data object GithubBlockedUsersRoute
 
 @Serializable
 data class GithubRepositoryRoute(val fullName: String) {
@@ -68,7 +95,32 @@ data class GithubRepositoryBranchesRoute(
 }
 
 @Serializable
+data class GithubRepositoryTagsRoute(
+    val fullName: String,
+    val defaultBranch: String
+) {
+    val owner: String get() = fullName.substringBefore('/')
+    val name: String get() = fullName.substringAfter('/')
+}
+
+@Serializable
+data class GithubRepositoryCompareRoute(
+    val fullName: String,
+    val base: String,
+    val head: String
+) {
+    val owner: String get() = fullName.substringBefore('/')
+    val name: String get() = fullName.substringAfter('/')
+}
+
+@Serializable
 data class GithubRepositoryCollaboratorsRoute(val fullName: String) {
+    val owner: String get() = fullName.substringBefore('/')
+    val name: String get() = fullName.substringAfter('/')
+}
+
+@Serializable
+data class GithubInviteCollaboratorRoute(val fullName: String) {
     val owner: String get() = fullName.substringBefore('/')
     val name: String get() = fullName.substringAfter('/')
 }
@@ -200,3 +252,6 @@ data class GithubCreateIssueRoute(val fullName: String) {
     val owner: String get() = fullName.substringBefore('/')
     val name: String get() = fullName.substringAfter('/')
 }
+
+@Serializable
+data object GithubStoreDetailRoute

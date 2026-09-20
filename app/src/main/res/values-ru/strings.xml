@@ -136,4 +136,38 @@
 
 
 
+    <string name="github_directory_accessibility">Каталог %1$s</string>
+    <string name="github_file_accessibility">Файл %1$s, %2$s</string>
+    <string name="github_explore_filter_description">%1$s: %2$s</string>
+    <string name="github_unnamed_job">Задача без названия</string>
+    <string name="github_copilot_copy_success">Скопировано в буфер обмена</string>
+    <string name="github_commit_change_summary">Добавлено строк: %1$d, удалено строк: %2$d, всего изменений: %3$d</string>
+    <string name="github_code_match_position">Совпадение %1$d из %2$d</string>
+    <string name="github_code_previous_match">Назад</string>
+    <string name="github_code_next_match">Далее</string>
+    <string name="github_code_line_number">Строка кода %1$d</string>
+    <!-- Short labels keep the M3E navigation readable at larger font sizes. -->
+    <string name="github_nav_home">Домой</string>
+    <string name="github_nav_inbox">Почта</string>
+    <string name="github_nav_explore">Поиск</string>
+    <string name="github_nav_store">Маркет</string>
+    <string name="github_nav_profile">Я</string>
+    <string name="github_settings">Настройки</string>
+    <string name="github_settings_subtitle">Оформление и язык</string>
+    <string name="github_appearance">Оформление</string>
+    <string name="github_appearance_subtitle">Стиль, светлый и тёмный режимы, палитра</string>
+    <string name="github_language">Язык</string>
+    <string name="github_language_description">Выберите язык приложения. Изменения применяются сразу.</string>
+    <string name="github_design_style">Стиль интерфейса</string>
+    <string name="github_theme">Цветовой режим</string>
+    <string name="github_system">Как в системе</string>
+    <string name="github_light">Светлый</string>
+    <string name="github_dark">Тёмный</string>
+    <string name="github_palette">Палитра</string>
+    <string name="github_palette_default">По умолчанию</string>
+    <string name="github_palette_ocean">Океанский синий</string>
+    <string name="github_palette_sunset">Закатный оранжевый</string>
+    <string name="github_palette_forest">Лесной зелёный</string>
+    <string name="github_palette_purple">Техно-фиолетовый</string>
+    <string name="github_palette_miui">Синий MIUI</string>
 </resources>

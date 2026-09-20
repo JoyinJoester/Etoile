@@ -6,6 +6,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -16,6 +17,12 @@ class GithubPublicUserRepositoryImplTest {
 
     @Before fun setUp() { server = MockWebServer().also { it.start() } }
     @After fun tearDown() { server.shutdown() }
+
+    @Test
+    fun organizationTypeIsPreserved() = runTest {
+        server.enqueue(MockResponse().setBody(USER_JSON.replaceFirst("{", "{\"type\":\"Organization\",")))
+        assertTrue(repository(token = null).user("joyins").getOrThrow().isOrganization)
+    }
 
     @Test
     fun userMapsProfileMetadata() = runTest {
@@ -132,6 +139,75 @@ class GithubPublicUserRepositoryImplTest {
         assertEquals(false, repository.setFollowing("alice", false).getOrThrow())
         assertEquals("DELETE", server.takeRequest().method)
         assertTrue(cacheStore.isEmpty())
+    }
+
+    @Test
+    fun blockedListUsesViewerEndpointAndLinkPagination() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Link", "<${server.url("/user/blocks?page=2")}>; rel=\"next\"")
+                .setBody(USERS_JSON)
+        )
+
+        val page = repository(token = "test_token_12345678901234567890").blockedUsers().getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("/user/blocks?per_page=50&page=1", request.path)
+        assertEquals(listOf("alice", "bob"), page.items.map { it.login })
+        assertEquals(2, page.nextPage)
+        assertEquals("Bearer test_token_12345678901234567890", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun blockedListNeverAsksWithoutASession() = runTest {
+        val result = repository(token = null).blockedUsers()
+
+        assertTrue(result.isFailure)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun viewerBlockUses204And404AsBooleanStates() = runTest {
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(MockResponse().setResponseCode(404))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        assertTrue(repository.viewerBlocks("alice").getOrThrow())
+        assertEquals(false, repository.viewerBlocks("bob").getOrThrow())
+        assertEquals("/user/blocks/alice", server.takeRequest().path)
+        assertEquals("/user/blocks/bob", server.takeRequest().path)
+    }
+
+    @Test
+    fun setBlockedUsesPutAndDeleteAndInvalidatesCache() = runTest {
+        server.enqueue(MockResponse().setResponseCode(204))
+        server.enqueue(MockResponse().setResponseCode(204))
+        val cacheStore = TestGithubCacheStore()
+        cacheStore.write("stale", GithubCachedResponse("{}", null, null, 1L))
+        val repository = repository(token = "test_token_12345678901234567890", cacheStore = cacheStore)
+
+        repository.setBlocked("alice", true).getOrThrow()
+        val put = server.takeRequest()
+        assertEquals("PUT", put.method)
+        assertEquals("/user/blocks/alice", put.path)
+        assertEquals(0, put.body.size)
+        repository.setBlocked("alice", false).getOrThrow()
+        assertEquals("DELETE", server.takeRequest().method)
+        assertTrue(cacheStore.isEmpty())
+    }
+
+    @Test
+    fun refusedBlockKeepsTheCache() = runTest {
+        server.enqueue(MockResponse().setResponseCode(404))
+        val cacheStore = TestGithubCacheStore()
+        cacheStore.write("stale", GithubCachedResponse("{}", null, null, 1L))
+        val repository = repository(token = "test_token_12345678901234567890", cacheStore = cacheStore)
+
+        val result = repository.setBlocked("ghost", true)
+
+        assertTrue(result.isFailure)
+        assertFalse(cacheStore.isEmpty())
     }
 
     private fun repository(

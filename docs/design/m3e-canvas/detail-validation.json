@@ -1,0 +1,293 @@
+{
+  "date": "2026-09-17",
+  "result": "PASS",
+  "densityDpi": 420,
+  "checks": [
+    {
+      "layout": "wide",
+      "screen": "pull-request",
+      "style": "MATERIAL",
+      "twoPanes": true,
+      "contentLeftPx": 1190,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "wide",
+      "screen": "actions-run",
+      "style": "MATERIAL",
+      "twoPanes": true,
+      "contentLeftPx": 1148,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "wide",
+      "screen": "actions-job",
+      "style": "MATERIAL",
+      "twoPanes": true,
+      "contentLeftPx": 1211,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "medium",
+      "screen": "pull-request",
+      "style": "MATERIAL",
+      "twoPanes": true,
+      "contentLeftPx": 1085,
+      "windowPx": [
+        2205,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "medium",
+      "screen": "actions-run",
+      "style": "MATERIAL",
+      "twoPanes": true,
+      "contentLeftPx": 1043,
+      "windowPx": [
+        2205,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "medium",
+      "screen": "actions-job",
+      "style": "MATERIAL",
+      "twoPanes": true,
+      "contentLeftPx": 1106,
+      "windowPx": [
+        2205,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "medium-large",
+      "screen": "pull-request",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 84,
+      "windowPx": [
+        2205,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "medium-large",
+      "screen": "actions-run",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 42,
+      "windowPx": [
+        2205,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "medium-large",
+      "screen": "actions-job",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 42,
+      "windowPx": [
+        2205,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "wide-large",
+      "screen": "pull-request",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 189,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "wide-large",
+      "screen": "actions-run",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 147,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "wide-large",
+      "screen": "actions-job",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 147,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "narrow-large",
+      "screen": "pull-request",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 84,
+      "windowPx": [
+        840,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "narrow-large",
+      "screen": "actions-run",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 42,
+      "windowPx": [
+        840,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "narrow-large",
+      "screen": "actions-job",
+      "style": "MATERIAL",
+      "twoPanes": false,
+      "contentLeftPx": 42,
+      "windowPx": [
+        840,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "nothing",
+      "screen": "pull-request",
+      "style": "NOTHING",
+      "twoPanes": true,
+      "contentLeftPx": 1190,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "nothing",
+      "screen": "actions-run",
+      "style": "NOTHING",
+      "twoPanes": true,
+      "contentLeftPx": 1148,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "nothing",
+      "screen": "actions-job",
+      "style": "NOTHING",
+      "twoPanes": true,
+      "contentLeftPx": 1211,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "miuix",
+      "screen": "pull-request",
+      "style": "MIUIX",
+      "twoPanes": true,
+      "contentLeftPx": 1190,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "miuix",
+      "screen": "actions-run",
+      "style": "MIUIX",
+      "twoPanes": true,
+      "contentLeftPx": 1148,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "miuix",
+      "screen": "actions-job",
+      "style": "MIUIX",
+      "twoPanes": true,
+      "contentLeftPx": 1211,
+      "windowPx": [
+        3360,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "nothing-narrow-large",
+      "screen": "actions-run",
+      "style": "NOTHING",
+      "twoPanes": false,
+      "contentLeftPx": 42,
+      "windowPx": [
+        840,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "layout": "miuix-narrow-large",
+      "screen": "actions-run",
+      "style": "MIUIX",
+      "twoPanes": false,
+      "contentLeftPx": 42,
+      "windowPx": [
+        840,
+        2100
+      ],
+      "result": "PASS"
+    },
+    {
+      "interaction": "PR activity selection and draft survive two-pane to single-column reflow",
+      "result": "PASS"
+    },
+    {
+      "interaction": "Run opens its job and Back returns to the run",
+      "result": "PASS"
+    }
+  ],
+  "scope": "Production Compose screens with deterministic local fixtures; no remote writes",
+  "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-04.APK"
+}

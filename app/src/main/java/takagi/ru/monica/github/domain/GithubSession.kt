@@ -26,6 +26,8 @@ interface GithubAuthRepository {
     val accounts: StateFlow<List<GithubAccount>>
     suspend fun restore(): Result<Unit>
     suspend fun signInWithToken(token: String): Result<GithubAccount>
+    suspend fun signInWithOAuth(token: GithubDeviceAccessToken): Result<GithubAccount> =
+        signInWithToken(token.accessToken)
     suspend fun switchAccount(accountId: Long): Result<GithubAccount>
     suspend fun removeAccount(accountId: Long): Result<Unit>
     suspend fun signOut()

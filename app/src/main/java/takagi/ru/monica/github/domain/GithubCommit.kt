@@ -47,5 +47,14 @@ interface GithubCommitsRepository {
         perPage: Int = 30
     ): Result<GithubPage<GithubCommit>>
 
+    /** Explicit refresh path. Implementations may bypass a short-lived local cache. */
+    suspend fun refreshCommits(
+        owner: String,
+        name: String,
+        ref: String,
+        page: Int = 1,
+        perPage: Int = 30
+    ): Result<GithubPage<GithubCommit>> = commits(owner, name, ref, page, perPage)
+
     suspend fun commit(owner: String, name: String, sha: String): Result<GithubCommitDetails>
 }

@@ -8,23 +8,31 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubActionsConclusion
 import takagi.ru.monica.github.domain.GithubActionsLog
 import takagi.ru.monica.github.domain.GithubActionsRepository
 import takagi.ru.monica.github.domain.GithubActionsStatus
+import takagi.ru.monica.github.domain.GithubArtifactOutput
 import takagi.ru.monica.github.domain.GithubUserSummary
 import takagi.ru.monica.github.domain.GithubPage
+import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.github.domain.GithubWorkflow
+import takagi.ru.monica.github.domain.GithubWorkflowArtifact
 import takagi.ru.monica.github.domain.GithubWorkflowJob
 import takagi.ru.monica.github.domain.GithubWorkflowRun
 import takagi.ru.monica.github.domain.GithubWorkflowRunAction
 import takagi.ru.monica.github.domain.GithubWorkflowState
 import takagi.ru.monica.github.domain.GithubWorkflowStep
+import takagi.ru.monica.github.domain.TestGithubRepositoryDetailsRepository
+import java.io.ByteArrayOutputStream
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GithubActionsViewModelTest {
@@ -39,7 +47,7 @@ class GithubActionsViewModelTest {
     @Test
     fun workflowAndRunListsAppendPagesWithoutDuplicates() = runTest(dispatcher) {
         val repository = FakeActionsRepository()
-        val workflowsViewModel = ActionsWorkflowsViewModel("openai", "codex", repository)
+        val workflowsViewModel = ActionsWorkflowsViewModel("openai", "codex", repository, TestGithubRepositoryDetailsRepository())
         advanceUntilIdle()
         workflowsViewModel.onAction(ActionsWorkflowsAction.LoadMore)
         advanceUntilIdle()
@@ -56,7 +64,8 @@ class GithubActionsViewModelTest {
     @Test
     fun workflowListTogglesEnabledStatePerWorkflow() = runTest(dispatcher) {
         val repository = FakeActionsRepository()
-        val viewModel = ActionsWorkflowsViewModel("openai", "codex", repository)
+        val viewModel = ActionsWorkflowsViewModel("openai", "codex", repository, TestGithubRepositoryDetailsRepository())
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(ActionsWorkflowsAction.SetWorkflowEnabled(1L, false))
@@ -68,9 +77,25 @@ class GithubActionsViewModelTest {
     }
 
     @Test
+    fun workflowRefreshKeepsExistingItemsAndUsesRefreshRepositoryPath() = runTest(dispatcher) {
+        val repository = FakeActionsRepository()
+        val viewModel = ActionsWorkflowsViewModel("openai", "codex", repository, TestGithubRepositoryDetailsRepository())
+        advanceUntilIdle()
+
+        viewModel.onAction(ActionsWorkflowsAction.Refresh)
+        assertTrue(viewModel.state.value.isRefreshing)
+        advanceUntilIdle()
+
+        assertEquals(listOf(1), repository.refreshWorkflowRequests)
+        assertEquals(1, viewModel.state.value.items.size)
+        assertFalse(viewModel.state.value.isRefreshing)
+    }
+
+    @Test
     fun workflowListDispatchesRefAndInputsWithIndependentState() = runTest(dispatcher) {
         val repository = FakeActionsRepository()
-        val viewModel = ActionsWorkflowsViewModel("openai", "codex", repository)
+        val viewModel = ActionsWorkflowsViewModel("openai", "codex", repository, TestGithubRepositoryDetailsRepository())
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(
@@ -90,7 +115,7 @@ class GithubActionsViewModelTest {
     @Test
     fun runDetailLoadsRunAndPagedJobs() = runTest(dispatcher) {
         val repository = FakeActionsRepository()
-        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository)
+        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository, TestGithubRepositoryDetailsRepository())
         advanceUntilIdle()
         viewModel.onAction(ActionsRunDetailAction.LoadMoreJobs)
         advanceUntilIdle()
@@ -103,7 +128,8 @@ class GithubActionsViewModelTest {
     @Test
     fun runDetailPerformsAndRefreshesAWorkflowAction() = runTest(dispatcher) {
         val repository = FakeActionsRepository()
-        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository)
+        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository, TestGithubRepositoryDetailsRepository())
+        viewModel.onSessionChanged(signedInSession("joyins"))
         advanceUntilIdle()
 
         viewModel.onAction(
@@ -114,6 +140,84 @@ class GithubActionsViewModelTest {
         assertEquals(listOf(GithubWorkflowRunAction.RERUN), repository.runActions)
         assertFalse(viewModel.state.value.isPerformingAction)
         assertFalse(viewModel.state.value.actionError)
+    }
+
+    @Test
+    fun runDetailLoadsAndPagesArtifacts() = runTest(dispatcher) {
+        val repository = FakeActionsRepository()
+        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository, TestGithubRepositoryDetailsRepository())
+        advanceUntilIdle()
+        viewModel.onAction(ActionsRunDetailAction.LoadMoreArtifacts)
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L, 2L), viewModel.state.value.artifacts.map(GithubWorkflowArtifact::id))
+        assertFalse(viewModel.state.value.isLoadingArtifacts)
+        assertFalse(viewModel.state.value.artifactsError)
+    }
+
+    @Test
+    fun artifactFailureLeavesJobsUsable() = runTest(dispatcher) {
+        val viewModel = ActionsRunDetailViewModel(
+            "openai", "codex", 1, FakeActionsRepository(failArtifacts = true),
+            TestGithubRepositoryDetailsRepository()
+        )
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.artifactsError)
+        assertEquals(listOf(1L), viewModel.state.value.jobs.map(GithubWorkflowJob::id))
+    }
+
+    @Test
+    fun downloadingAnArtifactStreamsBytesThenFreesTheSlot() = runTest(dispatcher) {
+        val repository = FakeActionsRepository()
+        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository, TestGithubRepositoryDetailsRepository())
+        advanceUntilIdle()
+        val output = RecordingArtifactOutput()
+
+        viewModel.onAction(ActionsRunDetailAction.DownloadArtifact(1L) { output })
+        assertEquals(1L, viewModel.state.value.downloadingArtifactId)
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L), repository.downloads)
+        assertArrayEquals(byteArrayOf(1, 2, 3), output.bytes.toByteArray())
+        assertTrue(output.closed)
+        assertNull(viewModel.state.value.downloadingArtifactId)
+        assertFalse(viewModel.state.value.artifactDownloadFailed)
+    }
+
+    @Test
+    fun anInterruptedDownloadNeverOpensTheFile() = runTest(dispatcher) {
+        val viewModel = ActionsRunDetailViewModel(
+            "openai", "codex", 1, FakeActionsRepository(failDownload = true),
+            TestGithubRepositoryDetailsRepository()
+        )
+        advanceUntilIdle()
+        val output = RecordingArtifactOutput()
+        var openCount = 0
+
+        viewModel.onAction(ActionsRunDetailAction.DownloadArtifact(1L) {
+            openCount += 1
+            output
+        })
+        advanceUntilIdle()
+
+        assertEquals(0, openCount)
+        assertNull(viewModel.state.value.downloadingArtifactId)
+        assertTrue(viewModel.state.value.artifactDownloadFailed)
+    }
+
+    @Test
+    fun onlyOneArtifactDownloadsAtATime() = runTest(dispatcher) {
+        val repository = FakeActionsRepository()
+        val viewModel = ActionsRunDetailViewModel("openai", "codex", 1, repository, TestGithubRepositoryDetailsRepository())
+        advanceUntilIdle()
+        val output = RecordingArtifactOutput()
+
+        viewModel.onAction(ActionsRunDetailAction.DownloadArtifact(1L) { output })
+        viewModel.onAction(ActionsRunDetailAction.DownloadArtifact(2L) { output })
+        advanceUntilIdle()
+
+        assertEquals(listOf(1L), repository.downloads)
     }
 
     @Test
@@ -128,13 +232,20 @@ class GithubActionsViewModelTest {
     }
 
     private class FakeActionsRepository(
-        private val failLog: Boolean = false
+        private val failLog: Boolean = false,
+        private val failArtifacts: Boolean = false,
+        private val failDownload: Boolean = false
     ) : GithubActionsRepository {
         val runActions = mutableListOf<GithubWorkflowRunAction>()
         val workflowStates = mutableListOf<Pair<Long, Boolean>>()
         val dispatches = mutableListOf<Triple<Long, String, Map<String, String>>>()
+        val refreshWorkflowRequests = mutableListOf<Int>()
+        val downloads = mutableListOf<Long>()
         override suspend fun workflows(owner: String, name: String, page: Int, perPage: Int) =
             Result.success(GithubPage(listOf(workflow(page.toLong())), if (page == 1) 2 else null))
+
+        override suspend fun refreshWorkflows(owner: String, name: String, page: Int, perPage: Int) =
+            Result.success(GithubPage(listOf(workflow(page.toLong())).also { refreshWorkflowRequests += page }, if (page == 1) 2 else null))
 
         override suspend fun workflowRuns(
             owner: String,
@@ -156,6 +267,32 @@ class GithubActionsViewModelTest {
         override suspend fun jobLog(owner: String, name: String, jobId: Long): Result<GithubActionsLog> =
             if (failLog) Result.failure(IllegalStateException("unavailable"))
             else Result.success(GithubActionsLog("line one\nline two", isTruncated = false))
+
+        override suspend fun artifacts(
+            owner: String,
+            name: String,
+            runId: Long,
+            page: Int,
+            perPage: Int
+        ): Result<GithubPage<GithubWorkflowArtifact>> =
+            if (failArtifacts) Result.failure(IllegalStateException("unavailable"))
+            else Result.success(
+                GithubPage(listOf(artifact(page.toLong())), if (page == 1) 2 else null)
+            )
+
+        override suspend fun downloadArtifact(
+            owner: String,
+            name: String,
+            artifactId: Long,
+            open: () -> GithubArtifactOutput
+        ): Result<Unit> {
+            downloads += artifactId
+            if (failDownload) return Result.failure(IllegalStateException("interrupted"))
+            val output = open()
+            output.write(byteArrayOf(1, 2, 3), 0, 3)
+            output.close()
+            return Result.success(Unit)
+        }
 
         override suspend fun performRunAction(
             owner: String,
@@ -189,7 +326,30 @@ class GithubActionsViewModelTest {
         }
     }
 
+    /** Stands in for the document uri the user picks; records what a download actually wrote. */
+    private class RecordingArtifactOutput : GithubArtifactOutput {
+        val bytes = ByteArrayOutputStream()
+        var closed = false
+            private set
+
+        override fun write(source: ByteArray, offset: Int, count: Int) {
+            bytes.write(source, offset, count)
+        }
+
+        override fun close() {
+            closed = true
+        }
+    }
+
     private companion object {
+        fun artifact(id: Long) = GithubWorkflowArtifact(
+            id = id,
+            name = "artifact-$id",
+            sizeBytes = 1_024 * id,
+            isExpired = false,
+            createdAt = "2026-08-16T00:00:00Z"
+        )
+
         fun workflow(id: Long) = GithubWorkflow(
             id = id,
             name = "Workflow $id",
@@ -242,4 +402,19 @@ class GithubActionsViewModelTest {
             )
         )
     }
+
+    private fun signedInSession(login: String) = GithubSession.SignedIn(
+        GithubAccount(
+            id = 1,
+            login = login,
+            name = null,
+            bio = null,
+            avatarUrl = "https://avatars.githubusercontent.com/u/1",
+            htmlUrl = "https://github.com/$login",
+            publicRepositories = 0,
+            followers = 0,
+            following = 0
+        )
+    )
+
 }

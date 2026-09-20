@@ -4,7 +4,9 @@ import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okio.Buffer
 import org.junit.After
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,8 +15,10 @@ import org.junit.Before
 import org.junit.Test
 import takagi.ru.monica.github.domain.GithubActionsConclusion
 import takagi.ru.monica.github.domain.GithubActionsStatus
+import takagi.ru.monica.github.domain.GithubArtifactOutput
 import takagi.ru.monica.github.domain.GithubWorkflowRunAction
 import takagi.ru.monica.github.domain.GithubWorkflowState
+import java.io.ByteArrayOutputStream
 
 class GithubActionsRepositoryImplTest {
     private lateinit var apiServer: MockWebServer
@@ -80,7 +84,7 @@ class GithubActionsRepositoryImplTest {
     }
 
     @Test
-    fun workflowDispatchSendsRefAndInputs() = runTest {
+    fun workflowDispatchUsesDispatchesEndpointAndKeepsInputValues() = runTest {
         apiServer.enqueue(MockResponse().setResponseCode(204))
         val repository = repository()
 
@@ -89,13 +93,45 @@ class GithubActionsRepositoryImplTest {
             "codex",
             workflowId = 11,
             ref = " main ",
-            inputs = mapOf("platform" to "android")
+            inputs = mapOf("platform" to "android ", "target" to "= v2")
         ).getOrThrow()
         val request = apiServer.takeRequest()
 
         assertEquals("POST", request.method)
-        assertEquals("/repos/openai/codex/actions/workflows/11/dispatch", request.path)
-        assertEquals("{\"ref\":\"main\",\"inputs\":{\"platform\":\"android\"}}", request.body.readUtf8())
+        assertEquals("/repos/openai/codex/actions/workflows/11/dispatches", request.path)
+        assertEquals(
+            "{\"ref\":\"main\",\"inputs\":{\"platform\":\"android \",\"target\":\"= v2\"}}",
+            request.body.readUtf8()
+        )
+    }
+
+    @Test
+    fun workflowDispatchWithoutInputsOmitsInputsObject() = runTest {
+        apiServer.enqueue(MockResponse().setResponseCode(204))
+
+        repository().dispatchWorkflow("openai", "codex", workflowId = 11, ref = "main", inputs = emptyMap())
+            .getOrThrow()
+        val request = apiServer.takeRequest()
+
+        assertEquals("/repos/openai/codex/actions/workflows/11/dispatches", request.path)
+        assertEquals("{\"ref\":\"main\"}", request.body.readUtf8())
+    }
+
+    @Test
+    fun workflowDispatchRejectsBlankNameAndTooManyInputsBeforeRequesting() = runTest {
+        val repository = repository()
+
+        val blankName = repository.dispatchWorkflow(
+            "openai", "codex", workflowId = 11, ref = "main", inputs = mapOf(" " to "android")
+        )
+        val tooMany = repository.dispatchWorkflow(
+            "openai", "codex", workflowId = 11, ref = "main",
+            inputs = (1..26).associate { "input$it" to "v" }
+        )
+
+        assertTrue(blankName.isFailure)
+        assertTrue(tooMany.isFailure)
+        assertEquals(0, apiServer.requestCount)
     }
 
     @Test
@@ -159,6 +195,87 @@ class GithubActionsRepositoryImplTest {
 
         assertEquals("\"workflows-v1\"", validationRequest.getHeader("If-None-Match"))
         assertEquals("Android CI", cached.items.single().name)
+    }
+
+    @Test
+    fun artifactsUseTheRunScopedEndpointAndPageForward() = runTest {
+        apiServer.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader(
+                    "Link",
+                    "<${apiServer.url("/repos/openai/codex/actions/runs/99/artifacts?per_page=100&page=2")}>; rel=\"next\""
+                )
+                .setBody(ARTIFACTS_JSON)
+        )
+        val repository = repository()
+
+        val artifacts = repository.artifacts("openai", "codex", runId = 99).getOrThrow()
+        val request = apiServer.takeRequest()
+        val artifact = artifacts.items.single()
+
+        assertEquals("/repos/openai/codex/actions/runs/99/artifacts?per_page=100&page=1", request.path)
+        assertEquals(2, artifacts.nextPage)
+        assertEquals("android-apk", artifact.name)
+        assertEquals(2_097_152L, artifact.sizeBytes)
+        assertFalse(artifact.isExpired)
+        assertEquals("2026-08-16T00:02:00Z", artifact.createdAt)
+    }
+
+    @Test
+    fun artifactDownloadStreamsEveryByteAndNeverForwardsAuthorization() = runTest {
+        val payload = ByteArray(100_000) { (it % 251).toByte() }
+        apiServer.enqueue(
+            MockResponse()
+                .setResponseCode(302)
+                .setHeader("Location", downloadServer.url("/artifact.zip"))
+        )
+        downloadServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(Buffer().write(payload))
+        )
+        val output = RecordingArtifactOutput()
+        val repository = repository()
+
+        repository.downloadArtifact("openai", "codex", artifactId = 301) { output }.getOrThrow()
+        val apiRequest = apiServer.takeRequest()
+        val downloadRequest = downloadServer.takeRequest()
+
+        assertEquals("/repos/openai/codex/actions/artifacts/301/zip", apiRequest.path)
+        assertEquals("Bearer test_token_12345678901234567890", apiRequest.getHeader("Authorization"))
+        assertEquals("/artifact.zip", downloadRequest.path)
+        assertNull(downloadRequest.getHeader("Authorization"))
+        assertArrayEquals(payload, output.bytes.toByteArray())
+        assertTrue(output.closed)
+    }
+
+    @Test
+    fun aMissingArtifactFailsBeforeTheDestinationIsOpened() = runTest {
+        apiServer.enqueue(MockResponse().setResponseCode(404))
+        var openCount = 0
+        val repository = repository()
+
+        val result = repository.downloadArtifact("openai", "codex", artifactId = 301) {
+            openCount += 1
+            RecordingArtifactOutput()
+        }
+
+        assertEquals(404, (result.exceptionOrNull() as GithubApiException).statusCode)
+        assertEquals(0, openCount)
+        assertEquals(0, downloadServer.requestCount)
+    }
+
+    private class RecordingArtifactOutput : GithubArtifactOutput {
+        val bytes = ByteArrayOutputStream()
+        var closed = false
+            private set
+
+        override fun write(source: ByteArray, offset: Int, count: Int) {
+            bytes.write(source, offset, count)
+        }
+
+        override fun close() {
+            closed = true
+        }
     }
 
     private fun repository(
@@ -266,6 +383,24 @@ class GithubActionsRepositoryImplTest {
             {
               "total_count": 1,
               "jobs": [$JOB_JSON]
+            }
+        """.trimIndent()
+
+        val ARTIFACT_JSON = """
+            {
+              "id": 301,
+              "name": "android-apk",
+              "size_in_bytes": 2097152,
+              "expired": false,
+              "created_at": "2026-08-16T00:02:00Z",
+              "archive_download_url": "https://api.github.com/repos/openai/codex/actions/artifacts/301/zip"
+            }
+        """.trimIndent()
+
+        val ARTIFACTS_JSON = """
+            {
+              "total_count": 1,
+              "artifacts": [$ARTIFACT_JSON]
             }
         """.trimIndent()
     }

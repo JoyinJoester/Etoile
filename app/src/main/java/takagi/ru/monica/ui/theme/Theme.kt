@@ -1,4 +1,7 @@
-@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@file:OptIn(
+    androidx.compose.foundation.ExperimentalFoundationApi::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class
+)
 
 package takagi.ru.monica.ui.theme
 
@@ -11,12 +14,17 @@ import androidx.compose.foundation.OverscrollFactory
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.ColorScheme as MaterialColorScheme
 import androidx.compose.ui.graphics.toArgb
@@ -28,6 +36,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import takagi.ru.monica.data.ColorScheme
 import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 
 // ============================================
@@ -958,7 +967,7 @@ fun EtoileTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     oledPureBlackEnabled: Boolean = false,
     colorScheme: ColorScheme = ColorScheme.DEFAULT,
-    designStyle: DesignStyle = DesignStyle.MATERIAL,
+    designStyle: DesignStyle = DesignStyle.NOTHING,
     customPrimaryColor: Long = 0xFF6650a4,
     customSecondaryColor: Long = 0xFF625b71,
     customTertiaryColor: Long = 0xFF7D5260,
@@ -967,6 +976,9 @@ fun EtoileTheme(
     content: @Composable () -> Unit
 ) {
     val baseColorScheme = when {
+        designStyle == DesignStyle.NOTHING -> {
+            if (darkTheme) NothingDarkColorScheme else NothingLightColorScheme
+        }
         colorScheme == ColorScheme.DEFAULT && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -1279,28 +1291,57 @@ fun EtoileTheme(
             window.statusBarColor = android.graphics.Color.TRANSPARENT
             // 窗口背景跟随主题，避免页面切换/启动瞬间露出白色底
             window.decorView.setBackgroundColor(finalColorScheme.background.toArgb())
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).apply {
+                isAppearanceLightStatusBars = !darkTheme
+                isAppearanceLightNavigationBars = !darkTheme
+            }
+            // Android 8.0 only supports white navigation icons. Keep their
+            // background dark; later versions follow the selected app theme.
+            window.navigationBarColor = if (android.os.Build.VERSION.SDK_INT >= 27) {
+                finalColorScheme.background.toArgb()
+            } else {
+                android.graphics.Color.BLACK
+            }
         }
     }
 
-    val isNothingStyle = designStyle == DesignStyle.NOTHING
+    // Keep navigation and editor state when content moves between theme providers.
+    val currentContent = rememberUpdatedState(content)
+    val retainedContent = remember { movableContentOf { currentContent.value() } }
+
     // 全局关闭"拉伸过滚动"：滚到顶/底后不再被拽出空白回弹区。
     // 新版 foundation 改读 LocalOverscrollFactory，旧 Local 没用了，两个都关。
     CompositionLocalProvider(
         LocalOverscrollConfiguration provides null,
-        LocalOverscrollFactory provides NoOverscrollFactory
+        LocalOverscrollFactory provides NoOverscrollFactory,
+        LocalDesignStyle provides designStyle
     ) {
         MiuixTheme(colors = finalColorScheme.toMiuixColors(darkTheme)) {
-            MaterialTheme(
-                colorScheme = finalColorScheme,
-                typography = if (isNothingStyle) NothingTypography else Typography,
-                shapes = when (designStyle) {
-                    DesignStyle.NOTHING -> NothingShapes
-                    DesignStyle.MIUIX -> MiuixStyleShapes
-                    else -> MaterialTheme.shapes
-                },
-                content = content
-            )
+            if (designStyle == DesignStyle.MATERIAL) {
+                MaterialExpressiveTheme(
+                    colorScheme = finalColorScheme,
+                    typography = ExpressiveTypography,
+                    shapes = ExpressiveShapes,
+                    motionScheme = MotionScheme.expressive(),
+                    content = retainedContent
+                )
+            } else {
+                MaterialTheme(
+                    colorScheme = finalColorScheme,
+                    typography = when (designStyle) {
+                        DesignStyle.NOTHING -> NothingTypography
+                        DesignStyle.MATERIAL -> ExpressiveTypography
+                        DesignStyle.MIUIX -> Typography
+                    },
+                    shapes = when (designStyle) {
+                        DesignStyle.NOTHING -> NothingShapes
+                        DesignStyle.MIUIX -> MiuixStyleShapes
+                        DesignStyle.MATERIAL -> ExpressiveShapes
+                    },
+                    motionScheme = MotionScheme.standard(),
+                    content = retainedContent
+                )
+            }
         }
     }
 }

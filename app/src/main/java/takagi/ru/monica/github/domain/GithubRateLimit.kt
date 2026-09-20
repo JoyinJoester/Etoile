@@ -16,3 +16,18 @@ data class GithubRateLimitSnapshot(
 interface GithubRateLimitMonitor {
     val state: StateFlow<Map<String, GithubRateLimitSnapshot>>
 }
+
+/**
+ * GitHub limits each resource separately, so a healthy core bucket says nothing
+ * about the tiny search one. Ordering puts the bucket that will block requests
+ * soonest first.
+ */
+fun visibleRateLimits(
+    snapshots: Map<String, GithubRateLimitSnapshot>
+): List<GithubRateLimitSnapshot> = snapshots.values
+    .filter(GithubRateLimitSnapshot::isLow)
+    .sortedWith(
+        compareByDescending<GithubRateLimitSnapshot> { it.isExhausted }
+            .thenBy { it.remaining }
+            .thenBy { it.resetAtEpochSeconds }
+    )

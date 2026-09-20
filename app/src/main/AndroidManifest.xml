@@ -4,6 +4,13 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <queries>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+    </queries>
 
     <application
         android:name=".EtoileApplication"
@@ -19,6 +26,14 @@
         android:usesCleartextTraffic="false">
 
         <activity
+            android:name="takagi.ru.monica.github.feature.auth.CopyDeviceCodeActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <activity
             android:name=".EtoileActivity"
             android:exported="true"
             android:launchMode="singleTask"
@@ -28,6 +43,12 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="etoile" android:host="oauth" />
             </intent-filter>
             <!-- Supported GitHub work-item links. Unknown GitHub paths are
                  intentionally not claimed and continue opening in a browser. -->
@@ -46,9 +67,21 @@
             </intent-filter>
         </activity>
 
+        <!-- Merge removal marker only: no receiver class is required in the APK. -->
         <receiver
             android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            tools:ignore="MissingClass"
             tools:node="remove" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
     </application>
 
 </manifest>

@@ -1,8 +1,8 @@
 package takagi.ru.monica.github.component
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,7 +35,7 @@ import java.text.DateFormat
 import java.util.Date
 
 internal data class GithubServiceStatusState(
-    val rateLimit: GithubRateLimitSnapshot? = null,
+    val rateLimits: List<GithubRateLimitSnapshot> = emptyList(),
     val cacheFallback: GithubCacheFallbackSnapshot? = null
 )
 
@@ -43,12 +43,12 @@ internal val LocalGithubServiceStatus = compositionLocalOf { GithubServiceStatus
 
 @Composable
 fun GithubServiceStatusProvider(
-    rateLimit: GithubRateLimitSnapshot?,
+    rateLimits: List<GithubRateLimitSnapshot>,
     cacheFallback: GithubCacheFallbackSnapshot?,
     content: @Composable () -> Unit
 ) {
-    val status = remember(rateLimit, cacheFallback) {
-        GithubServiceStatusState(rateLimit = rateLimit, cacheFallback = cacheFallback)
+    val status = remember(rateLimits, cacheFallback) {
+        GithubServiceStatusState(rateLimits = rateLimits, cacheFallback = cacheFallback)
     }
     CompositionLocalProvider(LocalGithubServiceStatus provides status, content = content)
 }
@@ -57,7 +57,7 @@ fun GithubServiceStatusProvider(
 fun GithubServiceStatusNotices(modifier: Modifier = Modifier) {
     val status = LocalGithubServiceStatus.current
     GithubServiceStatusNotices(
-        rateLimit = status.rateLimit,
+        rateLimits = status.rateLimits,
         cacheFallback = status.cacheFallback,
         modifier = modifier
     )
@@ -65,138 +65,116 @@ fun GithubServiceStatusNotices(modifier: Modifier = Modifier) {
 
 @Composable
 fun GithubServiceStatusNotices(
-    rateLimit: GithubRateLimitSnapshot?,
+    rateLimits: List<GithubRateLimitSnapshot>,
     cacheFallback: GithubCacheFallbackSnapshot?,
     modifier: Modifier = Modifier
 ) {
-    val showRateLimit = rateLimit?.isLow == true
-    if (cacheFallback == null && !showRateLimit) return
+    if (cacheFallback == null && rateLimits.isEmpty()) return
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        cacheFallback?.let { GithubCacheFallbackNotice(it) }
-        if (showRateLimit) GithubRateLimitNotice(requireNotNull(rateLimit))
+    val anyExhausted = rateLimits.any { it.isExhausted }
+    val quotaAlert = rateLimits.isNotEmpty()
+    val bannerColor = when {
+        anyExhausted -> MaterialTheme.colorScheme.errorContainer
+        quotaAlert -> MaterialTheme.colorScheme.tertiaryContainer
+        else -> MaterialTheme.colorScheme.secondaryContainer
     }
-}
-
-@Composable
-fun GithubCacheFallbackNotice(
-    snapshot: GithubCacheFallbackSnapshot,
-    modifier: Modifier = Modifier
-) {
-    val cachedTime = remember(snapshot.cachedAtEpochMillis) {
-        DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(
-            Date(snapshot.cachedAtEpochMillis)
-        )
-    }
-
-    GithubStatusNotice(
-        icon = Icons.Default.CloudOff,
-        title = stringResource(R.string.github_cache_fallback_title),
-        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = modifier
-    ) {
-        Text(
-            text = stringResource(R.string.github_cache_fallback_message, cachedTime),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.82f),
-            modifier = Modifier.padding(top = 2.dp)
-        )
-    }
-}
-
-/**
- * Shared, non-blocking notice for low or exhausted GitHub API quota.
- * It intentionally renders nothing while the quota is healthy so callers can
- * place it at the top of any screen without branching layout code.
- */
-@Composable
-fun GithubRateLimitNotice(
-    snapshot: GithubRateLimitSnapshot,
-    modifier: Modifier = Modifier
-) {
-    if (!snapshot.isLow) return
-
-    val containerColor = if (snapshot.isExhausted) {
-        MaterialTheme.colorScheme.errorContainer
-    } else {
-        MaterialTheme.colorScheme.tertiaryContainer
-    }
-    val contentColor = if (snapshot.isExhausted) {
-        MaterialTheme.colorScheme.onErrorContainer
-    } else {
-        MaterialTheme.colorScheme.onTertiaryContainer
-    }
-    val resetTime = remember(snapshot.resetAtEpochSeconds) {
-        DateFormat.getTimeInstance(DateFormat.SHORT).format(
-            Date(snapshot.resetAtEpochSeconds * 1000L)
-        )
-    }
-
-    GithubStatusNotice(
-        icon = Icons.Default.Schedule,
-        title = stringResource(
-            if (snapshot.isExhausted) {
-                R.string.github_rate_limit_exhausted
-            } else {
-                R.string.github_rate_limit_low
-            }
-        ),
-        containerColor = containerColor,
-        contentColor = contentColor,
-        modifier = modifier
-    ) {
-        Text(
-            text = stringResource(
-                R.string.github_rate_limit_value,
-                snapshot.remaining,
-                snapshot.limit
-            ) + " · " + stringResource(R.string.github_rate_limit_resets, resetTime),
-            style = MaterialTheme.typography.labelMedium,
-            color = contentColor.copy(alpha = 0.85f),
-            modifier = Modifier.padding(top = 2.dp)
-        )
-    }
-}
-
-@Composable
-private fun GithubStatusNotice(
-    icon: ImageVector,
-    title: String,
-    containerColor: Color,
-    contentColor: Color,
-    modifier: Modifier = Modifier,
-    supportingContent: @Composable ColumnScope.() -> Unit
-) {
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .semantics { liveRegion = LiveRegionMode.Polite },
-        shape = GithubExpressiveShapes.container,
-        color = containerColor
+        shape = GithubExpressiveShapes.compact,
+        color = bannerColor
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(22.dp).padding(top = 1.dp)
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = contentColor
+            cacheFallback?.let { snapshot ->
+                val cachedTime = remember(snapshot.cachedAtEpochMillis) {
+                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT).format(
+                        Date(snapshot.cachedAtEpochMillis)
+                    )
+                }
+                GithubCompactStatusRow(
+                    icon = Icons.Default.CloudOff,
+                    title = stringResource(R.string.github_cache_fallback_title),
+                    supportingText = stringResource(R.string.github_cache_fallback_message, cachedTime),
+                    tint = when {
+                        anyExhausted -> MaterialTheme.colorScheme.onErrorContainer
+                        quotaAlert -> MaterialTheme.colorScheme.onTertiaryContainer
+                        else -> MaterialTheme.colorScheme.onSecondaryContainer
+                    }
                 )
-                supportingContent()
             }
+            rateLimits.forEach { snapshot ->
+                val resetTime = remember(snapshot.resetAtEpochSeconds) {
+                    DateFormat.getTimeInstance(DateFormat.SHORT).format(
+                        Date(snapshot.resetAtEpochSeconds * 1000L)
+                    )
+                }
+                val tint = if (snapshot.isExhausted) {
+                    MaterialTheme.colorScheme.onErrorContainer
+                } else {
+                    MaterialTheme.colorScheme.onTertiaryContainer
+                }
+                GithubCompactStatusRow(
+                    icon = Icons.Default.Schedule,
+                    title = stringResource(rateLimitTitle(snapshot)),
+                    supportingText = stringResource(
+                        R.string.github_rate_limit_value,
+                        snapshot.remaining,
+                        snapshot.limit
+                    ) + " · " + stringResource(R.string.github_rate_limit_resets, resetTime),
+                    tint = tint
+                )
+            }
+        }
+    }
+}
+
+@StringRes
+private fun rateLimitTitle(snapshot: GithubRateLimitSnapshot): Int = when {
+    snapshot.isSearchResource && snapshot.isExhausted -> R.string.github_rate_limit_exhausted_search
+    snapshot.isSearchResource -> R.string.github_rate_limit_low_search
+    snapshot.isExhausted -> R.string.github_rate_limit_exhausted
+    else -> R.string.github_rate_limit_low
+}
+
+private val GithubRateLimitSnapshot.isSearchResource: Boolean
+    get() = resource.equals("search", ignoreCase = true)
+
+@Composable
+private fun GithubCompactStatusRow(
+    icon: ImageVector,
+    title: String,
+    supportingText: String,
+    tint: Color
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(20.dp).padding(top = 1.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = tint,
+                maxLines = 1
+            )
+            Text(
+                text = supportingText,
+                style = MaterialTheme.typography.labelMedium,
+                color = tint.copy(alpha = 0.78f),
+                maxLines = 1,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
         }
     }
 }

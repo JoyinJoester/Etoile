@@ -14,12 +14,14 @@ fun GithubApp(
     settings: AppSettings,
     settingsManager: SettingsManager,
     initialGithubUrl: String? = null,
-    onGithubUrlConsumed: (String) -> Unit = {}
+    onGithubUrlConsumed: (String) -> Unit = {},
+    onExit: () -> Unit = {}
 ) {
     EtoileGithubApp(
         settings = settings,
         settingsManager = settingsManager,
         initialGithubUrl = initialGithubUrl,
-        onGithubUrlConsumed = onGithubUrlConsumed
+        onGithubUrlConsumed = onGithubUrlConsumed,
+        onExit = onExit
     )
 }

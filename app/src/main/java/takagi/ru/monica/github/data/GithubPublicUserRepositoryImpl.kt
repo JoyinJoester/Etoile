@@ -45,7 +45,7 @@ class GithubPublicUserRepositoryImpl(
                 when (response.code) {
                     204 -> true
                     404 -> false
-                    else -> throw GithubApiException(response.code)
+                    else -> throw GithubApiException.of(response)
                 }
             }
         }
@@ -61,7 +61,7 @@ class GithubPublicUserRepositoryImpl(
                     builder.delete().build()
                 }
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw GithubApiException(response.code)
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter { following }
                 }
             }
@@ -141,6 +141,58 @@ class GithubPublicUserRepositoryImpl(
         }
     }
 
+    override suspend fun blockedUsers(
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubUserSummary>> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val url = apiBaseUrl.newBuilder()
+                .addPathSegment("user")
+                .addPathSegment("blocks")
+                .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
+                .addQueryParameter("page", page.coerceAtLeast(1).toString())
+                .build()
+                .toString()
+            cachedGet.execute(
+                client = client,
+                cacheKey = GithubCacheKeys.endpoint("public-user-blocks", requests.cacheScope(), url),
+                request = { etag -> requests.builder(url).get().withCacheValidator(etag).build() },
+                decode = { body, linkHeader ->
+                    GithubPage(
+                        items = json.decodeFromString(
+                            ListSerializer(GithubUserDto.serializer()), body
+                        ).map(GithubUserDto::toDomain),
+                        nextPage = GithubPagination.nextPage(linkHeader)
+                    )
+                }
+            )
+        }
+    }
+
+    override suspend fun viewerBlocks(login: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            client.newCall(requests.builder(blockEndpoint(login)).get().build()).execute().use { response ->
+                when (response.code) {
+                    204 -> true
+                    404 -> false
+                    else -> throw GithubApiException.of(response)
+                }
+            }
+        }
+    }
+
+    override suspend fun setBlocked(login: String, blocked: Boolean): Result<Unit> =
+        withContext(Dispatchers.IO) {
+            githubRunCatching {
+                val builder = requests.builder(blockEndpoint(login))
+                val request = if (blocked) builder.put(EMPTY_BODY).build() else builder.delete().build()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
+                    cacheStore.invalidateAfter { Unit }
+                }
+            }
+        }
+
     @Serializable
     private data class PublicUserDto(
         val id: Long,
@@ -155,17 +207,26 @@ class GithubPublicUserRepositoryImpl(
         @SerialName("public_repos") val publicRepositories: Int = 0,
         val followers: Int = 0,
         val following: Int = 0,
-        val hireable: Boolean? = null
+        val hireable: Boolean? = null,
+        @SerialName("created_at") val createdAt: String? = null,
+        val type: String = "User"
     ) {
         fun toDomain() = GithubPublicUser(
             id, login, name, bio, avatarUrl, htmlUrl, company, location, blog,
-            publicRepositories, followers, following, hireable
+            publicRepositories, followers, following, hireable, createdAt, type
         )
     }
 
     private fun followingEndpoint(login: String): String = apiBaseUrl.newBuilder()
         .addPathSegment("user")
         .addPathSegment("following")
+        .addPathSegment(login)
+        .build()
+        .toString()
+
+    private fun blockEndpoint(login: String): String = apiBaseUrl.newBuilder()
+        .addPathSegment("user")
+        .addPathSegment("blocks")
         .addPathSegment(login)
         .build()
         .toString()

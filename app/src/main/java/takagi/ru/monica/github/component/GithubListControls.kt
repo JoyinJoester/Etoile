@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Tune
@@ -40,7 +42,8 @@ fun GithubListSearchField(
     clearContentDescription: String,
     orderingContentDescription: String,
     onOpenOrdering: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -52,6 +55,7 @@ fun GithubListSearchField(
             onValueChange = onValueChange,
             label = label,
             modifier = Modifier.weight(1f),
+            compact = compact,
             trailingIcon = if (value.isNotEmpty()) {
                 {
                     IconButton(onClick = { onValueChange("") }) {
@@ -87,7 +91,7 @@ fun GithubListOrderingSheet(
 ) {
     GithubModalBottomSheet(onDismissRequest = onDismissRequest, modifier = modifier) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp)
+            modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp)
         ) {
             GithubSheetHeader(title = title, subtitle = subtitle)
             filterContent()
@@ -136,7 +140,7 @@ fun GithubListFilterSection(
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier.padding(bottom = 2.dp)
         )
-        GithubFilterRow(
+        GithubWrappedFilterRow(
             labels = labels,
             selectedIndex = selectedIndex,
             onSelected = onSelected,

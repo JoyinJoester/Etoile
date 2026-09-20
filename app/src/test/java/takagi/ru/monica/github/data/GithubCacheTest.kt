@@ -55,6 +55,69 @@ class GithubCacheTest {
     }
 
     @Test
+    fun freshCachedResponseSkipsNetworkUntilItExpires() {
+        server.enqueue(MockResponse().setResponseCode(200).setHeader("ETag", "\"v1\"").setBody("payload-v1"))
+        server.enqueue(MockResponse().setResponseCode(304))
+        val store = TestGithubCacheStore()
+        var now = 100L
+        val executor = GithubCachedGetExecutor(store, nowEpochMillis = { now })
+
+        val first = execute(executor, "cache-key", maxAgeMillis = 1_000L)
+        now = 500L
+        val fresh = execute(executor, "cache-key", maxAgeMillis = 1_000L)
+
+        assertEquals(first, fresh)
+        assertEquals(1, server.requestCount)
+
+        now = 1_101L
+        val validated = execute(executor, "cache-key", maxAgeMillis = 1_000L)
+
+        assertEquals(first, validated)
+        assertEquals(2, server.requestCount)
+        server.takeRequest()
+        assertEquals("\"v1\"", server.takeRequest().getHeader("If-None-Match"))
+        assertEquals(1_101L, store.read("cache-key")?.savedAtEpochMillis)
+    }
+
+    @Test
+    fun defaultFreshnessWindowSkipsRepeatedNavigationRequests() {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody("payload-v1")
+        )
+        val store = TestGithubCacheStore()
+        var now = 100L
+        val executor = GithubCachedGetExecutor(store, nowEpochMillis = { now })
+
+        execute(executor, "cache-key", maxAgeMillis = GithubCachePolicy.DEFAULT_MAX_AGE_MILLIS)
+        now += GithubCachePolicy.DEFAULT_MAX_AGE_MILLIS - 1L
+        val cached = execute(executor, "cache-key", maxAgeMillis = GithubCachePolicy.DEFAULT_MAX_AGE_MILLIS)
+
+        assertEquals("payload-v1", cached.first)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test
+    fun exhaustedRateLimitFallsBackToCacheButOrdinaryForbiddenDoesNot() {
+        server.enqueue(MockResponse().setResponseCode(200).setBody("cached"))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(403)
+                .setHeader("X-RateLimit-Remaining", "0")
+        )
+        server.enqueue(MockResponse().setResponseCode(403))
+        val executor = GithubCachedGetExecutor(TestGithubCacheStore())
+
+        execute(executor, "cache-key")
+        assertEquals("cached", execute(executor, "cache-key").first)
+
+        val error = runCatching { execute(executor, "cache-key") }.exceptionOrNull()
+        assertTrue(error is GithubApiException)
+        assertEquals(403, (error as GithubApiException).statusCode)
+    }
+
+    @Test
     fun serverFailureFallsBackToCachedBodyButPermissionFailureDoesNot() {
         server.enqueue(
             MockResponse()
@@ -159,7 +222,8 @@ class GithubCacheTest {
 
     private fun execute(
         executor: GithubCachedGetExecutor,
-        key: String
+        key: String,
+        maxAgeMillis: Long = 0L
     ): Pair<String, String?> = executor.execute(
         client = client,
         cacheKey = key,
@@ -170,7 +234,8 @@ class GithubCacheTest {
                 .get()
                 .build()
         },
-        decode = { body, link -> body to link }
+        decode = { body, link -> body to link },
+        maxAgeMillis = maxAgeMillis
     )
 
     private class FakeTokenStore(private val token: String?) : GithubTokenStore {

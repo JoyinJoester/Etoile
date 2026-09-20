@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 import takagi.ru.monica.github.domain.GithubActionsConclusion
 import takagi.ru.monica.github.domain.GithubActionsStatus
 import takagi.ru.monica.github.domain.GithubWorkflow
+import takagi.ru.monica.github.domain.GithubWorkflowArtifact
 import takagi.ru.monica.github.domain.GithubWorkflowJob
 import takagi.ru.monica.github.domain.GithubWorkflowRun
 import takagi.ru.monica.github.domain.GithubWorkflowState
@@ -26,6 +27,12 @@ internal data class GithubWorkflowRunsResponseDto(
 internal data class GithubWorkflowJobsResponseDto(
     @SerialName("total_count") val totalCount: Int = 0,
     val jobs: List<GithubWorkflowJobDto> = emptyList()
+)
+
+@Serializable
+internal data class GithubWorkflowArtifactsResponseDto(
+    @SerialName("total_count") val totalCount: Int = 0,
+    val artifacts: List<GithubWorkflowArtifactDto> = emptyList()
 )
 
 @Serializable
@@ -133,6 +140,23 @@ internal data class GithubWorkflowStepDto(
         conclusion = conclusion.toGithubActionsConclusion(),
         startedAt = startedAt,
         completedAt = completedAt
+    )
+}
+
+@Serializable
+internal data class GithubWorkflowArtifactDto(
+    val id: Long,
+    val name: String,
+    @SerialName("size_in_bytes") val sizeInBytes: Long = 0,
+    val expired: Boolean = false,
+    @SerialName("created_at") val createdAt: String = ""
+) {
+    fun toDomain() = GithubWorkflowArtifact(
+        id = id,
+        name = name,
+        sizeBytes = sizeInBytes,
+        isExpired = expired,
+        createdAt = createdAt
     )
 }
 

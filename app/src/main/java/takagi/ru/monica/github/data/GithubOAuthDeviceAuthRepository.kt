@@ -46,7 +46,7 @@ class GithubOAuthDeviceAuthRepository(
                 .build()
             val request = oauthRequest("device/code").post(body).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 val payload = json.decodeFromString(
                     DeviceCodeResponse.serializer(),
                     response.body?.string().orEmpty()
@@ -67,11 +67,11 @@ class GithubOAuthDeviceAuthRepository(
                 .build()
             val request = oauthRequest("oauth/access_token").post(body).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 json.decodeFromString(
                     AccessTokenResponse.serializer(),
                     response.body?.string().orEmpty()
-                ).toDomain()
+                ).toDomain(nowEpochMillis())
             }
         }
     }
@@ -119,9 +119,12 @@ class GithubOAuthDeviceAuthRepository(
         @SerialName("access_token") val accessToken: String? = null,
         @SerialName("token_type") val tokenType: String? = null,
         val scope: String? = null,
+        @SerialName("refresh_token") val refreshToken: String? = null,
+        @SerialName("expires_in") val expiresIn: Long? = null,
+        @SerialName("refresh_token_expires_in") val refreshExpiresIn: Long? = null,
         val error: String? = null
     ) {
-        fun toDomain(): GithubDevicePollResult {
+        fun toDomain(now: Long): GithubDevicePollResult {
             if (!accessToken.isNullOrBlank()) {
                 val normalizedTokenType = tokenType
                     ?.takeIf { it.equals("bearer", ignoreCase = true) }
@@ -130,6 +133,9 @@ class GithubOAuthDeviceAuthRepository(
                     GithubDeviceAccessToken(
                         accessToken = accessToken,
                         tokenType = normalizedTokenType,
+                        refreshToken = validateGithubRefreshToken(refreshToken),
+                        expiresAtEpochMillis = githubTokenExpiry(now, expiresIn),
+                        refreshExpiresAtEpochMillis = githubTokenExpiry(now, refreshExpiresIn),
                         scopes = scope.orEmpty()
                             .split(',', ' ')
                             .map(String::trim)
@@ -151,7 +157,7 @@ class GithubOAuthDeviceAuthRepository(
     private companion object {
         const val DEVICE_GRANT_TYPE = "urn:ietf:params:oauth:grant-type:device_code"
         const val MINIMUM_INTERVAL_SECONDS = 5
-        val DEFAULT_SCOPES = setOf("notifications", "read:user", "repo")
+        val DEFAULT_SCOPES = setOf("notifications", "read:user", "repo", "user:follow")
         val LOCAL_TEST_HOSTS = setOf("localhost", "127.0.0.1")
 
         /**

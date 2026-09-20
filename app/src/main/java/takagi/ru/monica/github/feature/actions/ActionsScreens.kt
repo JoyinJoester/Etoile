@@ -1,5 +1,12 @@
 package takagi.ru.monica.github.feature.actions
 
+import android.content.ContentResolver
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -11,17 +18,28 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubCenteredProgress
 import takagi.ru.monica.github.component.GithubListLoadingState
@@ -30,9 +48,12 @@ import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubPagedListStatus
+import takagi.ru.monica.github.component.GithubPullToRefreshBox
 import takagi.ru.monica.github.component.GithubSectionHeader
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
+import takagi.ru.monica.github.domain.GithubArtifactOutput
 import takagi.ru.monica.github.domain.GithubWorkflow
+import takagi.ru.monica.github.domain.GithubWorkflowArtifact
 import takagi.ru.monica.github.domain.GithubWorkflowJob
 import takagi.ru.monica.github.domain.GithubWorkflowRun
 import takagi.ru.monica.github.navigation.GithubWebUrls
@@ -47,25 +68,38 @@ fun ActionsWorkflowsScreen(
     modifier: Modifier = Modifier
 ) {
     GithubDetailScaffold(
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = state.name,
         subtitle = stringResource(R.string.github_actions),
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
         actions = {
+            IconButton(
+                onClick = { onAction(ActionsWorkflowsAction.Refresh) },
+                enabled = !state.isRefreshing && !state.isLoading
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
+            }
             GithubOpenOnGithubButton {
                 onOpenExternal(GithubWebUrls.actions(state.fullName))
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        GithubPullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onAction(ActionsWorkflowsAction.Refresh) },
+            enabled = !state.isRefreshing && !state.isLoading && !state.isLoadingMore,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
             GithubListLoadingState(
                 isLoading = state.isLoading,
                 hasItems = state.items.isNotEmpty(),
                 row = GithubSkeletonRow.LIST,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
             )
-            LazyColumn(
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
             ) {
@@ -73,6 +107,7 @@ fun ActionsWorkflowsScreen(
                     ActionsWorkflowRow(
                         workflow = workflow,
                         onClick = { onOpenWorkflow(workflow) },
+                        canManage = state.canManageWorkflows,
                         isUpdating = workflow.id in state.workflowBusyIds,
                         hasError = workflow.id in state.workflowErrorIds,
                         isDispatching = workflow.id in state.dispatchBusyIds,
@@ -85,7 +120,7 @@ fun ActionsWorkflowsScreen(
                         }
                     )
                 }
-                item(key = "list-status") {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
                         itemCount = state.items.size,
                         isInitialLoading = state.isLoading,
@@ -99,6 +134,7 @@ fun ActionsWorkflowsScreen(
                         emptyIcon = Icons.Default.PlayArrow
                     )
                 }
+            }
             }
         }
     }
@@ -114,32 +150,45 @@ fun WorkflowRunsScreen(
     modifier: Modifier = Modifier
 ) {
     GithubDetailScaffold(
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = state.workflowName.ifBlank { stringResource(R.string.github_unnamed_workflow) },
         subtitle = stringResource(R.string.github_workflow_runs),
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
         actions = {
+            IconButton(
+                onClick = { onAction(WorkflowRunsAction.Refresh) },
+                enabled = !state.isRefreshing && !state.isLoading
+            ) {
+                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
+            }
             GithubOpenOnGithubButton {
                 onOpenExternal(GithubWebUrls.actions(state.fullName))
             }
         }
     ) { padding ->
-        Column(modifier = Modifier.fillMaxSize().padding(padding)) {
+        GithubPullToRefreshBox(
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onAction(WorkflowRunsAction.Refresh) },
+            enabled = !state.isRefreshing && !state.isLoading && !state.isLoadingMore,
+            modifier = Modifier.fillMaxSize().padding(padding)
+        ) {
+            Column(modifier = Modifier.fillMaxSize()) {
             GithubListLoadingState(
                 isLoading = state.isLoading,
                 hasItems = state.items.isNotEmpty(),
                 row = GithubSkeletonRow.LIST,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
             )
-            LazyColumn(
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
             ) {
                 items(state.items, key = GithubWorkflowRun::id) { run ->
                     WorkflowRunRow(run = run, onClick = { onOpenRun(run) })
                 }
-                item(key = "list-status") {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
                         itemCount = state.items.size,
                         isInitialLoading = state.isLoading,
@@ -153,6 +202,7 @@ fun WorkflowRunsScreen(
                         emptyIcon = Icons.Default.PlayArrow
                     )
                 }
+            }
             }
         }
     }
@@ -168,12 +218,32 @@ fun ActionsRunDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val run = state.run
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    val context = LocalContext.current
+    var downloadTarget by rememberSaveable { mutableStateOf(0L) }
+    val artifactPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        val artifact = state.artifacts.firstOrNull { it.id == downloadTarget }
+        if (uri != null && artifact != null) {
+            onAction(
+                ActionsRunDetailAction.DownloadArtifact(artifact.id) {
+                    uri.artifactOutput(context.contentResolver)
+                }
+            )
+        }
+    }
+    val requestDownload: (GithubWorkflowArtifact) -> Unit = { artifact ->
+        downloadTarget = artifact.id
+        artifactPicker.launch(artifact.zipFileName())
+    }
     GithubDetailScaffold(
         title = run?.let { stringResource(R.string.github_run_number, it.runNumber) } ?: "#${state.runId}",
         subtitle = state.fullName,
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         actions = {
             GithubOpenOnGithubButton {
                 onOpenExternal(run?.htmlUrl ?: GithubWebUrls.actionsRun(state.fullName, state.runId))
@@ -195,20 +265,22 @@ fun ActionsRunDetailScreen(
                 modifier = Modifier.padding(padding).padding(horizontal = 20.dp)
             )
             run != null -> BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(padding)) {
-                if (maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth) {
+                if (maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth * fontScale) {
                     Row(modifier = Modifier.fillMaxSize()) {
                         LazyColumn(
-                            modifier = Modifier.width(380.dp).fillMaxHeight(),
+                            modifier = Modifier.width(380.dp * fontScale).fillMaxHeight(),
                             contentPadding = PaddingValues(16.dp)
                         ) {
                             item(key = "summary") {
                                 ActionsRunSummaryCard(
                                     run = run,
                                     onAction = { action -> onAction(ActionsRunDetailAction.PerformRunAction(action)) },
+                                    canManage = state.canManageRun,
                                     isPerformingAction = state.isPerformingAction,
                                     actionError = state.actionError
                                 )
                             }
+                            actionsArtifacts(state, onAction, requestDownload)
                         }
                         VerticalDivider(
                             modifier = Modifier.fillMaxHeight().width(1.dp),
@@ -218,6 +290,7 @@ fun ActionsRunDetailScreen(
                             state = state,
                             onAction = onAction,
                             onOpenJob = onOpenJob,
+                            onRequestDownload = requestDownload,
                             modifier = Modifier.weight(1f).fillMaxHeight(),
                             includeSummary = false
                         )
@@ -227,6 +300,7 @@ fun ActionsRunDetailScreen(
                         state = state,
                         onAction = onAction,
                         onOpenJob = onOpenJob,
+                        onRequestDownload = requestDownload,
                         modifier = Modifier.fillMaxSize(),
                         includeSummary = true
                     )
@@ -241,6 +315,7 @@ private fun ActionsJobsList(
     state: ActionsRunDetailUiState,
     onAction: (ActionsRunDetailAction) -> Unit,
     onOpenJob: (GithubWorkflowJob) -> Unit,
+    onRequestDownload: (GithubWorkflowArtifact) -> Unit,
     modifier: Modifier,
     includeSummary: Boolean
 ) {
@@ -254,11 +329,13 @@ private fun ActionsJobsList(
                     ActionsRunSummaryCard(
                         run = run,
                         onAction = { action -> onAction(ActionsRunDetailAction.PerformRunAction(action)) },
+                        canManage = state.canManageRun,
                         isPerformingAction = state.isPerformingAction,
                         actionError = state.actionError
                     )
                 }
             }
+            actionsArtifacts(state, onAction, onRequestDownload)
         }
         item(key = "jobs-title") {
             GithubSectionHeader(title = stringResource(R.string.github_jobs))
@@ -286,6 +363,51 @@ private fun ActionsJobsList(
     }
 }
 
+private fun LazyListScope.actionsArtifacts(
+    state: ActionsRunDetailUiState,
+    onAction: (ActionsRunDetailAction) -> Unit,
+    onRequestDownload: (GithubWorkflowArtifact) -> Unit
+) {
+    item(key = "artifacts-title") {
+        GithubSectionHeader(title = stringResource(R.string.github_artifacts))
+    }
+    if (state.isLoadingArtifacts && state.artifacts.isEmpty()) {
+        item(key = "artifacts-loading") { GithubCenteredProgress() }
+    }
+    if (state.artifactDownloadFailed) {
+        item(key = "artifacts-download-error") {
+            Text(
+                text = stringResource(R.string.github_actions_artifact_download_error),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+        }
+    }
+    items(state.artifacts, key = GithubWorkflowArtifact::id) { artifact ->
+        ActionsArtifactRow(
+            artifact = artifact,
+            isDownloading = state.downloadingArtifactId == artifact.id,
+            isBusy = state.isDownloadingArtifact,
+            onDownload = { onRequestDownload(artifact) }
+        )
+    }
+    item(key = "artifacts-status") {
+        GithubPagedListStatus(
+            itemCount = state.artifacts.size,
+            isInitialLoading = state.isLoadingArtifacts,
+            isLoadingMore = state.isLoadingMoreArtifacts,
+            hasError = state.artifactsError,
+            canLoadMore = state.canLoadMoreArtifacts,
+            errorMessage = stringResource(R.string.github_actions_artifacts_error),
+            emptyMessage = stringResource(R.string.github_no_artifacts),
+            onRetry = { onAction(ActionsRunDetailAction.RetryArtifacts) },
+            onLoadMore = { onAction(ActionsRunDetailAction.LoadMoreArtifacts) },
+            compact = true
+        )
+    }
+}
+
 @Composable
 fun ActionsJobDetailScreen(
     state: ActionsJobDetailUiState,
@@ -295,12 +417,14 @@ fun ActionsJobDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val job = state.job
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     GithubDetailScaffold(
         title = job?.name ?: "#${state.jobId}",
         subtitle = state.fullName,
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         actions = {
             GithubOpenOnGithubButton {
                 onOpenExternal(job?.htmlUrl ?: GithubWebUrls.actions(state.fullName))
@@ -308,12 +432,12 @@ fun ActionsJobDetailScreen(
         }
     ) { padding ->
         BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(padding)) {
-            if (maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth) {
+            if (maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth * fontScale) {
                 Row(modifier = Modifier.fillMaxSize()) {
                     ActionsJobSummaryList(
                         state = state,
                         onAction = onAction,
-                        modifier = Modifier.width(400.dp).fillMaxHeight()
+                        modifier = Modifier.width(400.dp * fontScale).fillMaxHeight()
                     )
                     VerticalDivider(
                         modifier = Modifier.fillMaxHeight().width(1.dp),
@@ -401,5 +525,23 @@ private fun ActionsJobLogState(
             actionLabel = stringResource(R.string.github_retry),
             onAction = { onAction(ActionsJobDetailAction.RetryLog) }
         )
+    }
+}
+
+/** Artifact names are workflow input, so the suggested file name drops characters file systems reject. */
+private fun GithubWorkflowArtifact.zipFileName(): String {
+    val safeName = name.map {
+        if (it.isLetterOrDigit() || it == '.' || it == '-' || it == '_') it else '-'
+    }.joinToString("").ifBlank { "artifact" }
+    return "$safeName.zip"
+}
+
+private fun Uri.artifactOutput(resolver: ContentResolver): GithubArtifactOutput {
+    val stream = resolver.openOutputStream(this) ?: error("Unable to open the selected file")
+    return object : GithubArtifactOutput {
+        override fun write(source: ByteArray, offset: Int, count: Int) = stream.write(source, offset, count)
+        override fun close() {
+            stream.close()
+        }
     }
 }

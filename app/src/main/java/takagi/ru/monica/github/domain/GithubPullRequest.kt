@@ -184,6 +184,17 @@ data class GithubMergeResult(
 )
 
 interface GithubPullRequestsRepository {
+    suspend fun compare(
+        owner: String,
+        name: String,
+        base: String,
+        head: String,
+        headRepository: String? = null,
+        perPage: Int = 1
+    ): Result<GithubBranchComparison> =
+        Result.failure(UnsupportedOperationException("Branch comparison unavailable"))
+    suspend fun create(owner: String, name: String, draft: GithubCreatePullRequestDraft): Result<GithubPullRequest> =
+        Result.failure(UnsupportedOperationException("Pull request creation unavailable"))
     suspend fun pullRequests(
         owner: String,
         name: String,

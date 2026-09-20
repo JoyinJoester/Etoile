@@ -1,5 +1,9 @@
 package takagi.ru.monica.github.feature.inbox
 
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -11,6 +15,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,23 +39,31 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
+import takagi.ru.monica.github.design.GithubExpressiveShapes
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubFilterRow
 import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubAuthPromptCard
-import takagi.ru.monica.github.component.GithubMetric
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.githubRelativeTime
@@ -70,13 +83,25 @@ fun InboxScreen(
     onOpenNotification: (GithubNotification) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var unsubscribeCandidate by remember { mutableStateOf<GithubNotification?>(null) }
+    var unsubscribeCandidateId by rememberSaveable { mutableStateOf<String?>(null) }
+    val unsubscribeCandidate = if (state.requiresAuthentication) null else
+        state.items.firstOrNull { it.id == unsubscribeCandidateId }
+    LaunchedEffect(unsubscribeCandidateId, unsubscribeCandidate) {
+        if (unsubscribeCandidate == null) unsubscribeCandidateId = null
+    }
     val filters = InboxFilter.entries
     val labels = listOf(
-        stringResource(R.string.github_filter_all),
+        stringResource(R.string.github_unread),
         stringResource(R.string.github_filter_mentions),
-        stringResource(R.string.github_filter_review)
+        stringResource(R.string.github_filter_review),
+        stringResource(R.string.github_filter_read)
     )
+    val emptyMessage = when (state.selectedFilter) {
+        InboxFilter.READ -> stringResource(R.string.github_inbox_read_empty)
+        InboxFilter.UNREAD -> stringResource(R.string.github_inbox_empty)
+        else -> stringResource(R.string.github_inbox_filter_empty)
+    }
+    val isReadView = state.selectedFilter == InboxFilter.READ
 
     GithubPullToRefreshBox(
         isRefreshing = state.isRefreshing,
@@ -87,11 +112,11 @@ fun InboxScreen(
             !state.isLoadingMore &&
             !state.isTriaging
     ) {
-        LazyColumn(
+        GithubAdaptiveGrid(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 32.dp)
         ) {
-            item(key = "header") {
+            githubFullSpanItem(key = "header") {
                 GithubScreenIntro(
                     subtitle = stringResource(R.string.github_inbox_subtitle),
                     modifier = Modifier.padding(bottom = 4.dp)
@@ -105,46 +130,24 @@ fun InboxScreen(
                         onAction = onSignIn
                     )
                 } else {
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        GithubMetric(
-                            state.needsAttentionCount.toString(),
-                            stringResource(R.string.github_needs_attention),
-                            MaterialTheme.colorScheme.primary,
-                            Modifier.weight(1f),
-                            compact = true
-                        )
-                        GithubMetric(
-                            state.unreadIds.size.toString(),
-                            stringResource(R.string.github_unread),
-                            MaterialTheme.colorScheme.tertiary,
-                            Modifier.weight(1f),
-                            compact = true
-                        )
-                        GithubMetric(
-                            state.assignedCount.toString(),
-                            stringResource(R.string.github_assigned),
-                            MaterialTheme.colorScheme.secondary,
-                            Modifier.weight(1f),
-                            compact = true
-                        )
-                    }
                     GithubFilterRow(
                         labels = labels,
                         selectedIndex = filters.indexOf(state.selectedFilter),
                         onSelected = { onAction(InboxAction.SelectFilter(filters[it])) },
-                        modifier = Modifier.padding(top = 18.dp)
+                        modifier = Modifier.padding(top = 4.dp)
                     )
                     GithubSectionHeader(
                         title = stringResource(R.string.github_recent_activity),
-                        action = stringResource(R.string.github_mark_all_read),
+                        action = if (isReadView) null else stringResource(R.string.github_mark_all_read),
                         onAction = { onAction(InboxAction.MarkAllRead) },
+                        actionEnabled = !state.isTriaging && state.unreadIds.isNotEmpty(),
                         compact = true
                     )
                 }
             }
 
             if (state.isLoading && !state.requiresAuthentication) {
-                item(key = "loading") {
+                githubFullSpanItem(key = "loading") {
                     GithubListLoadingState(
                         isLoading = true,
                         hasItems = state.visibleItems.isNotEmpty(),
@@ -164,13 +167,13 @@ fun InboxScreen(
                         onOpenNotification(item)
                     },
                     onMarkDone = { onAction(InboxAction.MarkDone(item.id)) },
-                    onUnsubscribe = { unsubscribeCandidate = item },
+                    onUnsubscribe = { unsubscribeCandidateId = item.id },
                     modifier = Modifier.animateItem()
                 )
             }
 
             if (state.actionError && !state.error && !state.requiresAuthentication) {
-                item(key = "action-error") {
+                githubFullSpanItem(key = "action-error") {
                     GithubMessageState(
                         title = stringResource(R.string.github_notifications_action_error),
                         color = MaterialTheme.colorScheme.error,
@@ -181,7 +184,7 @@ fun InboxScreen(
             }
 
             if (!state.requiresAuthentication) {
-                item(key = "list-status") {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
                         itemCount = state.visibleItems.size,
                         isInitialLoading = state.isLoading,
@@ -189,7 +192,7 @@ fun InboxScreen(
                         hasError = state.error,
                         canLoadMore = state.canLoadMore,
                         errorMessage = stringResource(R.string.github_notifications_error),
-                        emptyMessage = stringResource(R.string.github_inbox_empty),
+                        emptyMessage = emptyMessage,
                         onRetry = {
                             onAction(
                                 if (state.items.isEmpty() || state.refreshError) {
@@ -208,7 +211,7 @@ fun InboxScreen(
     }
     unsubscribeCandidate?.let { notification ->
         AlertDialog(
-            onDismissRequest = { unsubscribeCandidate = null },
+            onDismissRequest = { unsubscribeCandidateId = null },
             title = { Text(stringResource(R.string.github_unsubscribe_notification_title)) },
             text = {
                 Text(
@@ -221,15 +224,16 @@ fun InboxScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        unsubscribeCandidate = null
+                        unsubscribeCandidateId = null
                         onAction(InboxAction.Unsubscribe(notification.id))
-                    }
+                    },
+                    enabled = !state.isTriaging
                 ) {
                     Text(stringResource(R.string.github_unsubscribe))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { unsubscribeCandidate = null }) {
+                TextButton(onClick = { unsubscribeCandidateId = null }) {
                     Text(stringResource(R.string.github_cancel))
                 }
             }
@@ -237,6 +241,7 @@ fun InboxScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun InboxNotificationRow(
     item: GithubNotification,
@@ -249,6 +254,7 @@ private fun InboxNotificationRow(
     modifier: Modifier = Modifier
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    val expressive = LocalDesignStyle.current == DesignStyle.MATERIAL
     val semanticColors = githubSemanticColors()
     val accent = when (item.reason) {
         GithubNotificationReason.REVIEW_REQUESTED -> semanticColors.review
@@ -257,17 +263,47 @@ private fun InboxNotificationRow(
         else -> semanticColors.release
     }
 
-    Column(modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 15.dp)) {
+    Column(
+        modifier = modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .padding(vertical = if (expressive) 4.dp else 0.dp)
+            .clip(if (expressive) GithubExpressiveShapes.control else androidx.compose.ui.graphics.RectangleShape)
+            .background(if (expressive) {
+                if (unread) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainerLow
+            } else Color.Transparent)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = if (expressive) 16.dp else 0.dp, vertical = 15.dp)
+    ) {
         Row(verticalAlignment = Alignment.Top) {
             Box(modifier = Modifier.padding(top = 4.dp).size(10.dp).background(if (unread) accent else Color.Transparent, CircleShape))
             Spacer(Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.title, style = MaterialTheme.typography.bodyLarge, fontWeight = if (unread) FontWeight.SemiBold else FontWeight.Normal, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                Text(item.repository, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(top = 4.dp))
-                Text(item.subjectType, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    item.title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (unread) FontWeight.SemiBold else FontWeight.Normal,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    item.repository,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+                FlowRow(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(item.subjectType, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        githubRelativeTime(item.updatedAt),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text(githubRelativeTime(item.updatedAt), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Box(contentAlignment = Alignment.Center) {
                     if (isTriageBusy) {
                         CircularProgressIndicator(
@@ -314,6 +350,8 @@ private fun InboxNotificationRow(
                 modifier = Modifier.padding(start = 22.dp, top = 8.dp)
             )
         }
-        HorizontalDivider(modifier = Modifier.padding(top = 15.dp, start = 22.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+        if (!expressive) {
+            HorizontalDivider(modifier = Modifier.padding(top = 15.dp, start = 22.dp), color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+        }
     }
 }

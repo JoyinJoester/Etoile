@@ -76,8 +76,8 @@ class SettingsManager(private val context: Context) {
                 ColorScheme.valueOf(preferences[COLOR_SCHEME_KEY] ?: ColorScheme.DEFAULT.name)
             }.getOrDefault(ColorScheme.DEFAULT),
             designStyle = runCatching {
-                DesignStyle.valueOf(preferences[DESIGN_STYLE_KEY] ?: DesignStyle.MATERIAL.name)
-            }.getOrDefault(DesignStyle.MATERIAL),
+                DesignStyle.valueOf(preferences[DESIGN_STYLE_KEY] ?: DesignStyle.NOTHING.name)
+            }.getOrDefault(DesignStyle.NOTHING),
             customPrimaryColor = preferences[CUSTOM_PRIMARY_COLOR_KEY] ?: 0xFF6650a4,
             customSecondaryColor = preferences[CUSTOM_SECONDARY_COLOR_KEY] ?: 0xFF625b71,
             customTertiaryColor = preferences[CUSTOM_TERTIARY_COLOR_KEY] ?: 0xFF7D5260,

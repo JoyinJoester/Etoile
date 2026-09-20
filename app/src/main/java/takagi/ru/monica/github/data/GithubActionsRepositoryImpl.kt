@@ -17,8 +17,10 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okio.Buffer
 import takagi.ru.monica.github.domain.GithubActionsLog
 import takagi.ru.monica.github.domain.GithubActionsRepository
+import takagi.ru.monica.github.domain.GithubArtifactOutput
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubWorkflow
+import takagi.ru.monica.github.domain.GithubWorkflowArtifact
 import takagi.ru.monica.github.domain.GithubWorkflowJob
 import takagi.ru.monica.github.domain.GithubWorkflowRun
 import takagi.ru.monica.github.domain.GithubWorkflowRunAction
@@ -48,6 +50,21 @@ class GithubActionsRepositoryImpl(
         name: String,
         page: Int,
         perPage: Int
+    ): Result<GithubPage<GithubWorkflow>> = workflowsInternal(owner, name, page, perPage, forceRefresh = false)
+
+    override suspend fun refreshWorkflows(
+        owner: String,
+        name: String,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubWorkflow>> = workflowsInternal(owner, name, page, perPage, forceRefresh = true)
+
+    private suspend fun workflowsInternal(
+        owner: String,
+        name: String,
+        page: Int,
+        perPage: Int,
+        forceRefresh: Boolean
     ): Result<GithubPage<GithubWorkflow>> = withContext(Dispatchers.IO) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "workflows").newBuilder()
@@ -70,7 +87,8 @@ class GithubActionsRepositoryImpl(
                         items = payload.workflows.map(GithubWorkflowDto::toDomain),
                         nextPage = GithubPagination.nextPage(linkHeader)
                     )
-                }
+                },
+                maxAgeMillis = if (forceRefresh) 0L else cacheStore.defaultMaxAgeMillis
             )
         }
     }
@@ -81,6 +99,27 @@ class GithubActionsRepositoryImpl(
         workflowId: Long,
         page: Int,
         perPage: Int
+    ): Result<GithubPage<GithubWorkflowRun>> = workflowRunsInternal(
+        owner, name, workflowId, page, perPage, forceRefresh = false
+    )
+
+    override suspend fun refreshWorkflowRuns(
+        owner: String,
+        name: String,
+        workflowId: Long,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubWorkflowRun>> = workflowRunsInternal(
+        owner, name, workflowId, page, perPage, forceRefresh = true
+    )
+
+    private suspend fun workflowRunsInternal(
+        owner: String,
+        name: String,
+        workflowId: Long,
+        page: Int,
+        perPage: Int,
+        forceRefresh: Boolean
     ): Result<GithubPage<GithubWorkflowRun>> = withContext(Dispatchers.IO) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "workflows", workflowId.toString(), "runs").newBuilder()
@@ -103,7 +142,8 @@ class GithubActionsRepositoryImpl(
                         items = payload.workflowRuns.map(GithubWorkflowRunDto::toDomain),
                         nextPage = GithubPagination.nextPage(linkHeader)
                     )
-                }
+                },
+                maxAgeMillis = if (forceRefresh) 0L else cacheStore.defaultMaxAgeMillis
             )
         }
     }
@@ -202,17 +242,78 @@ class GithubActionsRepositoryImpl(
 
             val redirectUrl = noRedirectClient.newCall(apiRequest).execute().use { response ->
                 if (response.isSuccessful) return@githubRunCatching readLog(response.body)
-                if (response.code !in 300..399) throw GithubApiException(response.code)
-                resolveLogRedirect(response.header("Location"))
+                if (response.code !in 300..399) throw GithubApiException.of(response)
+                resolveDownloadRedirect(response.header("Location"))
             }
             val downloadRequest = Request.Builder()
                 .url(redirectUrl)
-                .header("User-Agent", "Etoile-GitHub-Client")
+                .header("User-Agent", DOWNLOAD_USER_AGENT)
                 .get()
                 .build()
             client.newCall(downloadRequest).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 readLog(response.body)
+            }
+        }
+    }
+
+    override suspend fun artifacts(
+        owner: String,
+        name: String,
+        runId: Long,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubWorkflowArtifact>> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val url = endpoint(owner, name, "actions", "runs", runId.toString(), "artifacts").newBuilder()
+                .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
+                .addQueryParameter("page", page.coerceAtLeast(1).toString())
+                .build()
+            val cacheKey = GithubCacheKeys.endpoint("actions-artifacts", requests.cacheScope(), url.toString())
+            cachedGet.execute(
+                client = client,
+                cacheKey = cacheKey,
+                request = { etag ->
+                    requests.optionalBuilder(url.toString()).get().withCacheValidator(etag).build()
+                },
+                decode = { body, linkHeader ->
+                    val payload = json.decodeFromString(
+                        GithubWorkflowArtifactsResponseDto.serializer(),
+                        body
+                    )
+                    GithubPage(
+                        items = payload.artifacts.map(GithubWorkflowArtifactDto::toDomain),
+                        nextPage = GithubPagination.nextPage(linkHeader)
+                    )
+                }
+            )
+        }
+    }
+
+    override suspend fun downloadArtifact(
+        owner: String,
+        name: String,
+        artifactId: Long,
+        open: () -> GithubArtifactOutput
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val apiRequest = requests.optionalBuilder(
+                endpoint(owner, name, "actions", "artifacts", artifactId.toString(), "zip").toString()
+            ).get().build()
+
+            val redirectUrl = noRedirectClient.newCall(apiRequest).execute().use { response ->
+                if (response.isSuccessful) return@githubRunCatching writeArtifact(response.body, open)
+                if (response.code !in 300..399) throw GithubApiException.of(response)
+                resolveDownloadRedirect(response.header("Location"))
+            }
+            val downloadRequest = Request.Builder()
+                .url(redirectUrl)
+                .header("User-Agent", DOWNLOAD_USER_AGENT)
+                .get()
+                .build()
+            client.newCall(downloadRequest).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                writeArtifact(response.body, open)
             }
         }
     }
@@ -232,7 +333,7 @@ class GithubActionsRepositoryImpl(
                 endpoint(owner, name, "actions", "runs", runId.toString(), path).toString()
             ).post("{}".toRequestBody("application/json; charset=utf-8".toMediaType())).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
                 Unit
             }
@@ -251,7 +352,7 @@ class GithubActionsRepositoryImpl(
                 endpoint(owner, name, "actions", "workflows", workflowId.toString(), action).toString()
             ).put("{}".toRequestBody("application/json; charset=utf-8".toMediaType())).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
                 Unit
             }
@@ -268,36 +369,51 @@ class GithubActionsRepositoryImpl(
         githubRunCatching {
             val normalizedRef = ref.trim()
             require(normalizedRef.isNotBlank()) { "Workflow ref must not be blank" }
+            require(inputs.keys.none(String::isBlank)) { "Workflow input names must not be blank" }
+            require(inputs.size <= MAX_DISPATCH_INPUTS) {
+                "GitHub accepts at most $MAX_DISPATCH_INPUTS workflow_dispatch inputs"
+            }
             val payload = buildJsonObject {
                 put("ref", normalizedRef)
                 if (inputs.isNotEmpty()) {
                     put("inputs", buildJsonObject {
-                        inputs.entries
-                            .map { it.key.trim() to it.value.trim() }
-                            .filter { it.first.isNotBlank() }
-                            .take(20)
-                            .forEach { (key, value) -> put(key, JsonPrimitive(value)) }
+                        inputs.forEach { (key, value) -> put(key, JsonPrimitive(value)) }
                     })
                 }
             }
             val request = requests.builder(
-                endpoint(owner, name, "actions", "workflows", workflowId.toString(), "dispatch").toString()
+                endpoint(owner, name, "actions", "workflows", workflowId.toString(), "dispatches").toString()
             ).post(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType())).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
                 Unit
             }
         }
     }
 
-    private fun resolveLogRedirect(location: String?): HttpUrl {
+    private fun resolveDownloadRedirect(location: String?): HttpUrl {
         val redirect = location?.toHttpUrlOrNull() ?: location?.let(apiBaseUrl::resolve)
-            ?: throw IllegalStateException("GitHub did not provide a log redirect")
+            ?: throw IllegalStateException("GitHub did not provide a download redirect")
         if (apiBaseUrl.isHttps && !redirect.isHttps) {
-            throw IllegalStateException("Insecure GitHub log redirect")
+            throw IllegalStateException("Insecure GitHub download redirect")
         }
         return redirect
+    }
+
+    private fun writeArtifact(body: ResponseBody?, open: () -> GithubArtifactOutput) {
+        val source = body?.source() ?: throw IllegalStateException("GitHub did not return the artifact")
+        val output = open()
+        try {
+            val buffer = Buffer()
+            while (true) {
+                if (source.read(buffer, ARTIFACT_CHUNK_BYTES) == -1L) break
+                val chunk = buffer.readByteArray()
+                output.write(chunk, 0, chunk.size)
+            }
+        } finally {
+            output.close()
+        }
     }
 
     private fun readLog(body: ResponseBody?): GithubActionsLog {
@@ -325,7 +441,10 @@ class GithubActionsRepositoryImpl(
             .build()
 
     private companion object {
+        const val MAX_DISPATCH_INPUTS = 25
         const val DEFAULT_MAX_LOG_BYTES = 256L * 1024L
         const val LOG_READ_CHUNK_BYTES = 8L * 1024L
+        const val ARTIFACT_CHUNK_BYTES = 32L * 1024L
+        const val DOWNLOAD_USER_AGENT = "Etoile-GitHub-Client"
     }
 }

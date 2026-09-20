@@ -4,10 +4,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRepository
+import takagi.ru.monica.github.domain.GithubRepositoryCreateDraft
 import takagi.ru.monica.github.domain.GithubUserRepositoriesRepository
 
 class GithubUserRepositoriesRepositoryImpl(
@@ -52,5 +57,37 @@ class GithubUserRepositoriesRepositoryImpl(
                 }
             )
         }
+    }
+
+    override suspend fun create(draft: GithubRepositoryCreateDraft): Result<GithubRepository> =
+        withContext(Dispatchers.IO) {
+            githubRunCatching {
+                val payload = buildJsonObject {
+                    put("name", draft.name)
+                    draft.description?.let { put("description", it) }
+                    put("private", draft.isPrivate)
+                    put("auto_init", draft.autoInit)
+                }
+                val url = apiBaseUrl.newBuilder()
+                    .addPathSegment("user")
+                    .addPathSegment("repos")
+                    .build()
+                val request = requests.builder(url.toString())
+                    .post(payload.toString().toRequestBody(JSON_MEDIA_TYPE))
+                    .build()
+                client.newCall(request).execute().use { response ->
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
+                    val created = json.decodeFromString(
+                        GithubRepositoryDto.serializer(),
+                        response.body?.string().orEmpty()
+                    ).toDomain()
+                    cacheStore.clear()
+                    created
+                }
+            }
+        }
+
+    private companion object {
+        val JSON_MEDIA_TYPE = "application/json; charset=utf-8".toMediaType()
     }
 }

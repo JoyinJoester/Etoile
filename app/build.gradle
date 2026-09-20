@@ -5,6 +5,18 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
+def rustOutput = layout.buildDirectory.dir('rustJniLibs')
+tasks.register('buildRustReader', Exec) {
+    workingDir rootProject.file('native/code-reader')
+    doFirst {
+        environment 'ANDROID_NDK_HOME', System.getenv('ANDROID_NDK_HOME') ?: new File(android.sdkDirectory, 'ndk/28.2.13676358').absolutePath
+    }
+    commandLine 'cargo', 'ndk', '-t', 'arm64-v8a', '-t', 'armeabi-v7a', '-o', rustOutput.get().asFile.absolutePath, 'build', '--release'
+    inputs.files(rootProject.fileTree('native/code-reader') { exclude 'target/**' })
+    outputs.dir(rustOutput)
+}
+tasks.named('preBuild').configure { dependsOn 'buildRustReader' }
+
 // Release signing is intentionally external. A missing or partial contract
 // produces an unsigned release configuration and never falls back to the
 // Android public debug certificate.
@@ -77,6 +89,7 @@ if (hasCompleteReleaseSigning && !releaseStoreFile.isFile()) {
 def requireReleaseSigning = project.findProperty('requireReleaseSigning')?.toString()?.toBoolean() ?: false
 
 android {
+    sourceSets.main.jniLibs.srcDir(rustOutput)
     namespace 'takagi.ru.monica'
     compileSdk 37
 
@@ -114,6 +127,26 @@ android {
                     ?: localBuildProperties.getProperty('githubOAuthClientId')
                     ?: '178c6fc778ccc68e1d6a'
     ).toString().trim()
+    def githubOAuthClientSecret = (
+            project.findProperty('githubOAuthClientSecret')
+                    ?: System.getenv('ETOILE_GITHUB_OAUTH_CLIENT_SECRET')
+                    ?: localBuildProperties.getProperty('githubOAuthClientSecret')
+                    ?: ''
+    ).toString().trim()
+
+    def githubAppClientId = (project.findProperty('githubAppClientId')
+            ?: System.getenv('ETOILE_GITHUB_APP_CLIENT_ID')
+            ?: localBuildProperties.getProperty('githubAppClientId') ?: '').toString().trim()
+    def githubAuthServiceUrl = (project.findProperty('githubAuthServiceUrl')
+            ?: System.getenv('ETOILE_GITHUB_AUTH_SERVICE_URL')
+            ?: localBuildProperties.getProperty('githubAuthServiceUrl') ?: '').toString().trim()
+    if (githubAuthServiceUrl) {
+        def serviceUri = new URI(githubAuthServiceUrl)
+        if (serviceUri.scheme != 'https' || !serviceUri.host || serviceUri.userInfo || serviceUri.query || serviceUri.fragment || !githubAuthServiceUrl.endsWith('/')) {
+            throw new GradleException('githubAuthServiceUrl must be an HTTPS base URL ending in / without credentials, query or fragment')
+        }
+        if (!githubAppClientId) throw new GradleException('githubAppClientId is required for the auth service')
+    }
 
     def resolveArchTag = { output ->
         def manualArch = project.findProperty('apkArch')
@@ -172,7 +205,7 @@ android {
     def fullVersionName = "${baseVersionName}-${buildDateTag}${buildVersionTag}-${buildDailySeq}"
 
     defaultConfig {
-        applicationId "app.etoile"
+        applicationId "takagi.joyin.github.etoile"
         minSdk 26
         targetSdk 34
         versionCode appVersionCode
@@ -196,6 +229,10 @@ android {
         buildConfigField 'String', 'FULL_VERSION_NAME', "\"${fullVersionName}\""
         buildConfigField 'String', 'BUILD_DETAIL_TAG', "\"${buildDateTag}${buildVersionTag}-${buildDailySeq}\""
         buildConfigField 'String', 'GITHUB_OAUTH_CLIENT_ID', "\"${escapeForBuildConfig(githubOAuthClientId)}\""
+        buildConfigField 'String', 'GITHUB_OAUTH_CLIENT_SECRET', "\"${escapeForBuildConfig(githubOAuthClientSecret)}\""
+        buildConfigField 'String', 'GITHUB_OAUTH_CALLBACK_URI', '"etoile://oauth"'
+        buildConfigField 'String', 'GITHUB_APP_CLIENT_ID', "\"${escapeForBuildConfig(githubAppClientId)}\""
+        buildConfigField 'String', 'GITHUB_AUTH_SERVICE_URL', "\"${escapeForBuildConfig(githubAuthServiceUrl)}\""
         
     }
 
@@ -330,6 +367,7 @@ dependencies {
 
     // Core Android libraries
     implementation libs.androidx.core.ktx
+    implementation libs.androidx.browser
     implementation libs.androidx.lifecycle.runtime.ktx
     implementation libs.androidx.activity.compose
 
@@ -371,12 +409,14 @@ dependencies {
     // Fragment and Material Color Utilities
     implementation libs.androidx.fragment.ktx
     implementation libs.material
+    implementation libs.material.color.utilities
 
     // DataStore
     implementation libs.androidx.datastore.preferences
 
     // Kotlinx Serialization
     implementation libs.kotlinx.serialization.json
+    implementation libs.snakeyaml
 
     // OkHttp for networking
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'

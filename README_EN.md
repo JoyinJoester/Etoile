@@ -57,7 +57,9 @@ read code, handle issues and pull requests, and watch Actions runs.
 - **Inbox**: paginated notification threads, per-item Done / Unsubscribe, unread state, and in-place failure hints.
 - **Repositories & code**: directory browsing, branch/tag switching, README rendering, raw files, commits, releases;
   plus separate read-only pages for branch lists, collaborator permissions, and webhooks.
-- **Issues**: detail view with a unified management sheet — title/body editing, labels, assignees, milestone,
+- **Issues**: create from repository Markdown templates or YAML Issue Forms, or use built-in Bug report,
+  Feature request, and Question forms in Chinese or English. Supports required fields, preview, draft restoration,
+  and a unified management sheet for title/body editing, labels, assignees, milestone,
   close/reopen, conversation locking, and reactions.
 - **Pull requests**: Conversation and Diff, inline review comments, reviewer requests, labels/assignees/milestone,
   and a merge confirmation bound to the head SHA (MERGE / SQUASH / REBASE).
@@ -72,7 +74,7 @@ read code, handle issues and pull requests, and watch Actions runs.
 
 1. Download the APK matching your device ABI from [Releases](https://github.com/JoyinJoester/Etoile/releases).
 2. Install on Android 8.0+.
-3. Sign in with the GitHub device flow; credentials stay in encrypted on-device storage.
+3. Sign in with GitHub OAuth. Personal builds can configure the `etoile://oauth` browser callback; other builds fall back to Device Flow.
 
 ### Known limitations
 - Still a public test build; APIs and UI may change at any time.
@@ -88,7 +90,7 @@ read code, handle issues and pull requests, and watch Actions runs.
 ## Data and security boundaries
 
 - Application ID: `app.etoile`; data is isolated by the Android application sandbox.
-- Access tokens come from the GitHub device flow and are kept in encrypted on-device storage. Nothing is
+- Access tokens come from GitHub OAuth and are kept in encrypted on-device storage. Browser OAuth in personal builds embeds the client secret in the APK; see the configuration guide. Nothing is
   uploaded to third-party servers.
 - Cache follows ETag / 304 validation and is cleared on sign-out or account switch; 401/403/4xx responses
   never surface another account's stale data.
@@ -200,3 +202,6 @@ Additional third-party copyright and license information is in [`THIRD_PARTY_NOT
 
 GitHub and related trademarks belong to GitHub, Inc. / Microsoft and their respective owners.
 This project is an unofficial third-party client.
+### Source code reader
+
+Repository files support line-oriented reading, text selection, horizontal scrolling, and Nothing-style syntax colors. A Rust JNI module computes UTF-16 line ranges, including Unicode, emoji, and mixed line endings. The offline `repository-reader` fixture in `DesignAuditActivity` previews the reader without a network session.

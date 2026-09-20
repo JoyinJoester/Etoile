@@ -42,3 +42,5 @@ keystore.properties
 gradle_props.txt
 quick-fix.ps1
 test_crypto.kt
+
+/native/code-reader/target/

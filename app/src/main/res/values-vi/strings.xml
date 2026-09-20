@@ -98,4 +98,38 @@
     
     
     
+    <string name="github_directory_accessibility">Thư mục %1$s</string>
+    <string name="github_file_accessibility">Tệp %1$s, %2$s</string>
+    <string name="github_explore_filter_description">%1$s: %2$s</string>
+    <string name="github_unnamed_job">Tác vụ không tên</string>
+    <string name="github_copilot_copy_success">Đã sao chép vào bộ nhớ tạm</string>
+    <string name="github_commit_change_summary">Số dòng thêm: %1$d, số dòng xóa: %2$d, tổng số thay đổi: %3$d</string>
+    <string name="github_code_match_position">Kết quả %1$d / %2$d</string>
+    <string name="github_code_previous_match">Trước</string>
+    <string name="github_code_next_match">Tiếp</string>
+    <string name="github_code_line_number">Dòng mã %1$d</string>
+    <!-- Short labels keep the M3E navigation readable at larger font sizes. -->
+    <string name="github_nav_home">Nhà</string>
+    <string name="github_nav_inbox">Hộp thư</string>
+    <string name="github_nav_explore">Tìm</string>
+    <string name="github_nav_store">Cửa hàng</string>
+    <string name="github_nav_profile">Tôi</string>
+    <string name="github_settings">Cài đặt</string>
+    <string name="github_settings_subtitle">Giao diện và ngôn ngữ</string>
+    <string name="github_appearance">Giao diện</string>
+    <string name="github_appearance_subtitle">Phong cách, chế độ sáng tối và bảng màu</string>
+    <string name="github_language">Ngôn ngữ</string>
+    <string name="github_language_description">Chọn ngôn ngữ hiển thị của ứng dụng. Thay đổi có hiệu lực ngay.</string>
+    <string name="github_design_style">Phong cách giao diện</string>
+    <string name="github_theme">Chế độ màu</string>
+    <string name="github_system">Theo hệ thống</string>
+    <string name="github_light">Sáng</string>
+    <string name="github_dark">Tối</string>
+    <string name="github_palette">Bảng màu</string>
+    <string name="github_palette_default">Mặc định</string>
+    <string name="github_palette_ocean">Xanh đại dương</string>
+    <string name="github_palette_sunset">Cam hoàng hôn</string>
+    <string name="github_palette_forest">Xanh lá rừng</string>
+    <string name="github_palette_purple">Tím công nghệ</string>
+    <string name="github_palette_miui">Xanh MIUI</string>
 </resources>

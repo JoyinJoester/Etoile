@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-17",
+  "defaultStyle": "Nothing",
+  "build": {
+    "result": "PASS",
+    "tasks": [
+      "assembleDebug",
+      "testDebugUnitTest",
+      "lintDebug",
+      "compileReleaseKotlin",
+      "processReleaseMainManifest"
+    ]
+  },
+  "unitTests": {
+    "tests": 387,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 104
+  },
+  "releaseIsolation": {
+    "classCount": 1871,
+    "debugPreviewClasses": [],
+    "debugActivityInManifest": false
+  },
+  "productionSettings": {
+    "result": "PASS",
+    "activity": "EtoileActivity",
+    "checks": [
+      "Language applies immediately and retains the language page after activity recreation",
+      "Back from Language returns to Settings",
+      "Language selection survives process restart",
+      "Appearance includes design style and a reachable palette, with no language choices",
+      "Switching between all three theme providers retains Appearance and its navigation stack",
+      "Design style and palette survive process restart",
+      "Back from Appearance returns to Settings",
+      "Restored Nothing, system theme and system language"
+    ]
+  },
+  "detailLayouts": {
+    "record": "detail-validation.json",
+    "checks": 25,
+    "result": "PASS"
+  },
+  "emulator": {
+    "api": 35,
+    "densityDpi": 420,
+    "phonePx": [
+      1080,
+      2400
+    ],
+    "narrowPx": [
+      840,
+      2100
+    ],
+    "widePx": [
+      3360,
+      2100
+    ],
+    "fontScales": [
+      1.0,
+      1.5
+    ]
+  },
+  "outputs": [
+    {
+      "file": "app/build/outputs/apk/debug/Etoile-Android-armeabi-v7a-0.1.0-26091701-04.APK",
+      "abi": "armeabi-v7a",
+      "bytes": 6539595,
+      "sha256": "7abdfc45817cbfdb241d8bec5b1379e8d66ec020f31c543b404a2ed8dedf0fdc"
+    },
+    {
+      "file": "app/build/outputs/apk/debug/Etoile-Android-arm64-v8a-0.1.0-26091701-04.APK",
+      "abi": "arm64-v8a",
+      "bytes": 6657783,
+      "sha256": "870f512f372800a10ca09eadfed107860224ed10aaa0796ad9bd9ce1bac0a936"
+    }
+  ],
+  "limitations": [
+    "Debug fixtures use local data",
+    "No OAuth or authenticated remote write verification",
+    "No app download or system installer workflow verification",
+    "Release compilation and manifest checked; no signed release APK produced"
+  ]
+}

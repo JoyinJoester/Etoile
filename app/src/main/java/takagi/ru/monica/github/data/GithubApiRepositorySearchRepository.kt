@@ -55,7 +55,8 @@ class GithubApiRepositorySearchRepository(
                         .items
                         .map(GithubRepositoryDto::toDomain)
                     GithubPage(items, GithubPagination.nextPage(linkHeader))
-                }
+                },
+                maxAgeMillis = SEARCH_CACHE_MAX_AGE_MILLIS
             )
         }
     }
@@ -145,7 +146,8 @@ class GithubApiRepositorySearchRepository(
             client = client,
             cacheKey = GithubCacheKeys.endpoint(namespace, requests.cacheScope(), url),
             request = { etag -> requests.optionalBuilder(url).get().withCacheValidator(etag).build() },
-            decode = decode
+            decode = decode,
+            maxAgeMillis = SEARCH_CACHE_MAX_AGE_MILLIS
         )
     }
 
@@ -247,6 +249,7 @@ class GithubApiRepositorySearchRepository(
     }
 
     private companion object {
+        const val SEARCH_CACHE_MAX_AGE_MILLIS = 10 * 60 * 1000L
         val ISSUE_TYPE_QUALIFIER = Regex(
             """(?i)(^|\s)(?:is|type):(issue|pr|pullrequest|pull-request)(?=\s|$)"""
         )

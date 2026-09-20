@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -27,7 +30,11 @@ import androidx.compose.material.icons.filled.AccountTree
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Forum
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.LocalOffer
+import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.NewReleases
@@ -46,13 +53,16 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +71,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -68,17 +79,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
+import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
+import takagi.ru.monica.github.component.GithubUserLink
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubMessageState
 import takagi.ru.monica.github.component.GithubMetadataRow
 import takagi.ru.monica.github.component.GithubMetric
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
+import takagi.ru.monica.github.component.GithubRefreshButton
 import takagi.ru.monica.github.component.GithubSectionHeader
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubRepositoryDetails
+import takagi.ru.monica.github.domain.GithubRepositoryFeature
 import takagi.ru.monica.github.navigation.GithubWebUrls
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 
@@ -89,6 +105,7 @@ fun RepositoryDetailScreen(
     onBack: () -> Unit,
     onBrowseCode: (GithubRepositoryDetails) -> Unit,
     onOpenBranches: (GithubRepositoryDetails) -> Unit,
+    onOpenTags: (GithubRepositoryDetails) -> Unit,
     onOpenCollaborators: (GithubRepositoryDetails) -> Unit,
     onOpenWebhooks: (GithubRepositoryDetails) -> Unit,
     onOpenIssues: (GithubRepositoryDetails) -> Unit,
@@ -96,7 +113,7 @@ fun RepositoryDetailScreen(
     onOpenActions: (GithubRepositoryDetails) -> Unit,
     onOpenReleases: (GithubRepositoryDetails) -> Unit,
     onOpenCommits: (GithubRepositoryDetails) -> Unit,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onSignIn: () -> Unit,
     onOpenRepository: (GithubRepository) -> Unit,
     onOpenExternal: (String) -> Unit,
@@ -109,8 +126,13 @@ fun RepositoryDetailScreen(
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         actions = {
             val url = details?.repository?.htmlUrl ?: GithubWebUrls.repository(state.fullName)
+            GithubRefreshButton(
+                onClick = { onAction(RepositoryDetailAction.Refresh) },
+                enabled = !state.isRefreshing && !state.isLoadingDetails
+            )
             GithubOpenOnGithubButton(onClick = { onOpenExternal(url) })
         }
     ) { padding ->
@@ -132,13 +154,15 @@ fun RepositoryDetailScreen(
                         modifier = Modifier.padding(horizontal = 24.dp)
                     )
                 }
-                details != null && maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth -> {
+                details != null && maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth *
+                    androidx.compose.ui.platform.LocalDensity.current.fontScale.coerceAtLeast(1f) -> {
                     RepositoryDetailExpanded(
                         details = details,
                         state = state,
                         onAction = onAction,
                         onBrowseCode = onBrowseCode,
                         onOpenBranches = onOpenBranches,
+                        onOpenTags = onOpenTags,
                         onOpenCollaborators = onOpenCollaborators,
                         onOpenWebhooks = onOpenWebhooks,
                         onOpenIssues = onOpenIssues,
@@ -146,7 +170,7 @@ fun RepositoryDetailScreen(
                         onOpenActions = onOpenActions,
                         onOpenReleases = onOpenReleases,
                         onOpenCommits = onOpenCommits,
-                        canWrite = canWrite,
+                        isSignedIn = isSignedIn,
                         onSignIn = onSignIn,
                         onOpenRepository = onOpenRepository,
                         onOpenExternal = onOpenExternal
@@ -159,6 +183,7 @@ fun RepositoryDetailScreen(
                         onAction = onAction,
                         onBrowseCode = onBrowseCode,
                         onOpenBranches = onOpenBranches,
+                        onOpenTags = onOpenTags,
                         onOpenCollaborators = onOpenCollaborators,
                         onOpenWebhooks = onOpenWebhooks,
                         onOpenIssues = onOpenIssues,
@@ -166,7 +191,7 @@ fun RepositoryDetailScreen(
                         onOpenActions = onOpenActions,
                         onOpenReleases = onOpenReleases,
                         onOpenCommits = onOpenCommits,
-                        canWrite = canWrite,
+                        isSignedIn = isSignedIn,
                         onSignIn = onSignIn,
                         onOpenRepository = onOpenRepository,
                         onOpenExternal = onOpenExternal
@@ -188,6 +213,7 @@ private fun RepositoryDetailCompact(
     onAction: (RepositoryDetailAction) -> Unit,
     onBrowseCode: (GithubRepositoryDetails) -> Unit,
     onOpenBranches: (GithubRepositoryDetails) -> Unit,
+    onOpenTags: (GithubRepositoryDetails) -> Unit,
     onOpenCollaborators: (GithubRepositoryDetails) -> Unit,
     onOpenWebhooks: (GithubRepositoryDetails) -> Unit,
     onOpenIssues: (GithubRepositoryDetails) -> Unit,
@@ -195,7 +221,7 @@ private fun RepositoryDetailCompact(
     onOpenActions: (GithubRepositoryDetails) -> Unit,
     onOpenReleases: (GithubRepositoryDetails) -> Unit,
     onOpenCommits: (GithubRepositoryDetails) -> Unit,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onSignIn: () -> Unit,
     onOpenRepository: (GithubRepository) -> Unit,
     onOpenExternal: (String) -> Unit
@@ -209,6 +235,7 @@ private fun RepositoryDetailCompact(
                 details,
                 onBrowseCode,
                 onOpenBranches,
+                onOpenTags,
                 onOpenCollaborators,
                 onOpenWebhooks,
                 onOpenIssues,
@@ -216,10 +243,13 @@ private fun RepositoryDetailCompact(
                 onOpenActions,
                 onOpenReleases,
                 onOpenCommits,
-                canWrite,
+                state.canEditTopics,
+                state.canAdminister,
                 state.isUpdatingTopics,
-                state.topicsError,
+                state.topicsFailure,
                 onUpdateTopics = { topics -> onAction(RepositoryDetailAction.UpdateTopics(topics)) },
+                isSignedIn,
+                onSignIn,
                 onOpenExternal
             )
         }
@@ -230,9 +260,16 @@ private fun RepositoryDetailCompact(
             )
         }
         item {
+            RepositoryAdministration(
+                details = details,
+                state = state,
+                onAction = onAction
+            )
+        }
+        item {
             RepositoryActionControls(
                 state = state,
-                canWrite = canWrite,
+                isSignedIn = isSignedIn,
                 onAction = onAction,
                 onSignIn = onSignIn,
                 onOpenRepository = onOpenRepository
@@ -256,6 +293,7 @@ private fun RepositoryDetailExpanded(
     onAction: (RepositoryDetailAction) -> Unit,
     onBrowseCode: (GithubRepositoryDetails) -> Unit,
     onOpenBranches: (GithubRepositoryDetails) -> Unit,
+    onOpenTags: (GithubRepositoryDetails) -> Unit,
     onOpenCollaborators: (GithubRepositoryDetails) -> Unit,
     onOpenWebhooks: (GithubRepositoryDetails) -> Unit,
     onOpenIssues: (GithubRepositoryDetails) -> Unit,
@@ -263,7 +301,7 @@ private fun RepositoryDetailExpanded(
     onOpenActions: (GithubRepositoryDetails) -> Unit,
     onOpenReleases: (GithubRepositoryDetails) -> Unit,
     onOpenCommits: (GithubRepositoryDetails) -> Unit,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onSignIn: () -> Unit,
     onOpenRepository: (GithubRepository) -> Unit,
     onOpenExternal: (String) -> Unit
@@ -278,6 +316,7 @@ private fun RepositoryDetailExpanded(
                     details,
                     onBrowseCode,
                     onOpenBranches,
+                    onOpenTags,
                     onOpenCollaborators,
                     onOpenWebhooks,
                     onOpenIssues,
@@ -285,17 +324,20 @@ private fun RepositoryDetailExpanded(
                     onOpenActions,
                     onOpenReleases,
                     onOpenCommits,
-                    canWrite,
+                    state.canEditTopics,
+                    state.canAdminister,
                     state.isUpdatingTopics,
-                    state.topicsError,
+                    state.topicsFailure,
                     onUpdateTopics = { topics -> onAction(RepositoryDetailAction.UpdateTopics(topics)) },
-                    onOpenExternal
+                    isSignedIn = isSignedIn,
+                    onSignIn = onSignIn,
+                    onOpenExternal = onOpenExternal
                 )
             }
             item {
                 RepositoryActionControls(
                     state = state,
-                    canWrite = canWrite,
+                    isSignedIn = isSignedIn,
                     onAction = onAction,
                     onSignIn = onSignIn,
                     onOpenRepository = onOpenRepository
@@ -305,6 +347,13 @@ private fun RepositoryDetailExpanded(
                 RepositoryBranchProtection(
                     state = state,
                     onRetry = { onAction(RepositoryDetailAction.RetryBranchProtection) }
+                )
+            }
+            item {
+                RepositoryAdministration(
+                    details = details,
+                    state = state,
+                    onAction = onAction
                 )
             }
         }
@@ -328,11 +377,13 @@ private fun RepositoryDetailExpanded(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RepositorySummary(
     details: GithubRepositoryDetails,
     onBrowseCode: (GithubRepositoryDetails) -> Unit,
     onOpenBranches: (GithubRepositoryDetails) -> Unit,
+    onOpenTags: (GithubRepositoryDetails) -> Unit,
     onOpenCollaborators: (GithubRepositoryDetails) -> Unit,
     onOpenWebhooks: (GithubRepositoryDetails) -> Unit,
     onOpenIssues: (GithubRepositoryDetails) -> Unit,
@@ -340,10 +391,13 @@ private fun RepositorySummary(
     onOpenActions: (GithubRepositoryDetails) -> Unit,
     onOpenReleases: (GithubRepositoryDetails) -> Unit,
     onOpenCommits: (GithubRepositoryDetails) -> Unit,
-    canWrite: Boolean,
+    canEditTopics: Boolean,
+    canAdminister: Boolean,
     isUpdatingTopics: Boolean,
-    topicsError: Boolean,
+    topicsFailure: RepositoryWriteFailure?,
     onUpdateTopics: (List<String>) -> Unit,
+    isSignedIn: Boolean,
+    onSignIn: () -> Unit,
     onOpenExternal: (String) -> Unit
 ) {
     val repository = details.repository
@@ -368,11 +422,11 @@ private fun RepositorySummary(
                         text = repository.name,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
+                        maxLines = 2,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Text(
-                        text = details.ownerLogin,
+                    GithubUserLink(
+                        login = details.ownerLogin,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -408,18 +462,20 @@ private fun RepositorySummary(
                     }
                 }
             }
-            if (canWrite) {
-                RepositoryTopicsEditor(
-                    topics = details.topics,
-                    isUpdating = isUpdatingTopics,
-                    hasError = topicsError,
-                    onUpdate = onUpdateTopics,
-                    modifier = Modifier.padding(top = 10.dp)
-                )
-            }
+            RepositoryTopicsEditor(
+                topics = details.topics,
+                isUpdating = isUpdatingTopics,
+                failure = topicsFailure,
+                enabled = canEditTopics,
+                onUpdate = onUpdateTopics,
+                modifier = Modifier.padding(top = 10.dp)
+            )
 
             Spacer(Modifier.height(14.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 GithubInlineStat(
                     icon = Icons.Default.Star,
                     value = formatCount(repository.stars),
@@ -508,21 +564,33 @@ private fun RepositorySummary(
             GithubCompactNavRow(
                 icon = Icons.Default.AccountTree,
                 iconContainer = GithubSectionTints.neutral,
-                label = stringResource(R.string.github_view_branches),
-                showDivider = canWrite
+                label = stringResource(R.string.github_view_branches)
             ) { onOpenBranches(details) }
-            if (canWrite) {
-                GithubCompactNavRow(
-                    icon = Icons.Default.Group,
-                    iconContainer = GithubSectionTints.neutral,
-                    label = stringResource(R.string.github_view_collaborators)
-                ) { onOpenCollaborators(details) }
-                GithubCompactNavRow(
-                    icon = Icons.Default.Link,
-                    iconContainer = GithubSectionTints.neutral,
-                    label = stringResource(R.string.github_view_webhooks),
-                    showDivider = false
-                ) { onOpenWebhooks(details) }
+            GithubCompactNavRow(
+                icon = Icons.Default.LocalOffer,
+                iconContainer = GithubSectionTints.neutral,
+                label = stringResource(R.string.github_view_tags)
+            ) { onOpenTags(details) }
+            GithubCompactNavRow(
+                icon = Icons.Default.Group,
+                iconContainer = GithubSectionTints.neutral,
+                label = stringResource(R.string.github_view_collaborators)
+            ) {
+                // Collaborator tiles fall back to the public contributors list, so the
+                // page stays readable without push access.
+                onOpenCollaborators(details)
+            }
+            GithubCompactNavRow(
+                icon = Icons.Default.Link,
+                iconContainer = GithubSectionTints.neutral,
+                label = stringResource(R.string.github_view_webhooks),
+                enabled = canAdminister || !isSignedIn,
+                showDivider = false
+            ) {
+                when {
+                    canAdminister -> onOpenWebhooks(details)
+                    !isSignedIn -> onSignIn()
+                }
             }
                 }
             }
@@ -594,6 +662,305 @@ private fun RepositoryBranchProtection(
     }
 }
 
+private data class SettingsRequest(
+    val action: RepositoryDetailAction,
+    val title: Int,
+    val message: Int
+)
+
+private data class FeatureRow(
+    val feature: GithubRepositoryFeature,
+    val icon: ImageVector,
+    val label: Int,
+    val enabled: Boolean
+)
+
+@Composable
+private fun RepositoryAdministration(
+    details: GithubRepositoryDetails,
+    state: RepositoryDetailUiState,
+    onAction: (RepositoryDetailAction) -> Unit
+) {
+    if (!state.canManageSettings) return
+    var pending by remember { mutableStateOf<SettingsRequest?>(null) }
+    var descriptionDraft by remember { mutableStateOf<String?>(null) }
+    var submittingDescription by remember { mutableStateOf(false) }
+    // The dialog holds its draft open until the repository reply lands, so a refused write keeps what the admin typed.
+    LaunchedEffect(submittingDescription, state.isUpdatingSettings, state.settingsFailure) {
+        if (submittingDescription && !state.isUpdatingSettings && state.settingsFailure == null) {
+            submittingDescription = false
+            descriptionDraft = null
+        }
+    }
+    val isPrivate = details.repository.isPrivate
+    val fullName = details.repository.fullName
+    val featureRows = listOf(
+        FeatureRow(
+            feature = GithubRepositoryFeature.Issues,
+            icon = Icons.Default.BugReport,
+            label = R.string.github_feature_issues,
+            enabled = details.features.hasIssues
+        ),
+        FeatureRow(
+            feature = GithubRepositoryFeature.Wiki,
+            icon = Icons.Default.MenuBook,
+            label = R.string.github_feature_wiki,
+            enabled = details.features.hasWiki
+        ),
+        FeatureRow(
+            feature = GithubRepositoryFeature.Projects,
+            icon = Icons.Default.AccountTree,
+            label = R.string.github_feature_projects,
+            enabled = details.features.hasProjects
+        )
+    )
+    GithubSectionHeader(title = stringResource(R.string.github_repository_administration))
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = GithubExpressiveShapes.container,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            AdministrationToggle(
+                icon = Icons.Default.Lock,
+                title = stringResource(R.string.github_repository_visibility),
+                summary = stringResource(
+                    if (isPrivate) R.string.github_visibility_private else R.string.github_visibility_public
+                ),
+                checked = isPrivate,
+                // GitHub rejects every other repository edit while it is archived.
+                enabled = !state.isUpdatingSettings && !details.isArchived,
+                onClick = {
+                    val target = !isPrivate
+                    pending = SettingsRequest(
+                        action = RepositoryDetailAction.SetVisibility(target),
+                        title = if (target) R.string.github_make_private else R.string.github_make_public,
+                        message = if (target) {
+                            R.string.github_make_private_message
+                        } else {
+                            R.string.github_make_public_message
+                        }
+                    )
+                }
+            )
+            AdministrationToggle(
+                icon = Icons.Default.Archive,
+                title = stringResource(R.string.github_archive_repository),
+                summary = stringResource(
+                    if (details.isArchived) R.string.github_archived_repository else R.string.github_active_repository
+                ),
+                checked = details.isArchived,
+                enabled = !state.isUpdatingSettings,
+                onClick = {
+                    val target = !details.isArchived
+                    pending = SettingsRequest(
+                        action = RepositoryDetailAction.SetArchived(target),
+                        title = if (target) R.string.github_archive_repository else R.string.github_unarchive_repository,
+                        message = if (target) {
+                            R.string.github_archive_message
+                        } else {
+                            R.string.github_unarchive_message
+                        }
+                    )
+                }
+            )
+            featureRows.forEach { row ->
+                AdministrationToggle(
+                    icon = row.icon,
+                    title = stringResource(row.label),
+                    summary = stringResource(
+                        if (row.enabled) R.string.github_enabled else R.string.github_disabled
+                    ),
+                    checked = row.enabled,
+                    enabled = !state.isUpdatingSettings && !details.isArchived,
+                    onClick = { onAction(RepositoryDetailAction.SetFeature(row.feature, !row.enabled)) }
+                )
+            }
+            AdministrationEditRow(
+                icon = Icons.Default.Description,
+                title = stringResource(R.string.github_repository_description),
+                summary = details.repository.description
+                    ?: stringResource(R.string.github_no_description),
+                enabled = !state.isUpdatingSettings && !details.isArchived,
+                onClick = { descriptionDraft = details.repository.description.orEmpty() }
+            )
+            state.settingsFailure?.takeIf { descriptionDraft == null }?.let { failure ->
+                Text(
+                    text = repositoryActionFailureText(failure),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+            }
+        }
+    }
+    pending?.let { request ->
+        AlertDialog(
+            onDismissRequest = {
+                if (!state.isUpdatingSettings) pending = null
+            },
+            title = { Text(stringResource(request.title)) },
+            text = { Text(stringResource(request.message, fullName)) },
+            confirmButton = {
+                TextButton(
+                    enabled = !state.isUpdatingSettings,
+                    onClick = {
+                        pending = null
+                        onAction(request.action)
+                    }
+                ) {
+                    Text(stringResource(R.string.github_save))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !state.isUpdatingSettings,
+                    onClick = { pending = null }
+                ) {
+                    Text(stringResource(R.string.github_cancel))
+                }
+            }
+        )
+    }
+    descriptionDraft?.let { draft ->
+        AlertDialog(
+            onDismissRequest = {
+                if (!state.isUpdatingSettings) {
+                    submittingDescription = false
+                    descriptionDraft = null
+                }
+            },
+            title = { Text(stringResource(R.string.github_edit_description)) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = draft,
+                        onValueChange = { descriptionDraft = it },
+                        enabled = !state.isUpdatingSettings,
+                        singleLine = false,
+                        minLines = 2,
+                        label = { Text(stringResource(R.string.github_description_hint)) }
+                    )
+                    state.settingsFailure?.let { failure ->
+                        Text(
+                            text = repositoryActionFailureText(failure),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !state.isUpdatingSettings,
+                    onClick = {
+                        submittingDescription = true
+                        onAction(RepositoryDetailAction.UpdateDescription(draft))
+                    }
+                ) {
+                    Text(stringResource(R.string.github_save))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    enabled = !state.isUpdatingSettings,
+                    onClick = {
+                        submittingDescription = false
+                        descriptionDraft = null
+                    }
+                ) {
+                    Text(stringResource(R.string.github_cancel))
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun AdministrationRow(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    enabled: Boolean,
+    trailing: @Composable () -> Unit,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Column(modifier = Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        trailing()
+    }
+}
+
+@Composable
+private fun AdministrationToggle(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    AdministrationRow(
+        icon = icon,
+        title = title,
+        summary = summary,
+        enabled = enabled,
+        trailing = {
+            // The switch only ever reflects what the repository confirmed, so a refused
+            // or still pending write cannot leave it showing a state that never happened.
+            Switch(checked = checked, onCheckedChange = { onClick() }, enabled = enabled)
+        },
+        onClick = onClick
+    )
+}
+
+@Composable
+private fun AdministrationEditRow(
+    icon: ImageVector,
+    title: String,
+    summary: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    AdministrationRow(
+        icon = icon,
+        title = title,
+        summary = summary,
+        enabled = enabled,
+        trailing = {
+            Icon(
+                imageVector = Icons.Default.Edit,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp)
+            )
+        },
+        onClick = onClick
+    )
+}
+
 private object GithubSectionTints {
     val issues = Color(0xFF3FB950)
     val pulls = Color(0xFF539BF5)
@@ -640,25 +1007,30 @@ private fun GithubCompactNavRow(
     label: String,
     count: String? = null,
     showDivider: Boolean = true,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
+    val contentAlpha = if (enabled) 1f else 0.38f
+    val nothing = LocalDesignStyle.current == DesignStyle.NOTHING
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .heightIn(min = 56.dp)
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
-            shape = RoundedCornerShape(10.dp),
-            color = iconContainer,
+            shape = GithubExpressiveShapes.compact,
+            color = if (nothing) Color.Transparent else iconContainer.copy(alpha = contentAlpha),
             modifier = Modifier.size(34.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
                 Icon(
                     icon,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = if (nothing) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
+                        else Color.White.copy(alpha = contentAlpha),
                     modifier = Modifier.size(19.dp)
                 )
             }
@@ -666,6 +1038,7 @@ private fun GithubCompactNavRow(
         Text(
             text = label,
             style = MaterialTheme.typography.bodyLarge,
+            color = LocalContentColor.current.copy(alpha = contentAlpha),
             modifier = Modifier
                 .weight(1f)
                 .padding(start = 14.dp)
@@ -674,7 +1047,7 @@ private fun GithubCompactNavRow(
             Text(
                 text = count,
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha),
                 modifier = Modifier.padding(start = 14.dp)
             )
         }
@@ -728,51 +1101,66 @@ private fun RepositorySettingsMenu(
 private fun RepositoryTopicsEditor(
     topics: List<String>,
     isUpdating: Boolean,
-    hasError: Boolean,
+    failure: RepositoryWriteFailure?,
+    enabled: Boolean,
     onUpdate: (List<String>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var open by remember { mutableStateOf(false) }
     var text by remember { mutableStateOf("") }
+    // A submission stays pending until the repository reply lands, so the dialog can
+    // close on success and hold its draft open on failure.
+    var pending by remember { mutableStateOf(false) }
+    LaunchedEffect(isUpdating, failure) {
+        if (pending && !isUpdating && failure == null) {
+            pending = false
+            open = false
+        }
+    }
     Column(modifier = modifier.fillMaxWidth()) {
         OutlinedButton(
             onClick = {
                 text = topics.joinToString(", ")
                 open = true
             },
-            enabled = !isUpdating,
+            enabled = enabled && !isUpdating,
             modifier = Modifier.fillMaxWidth(),
             shape = GithubExpressiveShapes.control
         ) {
             Text(stringResource(R.string.github_edit_topics))
         }
-        if (hasError) {
-            Text(
-                text = stringResource(R.string.github_topics_update_error),
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(top = 4.dp)
-            )
+        if (failure != null && !open) {
+            TopicsFailureNotice(failure = failure, modifier = Modifier.padding(top = 4.dp))
         }
     }
     if (open) {
         AlertDialog(
-            onDismissRequest = { if (!isUpdating) open = false },
+            onDismissRequest = {
+                if (!isUpdating) {
+                    pending = false
+                    open = false
+                }
+            },
             title = { Text(stringResource(R.string.github_edit_topics)) },
             text = {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    enabled = !isUpdating,
-                    singleLine = false,
-                    minLines = 2,
-                    label = { Text(stringResource(R.string.github_topics_hint)) }
-                )
+                Column {
+                    OutlinedTextField(
+                        value = text,
+                        onValueChange = { text = it },
+                        enabled = !isUpdating,
+                        singleLine = false,
+                        minLines = 2,
+                        label = { Text(stringResource(R.string.github_topics_hint)) }
+                    )
+                    if (failure != null) {
+                        TopicsFailureNotice(failure = failure, modifier = Modifier.padding(top = 8.dp))
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        open = false
+                        pending = true
                         onUpdate(
                             text.split(',')
                                 .map(String::trim)
@@ -785,10 +1173,32 @@ private fun RepositoryTopicsEditor(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { open = false }, enabled = !isUpdating) {
+                TextButton(
+                    onClick = {
+                        pending = false
+                        open = false
+                    },
+                    enabled = !isUpdating
+                ) {
                     Text(stringResource(R.string.github_cancel))
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun TopicsFailureNotice(failure: RepositoryWriteFailure, modifier: Modifier = Modifier) {
+    Column(modifier = modifier) {
+        Text(
+            text = stringResource(R.string.github_topics_update_error),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
+        )
+        Text(
+            text = repositoryActionFailureText(failure),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall
         )
     }
 }

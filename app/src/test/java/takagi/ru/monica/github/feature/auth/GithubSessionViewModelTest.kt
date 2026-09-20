@@ -3,9 +3,12 @@ package takagi.ru.monica.github.feature.auth
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -13,9 +16,11 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withContext
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -27,6 +32,9 @@ import takagi.ru.monica.github.domain.GithubDeviceAuthRepository
 import takagi.ru.monica.github.domain.GithubDeviceAuthorization
 import takagi.ru.monica.github.domain.GithubDevicePollResult
 import takagi.ru.monica.github.domain.GithubSession
+import takagi.ru.monica.github.domain.GithubWebAuthRepository
+import takagi.ru.monica.github.domain.GithubWebAuthorization
+import takagi.ru.monica.github.domain.UnavailableGithubWebAuthRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GithubSessionViewModelTest {
@@ -67,6 +75,233 @@ class GithubSessionViewModelTest {
         )
         assertFalse(viewModel.state.value.toString().contains(DEVICE_CODE))
 
+        viewModel.onAction(GithubSessionAction.ClearForm)
+        runCurrent()
+    }
+
+    @Test
+    fun browserFlowOpensGithubAndCompletesSignInFromValidatedCallback() = runTest(dispatcher) {
+        val webRepository = FakeWebAuthRepository()
+        val authRepository = FakeAuthRepository()
+        val viewModel = viewModel(authRepository = authRepository, webRepository = webRepository)
+        runCurrent()
+
+        assertEquals(GithubBrowserSignInUiState.Idle, viewModel.state.value.browserSignIn)
+        viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+
+        val opening = viewModel.state.value.browserSignIn as GithubBrowserSignInUiState.Opening
+        assertEquals(AUTHORIZATION_URL, opening.authorizationUrl)
+        viewModel.onAction(GithubSessionAction.BrowserSignInOpened)
+        assertTrue(viewModel.state.value.browserSignIn is GithubBrowserSignInUiState.Waiting)
+
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+
+        assertEquals(listOf(CALLBACK_URL), webRepository.callbacks)
+        assertEquals(listOf(OAUTH_TOKEN), authRepository.signInTokens)
+        assertEquals(GithubBrowserSignInUiState.Idle, viewModel.state.value.browserSignIn)
+        assertEquals(1L, viewModel.state.value.signInCompletionVersion)
+    }
+
+    @Test
+    fun failedAdditionalAccountDoesNotReportLoginSuccessWhenThePreviousSessionReturns() = runTest(dispatcher) {
+        val first = account()
+        val response = CompletableDeferred<Result<GithubAccount>>()
+        val repository = FakeAuthRepository(
+            initialSession = GithubSession.SignedIn(first),
+            signIn = { response.await() },
+            reportValidationLoading = true
+        )
+        val viewModel = viewModel(authRepository = repository)
+        runCurrent()
+        val completionBeforeOpeningForm = viewModel.state.value.signInCompletionVersion
+
+        viewModel.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        viewModel.onAction(GithubSessionAction.SignIn)
+        runCurrent()
+        assertEquals(GithubSession.Loading, viewModel.state.value.session)
+
+        response.complete(Result.failure(IllegalStateException("Invalid credential")))
+        runCurrent()
+
+        assertEquals(GithubSession.SignedIn(first), viewModel.state.value.session)
+        assertEquals(completionBeforeOpeningForm, viewModel.state.value.signInCompletionVersion)
+        assertEquals(GithubSignInError.REQUEST_FAILED, viewModel.state.value.signInError)
+        assertEquals(PERSONAL_TOKEN, viewModel.state.value.tokenInput)
+        assertFalse(viewModel.state.value.isSubmitting)
+    }
+
+    @Test
+    fun clearingTokenSignInCancelsTheRequestAndDoesNotSignInLater() = runTest(dispatcher) {
+        val response = CompletableDeferred<Result<GithubAccount>>()
+        var requestCancelled = false
+        val repository = FakeAuthRepository(signIn = {
+            try {
+                response.await()
+            } finally {
+                requestCancelled = !currentCoroutineContext().isActive
+            }
+        })
+        val viewModel = viewModel(authRepository = repository)
+        runCurrent()
+
+        viewModel.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        viewModel.onAction(GithubSessionAction.SignIn)
+        runCurrent()
+        assertTrue(viewModel.state.value.isSubmitting)
+        viewModel.onAction(GithubSessionAction.ClearForm)
+        runCurrent()
+        response.complete(Result.success(account()))
+        runCurrent()
+
+        assertTrue(requestCancelled)
+        assertEquals(GithubSession.SignedOut, viewModel.state.value.session)
+        assertEquals(0L, viewModel.state.value.signInCompletionVersion)
+        assertEquals("", viewModel.state.value.tokenInput)
+        assertFalse(viewModel.state.value.isSubmitting)
+        assertNull(viewModel.state.value.signInError)
+    }
+
+    @Test
+    fun lateCancelledTokenResponseCannotResetAnIntentionalRetry() = runTest(dispatcher) {
+        val oldResponse = CompletableDeferred<Result<GithubAccount>>()
+        val retryResponse = CompletableDeferred<Result<GithubAccount>>()
+        val second = account(id = 2, login = "octocat")
+        val repository = FakeAuthRepository(signIn = { token ->
+            if (token == PERSONAL_TOKEN) withContext(NonCancellable) { oldResponse.await() }
+            else retryResponse.await()
+        })
+        val viewModel = viewModel(authRepository = repository)
+        runCurrent()
+
+        viewModel.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        viewModel.onAction(GithubSessionAction.SignIn)
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.ClearForm)
+        viewModel.onAction(GithubSessionAction.TokenChanged(OAUTH_TOKEN))
+        viewModel.onAction(GithubSessionAction.SignIn)
+        runCurrent()
+
+        oldResponse.complete(Result.success(account()))
+        runCurrent()
+        assertTrue(viewModel.state.value.isSubmitting)
+        assertEquals(OAUTH_TOKEN, viewModel.state.value.tokenInput)
+        assertEquals(0L, viewModel.state.value.signInCompletionVersion)
+        assertNull(viewModel.state.value.signInError)
+
+        retryResponse.complete(Result.success(second))
+        runCurrent()
+        assertEquals(GithubSession.SignedIn(second), viewModel.state.value.session)
+        assertEquals(1L, viewModel.state.value.signInCompletionVersion)
+        assertEquals("", viewModel.state.value.tokenInput)
+        assertFalse(viewModel.state.value.isSubmitting)
+
+        viewModel.onAction(GithubSessionAction.ClearForm)
+        assertEquals(1L, viewModel.state.value.signInCompletionVersion)
+    }
+
+    @Test
+    fun clearingBrowserExchangeIgnoresALateTokenAndLaterCallbacks() = runTest(dispatcher) {
+        val exchangeResponse = CompletableDeferred<Result<GithubDeviceAccessToken>>()
+        val webRepository = FakeWebAuthRepository(exchange = {
+            withContext(NonCancellable) { exchangeResponse.await() }
+        })
+        val authRepository = FakeAuthRepository()
+        val viewModel = viewModel(authRepository = authRepository, webRepository = webRepository)
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+        assertEquals(GithubBrowserSignInUiState.Verifying, viewModel.state.value.browserSignIn)
+
+        viewModel.onAction(GithubSessionAction.ClearForm)
+        viewModel.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        exchangeResponse.complete(Result.success(GithubDeviceAccessToken(OAUTH_TOKEN, "bearer", setOf("repo"))))
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+
+        assertEquals(listOf(CALLBACK_URL), webRepository.callbacks)
+        assertTrue(authRepository.signInTokens.isEmpty())
+        assertEquals(0L, viewModel.state.value.signInCompletionVersion)
+        assertEquals(PERSONAL_TOKEN, viewModel.state.value.tokenInput)
+        assertEquals(GithubBrowserSignInUiState.Idle, viewModel.state.value.browserSignIn)
+    }
+
+    @Test
+    fun duplicateBrowserCallbacksShareOneExchangeAndOneSignIn() = runTest(dispatcher) {
+        val response = CompletableDeferred<Result<GithubDeviceAccessToken>>()
+        val webRepository = FakeWebAuthRepository(exchange = { response.await() })
+        val repository = FakeAuthRepository()
+        val viewModel = viewModel(authRepository = repository, webRepository = webRepository)
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+
+        assertEquals(listOf(CALLBACK_URL), webRepository.callbacks)
+        response.complete(Result.success(GithubDeviceAccessToken(OAUTH_TOKEN, "bearer", setOf("repo"))))
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+
+        assertEquals(listOf(OAUTH_TOKEN), repository.signInTokens)
+        assertEquals(listOf(CALLBACK_URL), webRepository.callbacks)
+        assertEquals(1L, viewModel.state.value.signInCompletionVersion)
+    }
+
+    @Test
+    fun callbackAfterProcessRecreationCanStillCompletePersistedAuthorization() = runTest(dispatcher) {
+        val webRepository = FakeWebAuthRepository()
+        val repository = FakeAuthRepository()
+        val viewModel = viewModel(authRepository = repository, webRepository = webRepository)
+        runCurrent()
+
+        viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+        runCurrent()
+
+        assertEquals(listOf(OAUTH_TOKEN), repository.signInTokens)
+        assertEquals(1L, viewModel.state.value.signInCompletionVersion)
+    }
+
+    @Test
+    fun signingOutCancelsPendingCredentialValidationInsteadOfSilentlyIgnoringTheAction() = runTest(dispatcher) {
+        val response = CompletableDeferred<Result<GithubAccount>>()
+        val repository = FakeAuthRepository(
+            initialSession = GithubSession.SignedIn(account()),
+            signIn = { response.await() }
+        )
+        val viewModel = viewModel(authRepository = repository)
+        runCurrent()
+
+        viewModel.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        viewModel.onAction(GithubSessionAction.SignIn)
+        runCurrent()
+        viewModel.onAction(GithubSessionAction.SignOut)
+        runCurrent()
+        response.complete(Result.success(account(id = 2, login = "octocat")))
+        runCurrent()
+
+        assertEquals(GithubSession.SignedOut, viewModel.state.value.session)
+        assertFalse(viewModel.state.value.isSubmitting)
+        assertFalse(viewModel.state.value.isAccountActionRunning)
+        assertEquals(0L, viewModel.state.value.signInCompletionVersion)
+    }
+
+    @Test
+    fun browserActionFallsBackToDeviceFlowWhenWebOauthIsNotConfigured() = runTest(dispatcher) {
+        val deviceRepository = FakeDeviceAuthRepository()
+        val viewModel = viewModel(deviceRepository = deviceRepository)
+        runCurrent()
+
+        viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        runCurrent()
+
+        assertEquals(1, deviceRepository.startCount)
+        assertTrue(viewModel.state.value.deviceSignIn is GithubDeviceSignInUiState.Waiting)
         viewModel.onAction(GithubSessionAction.ClearForm)
         runCurrent()
     }
@@ -268,10 +503,12 @@ class GithubSessionViewModelTest {
 
     private fun TestScope.viewModel(
         authRepository: FakeAuthRepository = FakeAuthRepository(),
-        deviceRepository: FakeDeviceAuthRepository = FakeDeviceAuthRepository()
+        deviceRepository: FakeDeviceAuthRepository = FakeDeviceAuthRepository(),
+        webRepository: GithubWebAuthRepository = UnavailableGithubWebAuthRepository
     ): GithubSessionViewModel = GithubSessionViewModel(
         repository = authRepository,
         deviceAuthRepository = deviceRepository,
+        webAuthRepository = webRepository,
         awaitDeviceAuthorization = AwaitGithubDeviceAuthorizationUseCase(
             repository = deviceRepository,
             nowEpochMillis = { testScheduler.currentTime },
@@ -282,11 +519,14 @@ class GithubSessionViewModelTest {
     private class FakeAuthRepository(
         initialSession: GithubSession = GithubSession.SignedOut,
         savedAccounts: List<GithubAccount> = emptyList(),
+        signIn: suspend (String) -> Result<GithubAccount> = { Result.success(account()) },
+        private val reportValidationLoading: Boolean = false,
         switchAccount: suspend (Long) -> Result<GithubAccount> = { accountId ->
             Result.success(account(id = accountId, login = "account-$accountId"))
         },
         removeAccount: suspend (Long) -> Result<Unit> = { Result.success(Unit) }
     ) : GithubAuthRepository {
+        private val signInResult = signIn
         private val switchAccountResult = switchAccount
         private val removeAccountResult = removeAccount
         private val mutableSession = MutableStateFlow(initialSession)
@@ -301,9 +541,18 @@ class GithubSessionViewModelTest {
 
         override suspend fun signInWithToken(token: String): Result<GithubAccount> {
             signInTokens += token
-            val account = account()
-            mutableSession.value = GithubSession.SignedIn(account)
-            return Result.success(account)
+            val previousSession = mutableSession.value
+            if (reportValidationLoading) mutableSession.value = GithubSession.Loading
+            val result = signInResult(token)
+            // Model a repository that rejects cancelled writes but can still
+            // return a delayed result from a non-cooperative transport.
+            if (currentCoroutineContext().isActive) {
+                mutableSession.value = result.fold(
+                    onSuccess = { GithubSession.SignedIn(it) },
+                    onFailure = { previousSession }
+                )
+            }
+            return result
         }
 
         override suspend fun switchAccount(accountId: Long): Result<GithubAccount> {
@@ -350,10 +599,29 @@ class GithubSessionViewModelTest {
         }
     }
 
+    private class FakeWebAuthRepository(
+        private val exchange: suspend () -> Result<GithubDeviceAccessToken> = {
+            Result.success(GithubDeviceAccessToken(OAUTH_TOKEN, "bearer", setOf("repo")))
+        }
+    ) : GithubWebAuthRepository {
+        override val isConfigured: Boolean = true
+        val callbacks = mutableListOf<String>()
+        override fun isCallbackUrl(url: String): Boolean = url.startsWith("etoile://oauth")
+        override fun start(): Result<GithubWebAuthorization> =
+            Result.success(GithubWebAuthorization(AUTHORIZATION_URL))
+        override suspend fun exchangeCallback(url: String): Result<GithubDeviceAccessToken> {
+            callbacks += url
+            return exchange()
+        }
+        override fun cancel() = Unit
+    }
+
     private companion object {
         const val DEVICE_CODE = "1234567890123456789012345678901234567890"
         const val OAUTH_TOKEN = "gho_123456789012345678901234567890"
         const val PERSONAL_TOKEN = "github_pat_123456789012345678901234567890"
+        const val AUTHORIZATION_URL = "https://github.com/login/oauth/authorize?state=redacted"
+        const val CALLBACK_URL = "etoile://oauth?code=temporary-code&state=redacted"
 
         fun authorization() = GithubDeviceAuthorization(
             deviceCode = DEVICE_CODE,

@@ -1,0 +1,16 @@
+[
+  {
+    "project": "conversations",
+    "wideScreens": 1,
+    "transitions": 2,
+    "result": "PASS",
+    "pageErrors": []
+  },
+  {
+    "project": "operations",
+    "wideScreens": 2,
+    "transitions": 2,
+    "result": "PASS",
+    "pageErrors": []
+  }
+]

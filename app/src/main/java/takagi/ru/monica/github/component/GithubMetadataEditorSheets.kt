@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.component
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,6 +24,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -58,18 +60,24 @@ fun GithubLabelsEditorSheet(
         if (isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         LazyColumn(
             modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
         ) {
             items(labels, key = GithubIssueLabel::name) { label ->
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .clickable(enabled = !isSaving) { onToggle(label.name) }
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                        .heightIn(min = 56.dp)
+                        .toggleable(
+                            value = label.name in selected,
+                            enabled = !isSaving,
+                            role = Role.Checkbox,
+                            onValueChange = { onToggle(label.name) }
+                        )
+                        .padding(vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = label.name in selected,
-                        onCheckedChange = { onToggle(label.name) },
+                        onCheckedChange = null,
                         enabled = !isSaving
                     )
                     Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
@@ -225,18 +233,24 @@ private fun GithubUsersEditorSheet(
         if (isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         LazyColumn(
             modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
         ) {
             items(users, key = GithubUserSummary::login) { user ->
                 Row(
                     modifier = Modifier.fillMaxWidth()
-                        .clickable(enabled = !isSaving) { onToggle(user.login) }
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                        .heightIn(min = 56.dp)
+                        .toggleable(
+                            value = user.login in selected,
+                            enabled = !isSaving,
+                            role = Role.Checkbox,
+                            onValueChange = { onToggle(user.login) }
+                        )
+                        .padding(vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = user.login in selected,
-                        onCheckedChange = { onToggle(user.login) },
+                        onCheckedChange = null,
                         enabled = !isSaving
                     )
                     GithubAvatar(
@@ -304,7 +318,7 @@ fun GithubMilestoneEditorSheet(
         if (isLoading) LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
         LazyColumn(
             modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
+            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
         ) {
             item(key = "no-milestone") {
                 GithubMilestoneRow(
@@ -364,11 +378,12 @@ private fun GithubMilestoneRow(
     onClick: () -> Unit
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick)
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .selectable(selected = selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(selected = selected, onClick = onClick, enabled = enabled)
+        RadioButton(selected = selected, onClick = null, enabled = enabled)
         Column(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
             Text(
                 text = title,

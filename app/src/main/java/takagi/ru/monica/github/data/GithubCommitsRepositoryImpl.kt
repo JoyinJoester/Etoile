@@ -17,7 +17,7 @@ class GithubCommitsRepositoryImpl(
     private val client: OkHttpClient = GithubNetwork.client,
     private val json: Json = Json { ignoreUnknownKeys = true },
     baseUrl: String = "https://api.github.com/",
-    cacheStore: GithubCacheStore = NoOpGithubCacheStore,
+    private val cacheStore: GithubCacheStore = NoOpGithubCacheStore,
     cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter
 ) : GithubCommitsRepository {
     private val apiBaseUrl = baseUrl.toHttpUrl()
@@ -29,6 +29,23 @@ class GithubCommitsRepositoryImpl(
         ref: String,
         page: Int,
         perPage: Int
+    ): Result<GithubPage<GithubCommit>> = commitsInternal(owner, name, ref, page, perPage, forceRefresh = false)
+
+    override suspend fun refreshCommits(
+        owner: String,
+        name: String,
+        ref: String,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubCommit>> = commitsInternal(owner, name, ref, page, perPage, forceRefresh = true)
+
+    private suspend fun commitsInternal(
+        owner: String,
+        name: String,
+        ref: String,
+        page: Int,
+        perPage: Int,
+        forceRefresh: Boolean
     ): Result<GithubPage<GithubCommit>> = withContext(Dispatchers.IO) {
         githubRunCatching {
             val normalizedRef = normalizeReference(ref)
@@ -52,7 +69,8 @@ class GithubCommitsRepositoryImpl(
                         ).map(GithubCommitDto::toDomain),
                         nextPage = GithubPagination.nextPage(linkHeader)
                     )
-                }
+                },
+                maxAgeMillis = if (forceRefresh) 0L else cacheStore.defaultMaxAgeMillis
             )
         }
     }

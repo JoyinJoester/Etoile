@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,9 +31,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -52,15 +56,19 @@ fun GithubAccountsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var removalCandidate by remember { mutableStateOf<GithubAccount?>(null) }
+    var removalCandidateId by rememberSaveable { mutableStateOf<Long?>(null) }
     val activeAccountId = (state.session as? GithubSession.SignedIn)?.account?.id
+    val removalCandidate = state.accounts.firstOrNull {
+        it.id == removalCandidateId && it.id != activeAccountId
+    }
 
     GithubDetailScaffold(
         title = stringResource(R.string.github_accounts),
         subtitle = stringResource(R.string.github_accounts_subtitle),
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
-        modifier = modifier
+        modifier = modifier,
+        contentMaxWidth = takagi.ru.monica.github.design.GithubAdaptiveLayout.formMaxWidth
     ) { padding ->
         Column(
             modifier = Modifier
@@ -86,7 +94,7 @@ fun GithubAccountsScreen(
                             onSelect = {
                                 onAction(GithubSessionAction.SwitchAccount(account.id))
                             },
-                            onRemove = { removalCandidate = account }
+                            onRemove = { removalCandidateId = account.id }
                         )
                     }
                 }
@@ -124,7 +132,7 @@ fun GithubAccountsScreen(
                             color = MaterialTheme.colorScheme.onErrorContainer,
                             modifier = Modifier.weight(1f)
                         )
-                        TextButton(onClick = { onAction(GithubSessionAction.ClearAccountError) }) {
+                        TextButton(modifier = Modifier.heightIn(min = 48.dp), onClick = { onAction(GithubSessionAction.ClearAccountError) }) {
                             Text(stringResource(R.string.github_dismiss))
                         }
                     }
@@ -147,13 +155,15 @@ fun GithubAccountsScreen(
 
     removalCandidate?.let { account ->
         AlertDialog(
-            onDismissRequest = { removalCandidate = null },
+            onDismissRequest = { removalCandidateId = null },
             title = { Text(stringResource(R.string.github_remove_account_title)) },
             text = { Text(stringResource(R.string.github_remove_account_message, account.login)) },
             confirmButton = {
                 TextButton(
+                    modifier = Modifier.heightIn(min = 48.dp),
+                    enabled = !state.isAccountActionRunning,
                     onClick = {
-                        removalCandidate = null
+                        removalCandidateId = null
                         onAction(GithubSessionAction.RemoveAccount(account.id))
                     }
                 ) {
@@ -164,7 +174,7 @@ fun GithubAccountsScreen(
                 }
             },
             dismissButton = {
-                TextButton(onClick = { removalCandidate = null }) {
+                TextButton(modifier = Modifier.heightIn(min = 48.dp), onClick = { removalCandidateId = null }) {
                     Text(stringResource(R.string.github_cancel))
                 }
             }
@@ -180,10 +190,18 @@ private fun GithubAccountRow(
     onSelect: () -> Unit,
     onRemove: () -> Unit
 ) {
+    val currentLabel = stringResource(R.string.github_current)
     Surface(
+        selected = selected,
         onClick = onSelect,
         enabled = enabled && !selected,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().semantics {
+            contentDescription = if (selected) {
+                account.login + " " + currentLabel
+            } else {
+                account.login
+            }
+        },
         shape = GithubExpressiveShapes.control,
         color = if (selected) {
             MaterialTheme.colorScheme.secondaryContainer
@@ -207,7 +225,7 @@ private fun GithubAccountRow(
                     text = account.name ?: account.login,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
@@ -217,9 +235,7 @@ private fun GithubAccountRow(
                         "@${account.login}"
                     },
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
             if (selected) {

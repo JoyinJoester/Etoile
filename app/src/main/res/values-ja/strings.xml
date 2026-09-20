@@ -92,4 +92,38 @@
     
     
     
+    <string name="github_directory_accessibility">ディレクトリ %1$s</string>
+    <string name="github_file_accessibility">ファイル %1$s、%2$s</string>
+    <string name="github_explore_filter_description">%1$s：%2$s</string>
+    <string name="github_unnamed_job">名前のないジョブ</string>
+    <string name="github_copilot_copy_success">クリップボードにコピーしました</string>
+    <string name="github_commit_change_summary">追加行数：%1$d、削除行数：%2$d、変更総数：%3$d</string>
+    <string name="github_code_match_position">一致 %1$d / %2$d 件</string>
+    <string name="github_code_previous_match">前へ</string>
+    <string name="github_code_next_match">次へ</string>
+    <string name="github_code_line_number">コードの %1$d 行目</string>
+    <!-- Short labels keep the M3E navigation readable at larger font sizes. -->
+    <string name="github_nav_home">ホーム</string>
+    <string name="github_nav_inbox">受信</string>
+    <string name="github_nav_explore">検索</string>
+    <string name="github_nav_store">ストア</string>
+    <string name="github_nav_profile">自分</string>
+    <string name="github_settings">設定</string>
+    <string name="github_settings_subtitle">外観と言語</string>
+    <string name="github_appearance">外観</string>
+    <string name="github_appearance_subtitle">デザイン、明暗モード、配色</string>
+    <string name="github_language">言語</string>
+    <string name="github_language_description">アプリの表示言語を選択します。変更はすぐに適用されます。</string>
+    <string name="github_design_style">デザイン</string>
+    <string name="github_theme">明暗モード</string>
+    <string name="github_system">システムに従う</string>
+    <string name="github_light">ライト</string>
+    <string name="github_dark">ダーク</string>
+    <string name="github_palette">配色</string>
+    <string name="github_palette_default">デフォルト</string>
+    <string name="github_palette_ocean">オーシャンブルー</string>
+    <string name="github_palette_sunset">サンセットオレンジ</string>
+    <string name="github_palette_forest">フォレストグリーン</string>
+    <string name="github_palette_purple">テックパープル</string>
+    <string name="github_palette_miui">MIUI ブルー</string>
 </resources>

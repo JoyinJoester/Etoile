@@ -1,0 +1,1130 @@
+{
+  "date": "2026-09-17",
+  "result": "PASS",
+  "unitTests": {
+    "tests": 424,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "errors": 0,
+    "warnings": 104
+  },
+  "apks": [
+    {
+      "filename": "Etoile-Android-armeabi-v7a-0.1.0-26091701-11.APK",
+      "bytes": 6676307,
+      "sha256": "9a5fd00d11dec61328b8af50ceb9ecf84f542284694c696192b6b7c882cabf6a",
+      "dex": {
+        "classes.dex": "34e4034683efda233f6fe4e6d7818ad422c27618bcc42d811469b6465c285d9b",
+        "classes2.dex": "29cb5042749a4751f9d43c0a5824822babd28fa95f8093c657b0fc13059df0a9"
+      }
+    },
+    {
+      "filename": "Etoile-Android-arm64-v8a-0.1.0-26091701-11.APK",
+      "bytes": 6794495,
+      "sha256": "03aa0f31b21f94381ed17382e1438269b8d707cecce65586a80e5ba9db1414c7",
+      "dex": {
+        "classes.dex": "34e4034683efda233f6fe4e6d7818ad422c27618bcc42d811469b6465c285d9b",
+        "classes2.dex": "29cb5042749a4751f9d43c0a5824822babd28fa95f8093c657b0fc13059df0a9"
+      }
+    }
+  ],
+  "suites": {
+    "wide": {
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+      "device": "emulator-5554",
+      "scope": "Production Compose screens; deterministic local data and intercepted external actions",
+      "checks": [
+        {
+          "check": "wide / NOTHING / repository",
+          "result": "PASS",
+          "page": "repository",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-repository.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / settings",
+          "result": "PASS",
+          "page": "settings",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-settings.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / appearance",
+          "result": "PASS",
+          "page": "appearance",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-appearance.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / language",
+          "result": "PASS",
+          "page": "language",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-language.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / accounts",
+          "result": "PASS",
+          "page": "accounts",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-accounts.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / sign-in",
+          "result": "PASS",
+          "page": "sign-in",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-sign-in.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / issues",
+          "result": "PASS",
+          "page": "issues",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-issues.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / issue",
+          "result": "PASS",
+          "page": "issue",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-issue.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / pull-requests",
+          "result": "PASS",
+          "page": "pull-requests",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-pull-requests.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / pull-request",
+          "result": "PASS",
+          "page": "pull-request",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-pull-request.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / my-issues",
+          "result": "PASS",
+          "page": "my-issues",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-my-issues.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / my-prs",
+          "result": "PASS",
+          "page": "my-prs",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-my-prs.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / commits",
+          "result": "PASS",
+          "page": "commits",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-commits.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / commit",
+          "result": "PASS",
+          "page": "commit",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-commit.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / releases",
+          "result": "PASS",
+          "page": "releases",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-releases.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / release",
+          "result": "PASS",
+          "page": "release",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-release.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / branches",
+          "result": "PASS",
+          "page": "branches",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-branches.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / contributors",
+          "result": "PASS",
+          "page": "contributors",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-contributors.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / webhooks",
+          "result": "PASS",
+          "page": "webhooks",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-webhooks.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / files",
+          "result": "PASS",
+          "page": "files",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-files.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / code",
+          "result": "PASS",
+          "page": "code",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-code.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / markdown",
+          "result": "PASS",
+          "page": "markdown",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-markdown.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / repositories",
+          "result": "PASS",
+          "page": "repositories",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-repositories.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / organizations",
+          "result": "PASS",
+          "page": "organizations",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-organizations.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / starred",
+          "result": "PASS",
+          "page": "starred",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-starred.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / public-profile",
+          "result": "PASS",
+          "page": "public-profile",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-public-profile.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / followers",
+          "result": "PASS",
+          "page": "followers",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-followers.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / following",
+          "result": "PASS",
+          "page": "following",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-following.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / workflows",
+          "result": "PASS",
+          "page": "workflows",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-workflows.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / workflow-runs",
+          "result": "PASS",
+          "page": "workflow-runs",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-workflow-runs.png",
+          "twoColumns": true,
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / actions-run",
+          "result": "PASS",
+          "page": "actions-run",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-actions-run.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / actions-job",
+          "result": "PASS",
+          "page": "actions-job",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-actions-job.png",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-09.APK"
+        },
+        {
+          "check": "wide / NOTHING / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-home.png"
+        },
+        {
+          "check": "wide / NOTHING / home-guest",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home-guest",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-home-guest.png"
+        },
+        {
+          "check": "wide / NOTHING / inbox",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "inbox",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-inbox.png"
+        },
+        {
+          "check": "wide / NOTHING / explore",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "explore",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-explore.png"
+        },
+        {
+          "check": "wide / NOTHING / store",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-store.png"
+        },
+        {
+          "check": "wide / NOTHING / profile",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "profile",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-profile.png"
+        },
+        {
+          "check": "wide / NOTHING / store-detail",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-detail",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-store-detail.png"
+        },
+        {
+          "check": "wide / NOTHING / fdroid",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "fdroid",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-fdroid.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / NOTHING / fdroid-detail",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "fdroid-detail",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-fdroid-detail.png"
+        },
+        {
+          "check": "wide / NOTHING / store-sources",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-sources",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-store-sources.png"
+        },
+        {
+          "check": "wide / NOTHING / explore-users",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "explore-users",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-explore-users.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / NOTHING / explore-code",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "explore-code",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-explore-code.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / NOTHING / explore-issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "explore-issues",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-explore-issues.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / NOTHING / explore-prs",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "explore-prs",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-explore-prs.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / NOTHING / issue-templates-empty",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue-templates-empty",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "en",
+          "screenshot": "wide-nothing-issue-templates-empty.png"
+        }
+      ],
+      "result": "PASS"
+    },
+    "responsive": {
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+      "device": "emulator-5554",
+      "scope": "Production Compose screens; deterministic local data and intercepted external actions",
+      "checks": [
+        {
+          "check": "portrait / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "portrait",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "portrait-material-home.png"
+        },
+        {
+          "check": "portrait / MATERIAL / issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issues",
+          "profile": "portrait",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "portrait-material-issues.png"
+        },
+        {
+          "check": "portrait / MATERIAL / issue",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "portrait",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "portrait-material-issue.png"
+        },
+        {
+          "check": "portrait / MATERIAL / release",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "release",
+          "profile": "portrait",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "portrait-material-release.png"
+        },
+        {
+          "check": "portrait / MATERIAL / store",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store",
+          "profile": "portrait",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "portrait-material-store.png"
+        },
+        {
+          "check": "portrait / MATERIAL / profile",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "profile",
+          "profile": "portrait",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "portrait-material-profile.png"
+        },
+        {
+          "check": "split / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-home.png"
+        },
+        {
+          "check": "split / MATERIAL / issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issues",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-issues.png"
+        },
+        {
+          "check": "split / MATERIAL / issue",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-issue.png"
+        },
+        {
+          "check": "split / MATERIAL / pull-request",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "pull-request",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-pull-request.png"
+        },
+        {
+          "check": "split / MATERIAL / store-detail",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-detail",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-store-detail.png"
+        },
+        {
+          "check": "split / MATERIAL / settings",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "settings",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-settings.png"
+        },
+        {
+          "check": "split / MATERIAL / issue-templates-empty",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue-templates-empty",
+          "profile": "split",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "split-material-issue-templates-empty.png"
+        },
+        {
+          "check": "large-text / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-home.png"
+        },
+        {
+          "check": "large-text / MATERIAL / issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issues",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-issues.png"
+        },
+        {
+          "check": "large-text / MATERIAL / issue",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-issue.png"
+        },
+        {
+          "check": "large-text / MATERIAL / pull-request",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "pull-request",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-pull-request.png"
+        },
+        {
+          "check": "large-text / MATERIAL / release",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "release",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-release.png"
+        },
+        {
+          "check": "large-text / MATERIAL / profile",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "profile",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-profile.png"
+        },
+        {
+          "check": "large-text / MATERIAL / store-detail",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-detail",
+          "profile": "large-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "large-text-material-store-detail.png"
+        },
+        {
+          "check": "small-text / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "small-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "small-text-material-home.png"
+        },
+        {
+          "check": "small-text / MATERIAL / issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issues",
+          "profile": "small-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "small-text-material-issues.png"
+        },
+        {
+          "check": "small-text / MATERIAL / issue-templates-empty",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue-templates-empty",
+          "profile": "small-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "small-text-material-issue-templates-empty.png"
+        },
+        {
+          "check": "small-text / MATERIAL / sign-in",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "sign-in",
+          "profile": "small-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "small-text-material-sign-in.png"
+        },
+        {
+          "check": "small-text / MATERIAL / store-sources",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-sources",
+          "profile": "small-text",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "small-text-material-store-sources.png"
+        },
+        {
+          "check": "short-landscape / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "short-landscape",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "short-landscape-material-home.png"
+        },
+        {
+          "check": "short-landscape / MATERIAL / explore",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "explore",
+          "profile": "short-landscape",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "short-landscape-material-explore.png"
+        },
+        {
+          "check": "short-landscape / MATERIAL / issue",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "short-landscape",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "short-landscape-material-issue.png"
+        },
+        {
+          "check": "short-landscape / MATERIAL / store-sources",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-sources",
+          "profile": "short-landscape",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "short-landscape-material-store-sources.png"
+        },
+        {
+          "check": "ultrawide / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "ultrawide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "ultrawide-material-home.png"
+        },
+        {
+          "check": "ultrawide / MATERIAL / code",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "code",
+          "profile": "ultrawide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "ultrawide-material-code.png"
+        },
+        {
+          "check": "ultrawide / MATERIAL / markdown",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "markdown",
+          "profile": "ultrawide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "ultrawide-material-markdown.png"
+        },
+        {
+          "check": "ultrawide / MATERIAL / sign-in",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "sign-in",
+          "profile": "ultrawide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "ultrawide-material-sign-in.png"
+        },
+        {
+          "check": "wide / MATERIAL / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-home.png"
+        },
+        {
+          "check": "wide / MATERIAL / issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issues",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-issues.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / MATERIAL / issue",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-issue.png"
+        },
+        {
+          "check": "wide / MATERIAL / pull-request",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "pull-request",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-pull-request.png"
+        },
+        {
+          "check": "wide / MATERIAL / release",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "release",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-release.png"
+        },
+        {
+          "check": "wide / MATERIAL / profile",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "profile",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-profile.png"
+        },
+        {
+          "check": "wide / MATERIAL / store-detail",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-detail",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-store-detail.png"
+        },
+        {
+          "check": "wide / MATERIAL / issue-templates-empty",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue-templates-empty",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "en",
+          "screenshot": "wide-material-issue-templates-empty.png"
+        },
+        {
+          "check": "wide / MIUIX / home",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-home.png"
+        },
+        {
+          "check": "wide / MIUIX / issues",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issues",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-issues.png",
+          "twoColumns": true
+        },
+        {
+          "check": "wide / MIUIX / issue",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-issue.png"
+        },
+        {
+          "check": "wide / MIUIX / pull-request",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "pull-request",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-pull-request.png"
+        },
+        {
+          "check": "wide / MIUIX / release",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "release",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-release.png"
+        },
+        {
+          "check": "wide / MIUIX / profile",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "profile",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-profile.png"
+        },
+        {
+          "check": "wide / MIUIX / store-detail",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "store-detail",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-store-detail.png"
+        },
+        {
+          "check": "wide / MIUIX / issue-templates-empty",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue-templates-empty",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "en",
+          "screenshot": "wide-miuix-issue-templates-empty.png"
+        },
+        {
+          "check": "wide / NOTHING / home / zh",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "wide",
+          "style": "NOTHING",
+          "locale": "zh",
+          "screenshot": "wide-nothing-home-zh.png"
+        },
+        {
+          "check": "wide / MATERIAL / home / zh",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "zh",
+          "screenshot": "wide-material-home-zh.png"
+        },
+        {
+          "check": "wide / MIUIX / home / zh",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "home",
+          "profile": "wide",
+          "style": "MIUIX",
+          "locale": "zh",
+          "screenshot": "wide-miuix-home-zh.png"
+        },
+        {
+          "check": "wide / MATERIAL / issue / zh",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "zh",
+          "screenshot": "wide-material-issue-zh.png"
+        },
+        {
+          "check": "wide / MATERIAL / issue-templates-empty / zh",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK",
+          "page": "issue-templates-empty",
+          "profile": "wide",
+          "style": "MATERIAL",
+          "locale": "zh",
+          "screenshot": "wide-material-issue-templates-empty-zh.png"
+        }
+      ],
+      "result": "PASS"
+    },
+    "interaction": {
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-11.APK",
+      "device": "emulator-5554",
+      "scope": "Production Compose screens; deterministic local data and intercepted external actions",
+      "checks": [
+        {
+          "check": "grid pagination reaches the last loaded item",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK"
+        },
+        {
+          "check": "release assets shortcut targets the sidebar",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK"
+        },
+        {
+          "check": "release assets shortcut reaches downloads in a compact window",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK"
+        },
+        {
+          "check": "public profile follow control remains usable in the sidebar",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK"
+        },
+        {
+          "check": "issue comment draft survives wide and compact window transitions",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK"
+        },
+        {
+          "check": "PR overview and selected section survive window changes",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-10.APK"
+        },
+        {
+          "check": "source sheet keeps its draft and exposes the add control above the keyboard",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-11.APK"
+        },
+        {
+          "check": "short landscape rail reaches its final destination",
+          "result": "PASS",
+          "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-11.APK"
+        }
+      ],
+      "result": "PASS"
+    }
+  }
+}

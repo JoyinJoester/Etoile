@@ -1,0 +1,37 @@
+[
+  {
+    "project": "workspace",
+    "frames": 17,
+    "steps": 17,
+    "result": "PASS",
+    "pageErrors": []
+  },
+  {
+    "project": "repositories",
+    "frames": 10,
+    "steps": 3,
+    "result": "PASS",
+    "pageErrors": []
+  },
+  {
+    "project": "conversations",
+    "frames": 9,
+    "steps": 4,
+    "result": "PASS",
+    "pageErrors": []
+  },
+  {
+    "project": "accounts",
+    "frames": 10,
+    "steps": 2,
+    "result": "PASS",
+    "pageErrors": []
+  },
+  {
+    "project": "operations",
+    "frames": 10,
+    "steps": 6,
+    "result": "PASS",
+    "pageErrors": []
+  }
+]

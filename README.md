@@ -54,7 +54,8 @@ Etoile 是一款独立维护的 GitHub 第三方 Android 客户端，用 Jetpack
 - **收件箱**：通知线程分页、逐条 Done / 取消订阅、未读状态与失败就地提示。
 - **仓库与代码**：目录浏览、Branch/Tag 切换、README 渲染、文件原文、Commits、Releases；
   独立的分支列表、协作者权限与 Webhooks 只读页面。
-- **Issue**：详情与管理弹层统一收口，支持标题正文编辑、Labels、Assignees、Milestone、
+- **Issue**：选择仓库的 Markdown / YAML 模板，或内置的中英文问题反馈、功能建议、使用求助模板创建议题；支持必填表单、预览与草稿恢复。
+  详情与管理弹层支持标题正文编辑、Labels、Assignees、Milestone、
   关闭/重开、会话锁定与 Reaction。
 - **Pull Request**：Conversation 与 Diff、行级 Review 评论、请求审阅者、Labels/Assignees/Milestone，
   以及绑定 Head SHA 的合并确认（MERGE / SQUASH / REBASE）。
@@ -67,7 +68,7 @@ Etoile 是一款独立维护的 GitHub 第三方 Android 客户端，用 Jetpack
 
 1. 从 [Releases](https://github.com/JoyinJoester/Etoile/releases) 下载与设备架构匹配的 APK。
 2. 在 Android 8.0+ 设备安装。
-3. 使用 GitHub 设备码流程（Device Flow）登录，凭据保存在本机加密存储中。
+3. 使用 GitHub OAuth 登录；个人构建可配置 `etoile://oauth` 浏览器回调，未配置时回退到 Device Flow。
 
 ### 已知限制
 - 仍为公开测试版，接口与布局可能随时调整。
@@ -81,7 +82,7 @@ Etoile 是一款独立维护的 GitHub 第三方 Android 客户端，用 Jetpack
 ## 数据与安全边界
 
 - 应用 ID：`app.etoile`，数据由 Android 应用沙箱隔离。
-- 访问令牌经 GitHub 设备码流程取得，保存在设备端加密存储；不上传到第三方服务器。
+- 访问令牌经 GitHub OAuth 取得并保存在设备端加密存储；个人构建的浏览器 OAuth 会将 Client Secret 编入 APK，详见配置文档。
 - 缓存遵循 ETag / 304 校验，退出登录或切换账号时清理，401/403/4xx 不会展示其他账号的旧数据。
 - Webhook 的 URL、secret 等敏感配置不进入客户端模型与界面。
 - 本仓库不含遥测或广告 SDK。
@@ -186,3 +187,6 @@ Etoile 基于 [GNU General Public License v3.0](LICENSE) 开源发布。
 其他第三方组件的版权与许可证见 [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md)。
 
 GitHub 及相关商标归 GitHub, Inc. / Microsoft 及其权利人所有。本项目为非官方第三方客户端。
+### 源码阅读器
+
+仓库文件页面支持按行阅读、文本选择、横向滚动与 Nothing 风格语法着色。行边界由 Rust JNI 模块计算，兼容 UTF-16、中文、Emoji 及不同换行符；无网络时可通过 Debug `DesignAuditActivity` 的 `repository-reader` 样例预览。

@@ -13,6 +13,7 @@ import org.junit.Before
 import org.junit.Test
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRepository
+import takagi.ru.monica.github.domain.GithubRepositoryCreateDraft
 import takagi.ru.monica.github.domain.GithubUserRepositoriesRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -42,6 +43,61 @@ class UserRepositoriesViewModelTest {
                 nextPage = if (page == 1) 2 else null
             )
         )
+
+        override suspend fun create(draft: GithubRepositoryCreateDraft) =
+            Result.failure<GithubRepository>(UnsupportedOperationException("this screen never creates"))
+    }
+
+    @Test
+    fun retryAfterFailedRefreshRequestsFirstPageAndKeepsRows() = runTest(dispatcher) {
+        val requested = mutableListOf<Int>()
+        var fail = false
+        val source = object : GithubUserRepositoriesRepository {
+            override suspend fun repositories(page: Int, perPage: Int): Result<GithubPage<GithubRepository>> {
+                requested += page
+                return if (fail) Result.failure(IllegalStateException("Offline"))
+                else Result.success(GithubPage(listOf(repository(1)), nextPage = null))
+            }
+
+            override suspend fun create(draft: GithubRepositoryCreateDraft) =
+                Result.failure<GithubRepository>(UnsupportedOperationException("this screen never creates"))
+        }
+        val viewModel = UserRepositoriesViewModel(source)
+        advanceUntilIdle()
+        fail = true
+        viewModel.onAction(UserRepositoriesAction.Refresh)
+        advanceUntilIdle()
+        fail = false
+        viewModel.onAction(UserRepositoriesAction.Retry)
+        assertEquals(listOf(1L), viewModel.state.value.items.map { it.id })
+        advanceUntilIdle()
+        assertEquals(listOf(1, 1, 1), requested)
+        assertEquals(false, viewModel.state.value.error)
+    }
+
+    @Test
+    fun retryAfterFailedPaginationRequestsSamePage() = runTest(dispatcher) {
+        val requested = mutableListOf<Int>()
+        var fail = true
+        val source = object : GithubUserRepositoriesRepository {
+            override suspend fun repositories(page: Int, perPage: Int): Result<GithubPage<GithubRepository>> {
+                requested += page
+                return if (page == 2 && fail) Result.failure(IllegalStateException("Offline"))
+                else Result.success(GithubPage(listOf(repository(page.toLong())), nextPage = if (page == 1) 2 else null))
+            }
+
+            override suspend fun create(draft: GithubRepositoryCreateDraft) =
+                Result.failure<GithubRepository>(UnsupportedOperationException("this screen never creates"))
+        }
+        val viewModel = UserRepositoriesViewModel(source)
+        advanceUntilIdle()
+        viewModel.onAction(UserRepositoriesAction.LoadMore)
+        advanceUntilIdle()
+        fail = false
+        viewModel.onAction(UserRepositoriesAction.Retry)
+        advanceUntilIdle()
+        assertEquals(listOf(1, 2, 2), requested)
+        assertEquals(listOf(1L, 2L), viewModel.state.value.items.map { it.id })
     }
 
     private companion object {

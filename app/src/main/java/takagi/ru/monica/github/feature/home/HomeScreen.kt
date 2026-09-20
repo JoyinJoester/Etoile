@@ -1,6 +1,8 @@
 package takagi.ru.monica.github.feature.home
 
-import android.widget.Toast
+import androidx.compose.foundation.layout.fillMaxSize
+
+import takagi.ru.monica.github.navigation.GithubWebUrls
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,14 +31,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.platform.LocalDensity
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import takagi.ru.monica.github.component.GithubCenteredProgress
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
+import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
 import takagi.ru.monica.github.component.GithubAuthPromptCard
+import takagi.ru.monica.github.component.GithubContributionHeatmap
 import takagi.ru.monica.github.component.GithubSkeletonList
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubMessageState
@@ -49,7 +60,6 @@ import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubSession
-import takagi.ru.monica.github.domain.GithubStarCategory
 import takagi.ru.monica.github.feature.mywork.MyConversationsKind
 import takagi.ru.monica.github.feature.starred.StarredUiState
 
@@ -57,65 +67,79 @@ import takagi.ru.monica.github.feature.starred.StarredUiState
 fun HomeScreen(
     session: GithubSession,
     starredState: StarredUiState,
+    contributionsState: HomeContributionsState?,
     onSignIn: () -> Unit,
     onRetrySession: () -> Unit,
+    onRetryContributions: () -> Unit,
     onOpenStarred: () -> Unit,
     onOpenRepositories: () -> Unit,
     onOpenOrganizations: () -> Unit,
     onOpenMyConversations: (MyConversationsKind) -> Unit,
     onOpenRepository: (GithubRepository) -> Unit,
+    onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
-    val comingSoonNotice = stringResource(R.string.github_home_coming_soon_detail)
 
-    LazyColumn(
-        modifier = modifier,
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp)
-    ) {
-        item(key = "intro") {
-            GithubScreenIntro(
-                subtitle = stringResource(R.string.github_home_subtitle)
-            )
-        }
-        item(key = "my-work") {
-            when (session) {
-                GithubSession.Loading -> Box(
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-
-                GithubSession.SignedOut -> HomeSignedOutHero(
-                    onSignIn = onSignIn,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-
-                is GithubSession.Error -> GithubMessageState(
-                    title = stringResource(R.string.github_session_error),
-                    actionLabel = stringResource(R.string.github_retry_session),
-                    onAction = onRetrySession,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-
-                is GithubSession.SignedIn -> MyWorkSection(
-                    account = session.account,
-                    onOpenStarred = onOpenStarred,
-                    onOpenRepositories = onOpenRepositories,
-                    onOpenOrganizations = onOpenOrganizations,
-                    onOpenMyConversations = onOpenMyConversations,
-                    onComingSoon = { Toast.makeText(context, comingSoonNotice, Toast.LENGTH_SHORT).show() }
+    BoxWithConstraints(modifier) {
+        val expanded = maxWidth >= GithubAdaptiveLayout.detailWorkspaceWidth * LocalDensity.current.fontScale.coerceAtLeast(1f)
+        GithubAdaptiveGrid(
+            modifier = Modifier.fillMaxSize(),
+            minimumColumnWidth = 440.dp,
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp)
+        ) {
+            githubFullSpanItem(key = "intro") {
+                GithubScreenIntro(
+                    subtitle = stringResource(R.string.github_home_subtitle)
                 )
             }
-        }
-        if (session is GithubSession.SignedIn) {
-            item(key = "favorites") {
-                FavoritesSection(
-                    state = starredState,
-                    onOpenStarred = onOpenStarred,
-                    onOpenRepository = onOpenRepository
-                )
+            githubFullSpanItem(key = "my-work") {
+                when (session) {
+                    GithubSession.Loading -> Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        GithubCenteredProgress()
+                    }
+
+                    GithubSession.SignedOut -> HomeSignedOutHero(
+                        onSignIn = onSignIn,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    is GithubSession.Error -> GithubMessageState(
+                        title = stringResource(R.string.github_session_error),
+                        actionLabel = stringResource(R.string.github_retry_session),
+                        onAction = onRetrySession,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    is GithubSession.SignedIn -> MyWorkSection(
+                        account = session.account,
+                        onOpenStarred = onOpenStarred,
+                        onOpenRepositories = onOpenRepositories,
+                        onOpenOrganizations = onOpenOrganizations,
+                        onOpenMyConversations = onOpenMyConversations,
+                        onOpenExternal = onOpenExternal
+                    )
+                }
+            }
+            if (session is GithubSession.SignedIn) {
+                item(key = "contributions") {
+                    ContributionsSection(
+                        state = contributionsState,
+                        onRetry = onRetryContributions,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+                item(key = "favorites") {
+                    Column(Modifier.padding(top = if (expanded) 16.dp else 0.dp)) {
+                        FavoritesSection(
+                            state = starredState,
+                            onOpenStarred = onOpenStarred,
+                            onOpenRepository = onOpenRepository
+                        )
+                    }
+                }
             }
         }
     }
@@ -128,17 +152,18 @@ private fun MyWorkSection(
     onOpenRepositories: () -> Unit,
     onOpenOrganizations: () -> Unit,
     onOpenMyConversations: (MyConversationsKind) -> Unit,
-    onComingSoon: () -> Unit
+    onOpenExternal: (String) -> Unit
 ) {
     GithubSectionHeader(
         title = stringResource(R.string.github_home_my_work),
         compact = true
     )
+    val material = LocalDesignStyle.current == DesignStyle.MATERIAL
     GithubPreferenceGroup {
         GithubPreferenceRow(
             Icons.Default.Star,
             stringResource(R.string.github_starred),
-            stringResource(R.string.github_manage),
+            if (material) "" else stringResource(R.string.github_manage),
             onClick = onOpenStarred
         )
         GithubPreferenceGroupDivider()
@@ -152,36 +177,36 @@ private fun MyWorkSection(
         GithubPreferenceRow(
             Icons.Default.Public,
             stringResource(R.string.github_organizations),
-            stringResource(R.string.github_open),
+            if (material) "" else stringResource(R.string.github_open),
             onClick = onOpenOrganizations
         )
         GithubPreferenceGroupDivider()
         GithubPreferenceRow(
             Icons.Default.RadioButtonChecked,
             stringResource(R.string.github_my_issues),
-            stringResource(R.string.github_open),
+            if (material) "" else stringResource(R.string.github_open),
             onClick = { onOpenMyConversations(MyConversationsKind.ISSUES) }
         )
         GithubPreferenceGroupDivider()
         GithubPreferenceRow(
             Icons.AutoMirrored.Filled.CallSplit,
             stringResource(R.string.github_my_pull_requests),
-            stringResource(R.string.github_open),
+            if (material) "" else stringResource(R.string.github_open),
             onClick = { onOpenMyConversations(MyConversationsKind.PULL_REQUESTS) }
         )
         GithubPreferenceGroupDivider()
         GithubPreferenceRow(
             Icons.Default.Forum,
             stringResource(R.string.github_discussions),
-            stringResource(R.string.github_home_coming_soon),
-            onClick = onComingSoon
+            if (material) "GitHub" else stringResource(R.string.github_open_on_github),
+            onClick = { onOpenExternal(GithubWebUrls.discussions()) }
         )
         GithubPreferenceGroupDivider()
         GithubPreferenceRow(
             Icons.Default.Dashboard,
             stringResource(R.string.github_projects),
-            stringResource(R.string.github_home_coming_soon),
-            onClick = onComingSoon
+            if (material) "GitHub" else stringResource(R.string.github_open_on_github),
+            onClick = { onOpenExternal(GithubWebUrls.userProjects(account.login)) }
         )
     }
 }
@@ -196,12 +221,12 @@ private fun FavoritesSection(
         title = stringResource(R.string.github_home_favorites),
         compact = true
     )
-    val categorized = state.repositories.filter { it.category != GithubStarCategory.ALL }
+    val labeled = state.repositories.filter { it.labels.isNotEmpty() }
     when {
-        state.isLoading && categorized.isEmpty() ->
+        state.isLoading && labeled.isEmpty() ->
             GithubSkeletonList(row = GithubSkeletonRow.LIST, rowCount = 4)
 
-        categorized.isEmpty() -> GithubMessageState(
+        labeled.isEmpty() -> GithubMessageState(
             title = stringResource(R.string.github_home_favorites_empty),
             actionLabel = stringResource(R.string.github_home_favorites_empty_action),
             onAction = onOpenStarred
@@ -211,51 +236,70 @@ private fun FavoritesSection(
             val descriptionFallback = stringResource(R.string.github_no_description)
             val languageFallback = stringResource(R.string.github_unknown_language)
             val updatedFallback = stringResource(R.string.github_updated_recently)
-            GithubStarCategory.entries
-                .filter { it != GithubStarCategory.ALL }
-                .forEach { category ->
-                    val items = categorized.filter { it.category == category }
-                    if (items.isNotEmpty()) {
-                        Text(
-                            text = categoryLabel(category),
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
-                        )
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = GithubExpressiveShapes.container,
-                            color = MaterialTheme.colorScheme.surfaceContainerLow
-                        ) {
-                            Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                items.forEach { item ->
-                                    GithubRepositoryRow(
-                                        repository = item.repository,
-                                        descriptionFallback = descriptionFallback,
-                                        languageFallback = languageFallback,
-                                        updatedFallback = updatedFallback,
-                                        onClick = { onOpenRepository(item.repository) }
-                                    )
-                                }
+            state.labels.forEach { label ->
+                val items = labeled.filter { item -> item.labels.any { it.id == label.id } }
+                if (items.isNotEmpty()) {
+                    Text(
+                        text = label.name,
+                        style = MaterialTheme.typography.labelLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(top = 12.dp, bottom = 8.dp)
+                    )
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = GithubExpressiveShapes.container,
+                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                    ) {
+                        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                            items.forEach { item ->
+                                GithubRepositoryRow(
+                                    repository = item.repository,
+                                    descriptionFallback = descriptionFallback,
+                                    languageFallback = languageFallback,
+                                    updatedFallback = updatedFallback,
+                                    onClick = { onOpenRepository(item.repository) }
+                                )
                             }
                         }
                     }
                 }
+            }
         }
     }
 }
 
 @Composable
-private fun categoryLabel(category: GithubStarCategory): String = when (category) {
-    GithubStarCategory.ALL -> stringResource(R.string.github_star_category_uncategorized)
-    GithubStarCategory.ANDROID -> stringResource(R.string.github_star_category_android)
-    GithubStarCategory.KOTLIN -> stringResource(R.string.github_star_category_kotlin)
-    GithubStarCategory.TOOLS -> stringResource(R.string.github_star_category_tools)
-}
-
-@Composable
 private fun HomeSignedOutHero(onSignIn: () -> Unit, modifier: Modifier = Modifier) {
+    if (LocalDesignStyle.current == DesignStyle.MATERIAL) {
+        Surface(
+            modifier = modifier.fillMaxWidth(),
+            shape = GithubExpressiveShapes.prominent,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ) {
+            Column(modifier = Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Icon(Icons.Default.Star, contentDescription = null, modifier = Modifier.size(36.dp))
+                Text(
+                    stringResource(R.string.github_home_welcome_title),
+                    style = MaterialTheme.typography.headlineLarge
+                )
+                Text(
+                    stringResource(R.string.github_home_welcome_body),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Button(
+                    onClick = onSignIn,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                    shape = GithubExpressiveShapes.container
+                ) {
+                    Icon(Icons.Default.Person, contentDescription = null)
+                    Text(stringResource(R.string.github_sign_in), modifier = Modifier.padding(start = 8.dp))
+                }
+            }
+        }
+        return
+    }
     Column(modifier = modifier.fillMaxWidth().padding(top = 16.dp)) {
         Text(
             text = stringResource(R.string.github_home_welcome_title),
@@ -295,7 +339,7 @@ private fun HomeSignedOutHero(onSignIn: () -> Unit, modifier: Modifier = Modifie
         Spacer(Modifier.height(24.dp))
         Button(
             onClick = onSignIn,
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
             shape = GithubExpressiveShapes.control
         ) {
             Icon(Icons.Default.Person, contentDescription = null)
@@ -303,6 +347,45 @@ private fun HomeSignedOutHero(onSignIn: () -> Unit, modifier: Modifier = Modifie
                 text = stringResource(R.string.github_sign_in),
                 modifier = Modifier.padding(start = 8.dp)
             )
+        }
+    }
+}
+
+@Composable
+private fun ContributionsSection(
+    state: HomeContributionsState?,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        GithubSectionHeader(
+            title = stringResource(R.string.github_profile_contributions_title),
+            compact = true
+        )
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            shape = GithubExpressiveShapes.container,
+            color = MaterialTheme.colorScheme.surfaceContainerLow
+        ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+                when {
+                    state == null || state.isLoading -> Box(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(22.dp))
+                    }
+                    state.hasError -> GithubMessageState(
+                        title = stringResource(R.string.github_profile_calendar_error),
+                        actionLabel = stringResource(R.string.github_retry),
+                        onAction = onRetry
+                    )
+                    state.calendar != null -> GithubContributionHeatmap(
+                        calendar = state.calendar
+                    )
+                    else -> Unit
+                }
+            }
         }
     }
 }

@@ -1,5 +1,8 @@
 package takagi.ru.monica.github.feature.pullrequest
 
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -10,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -21,8 +25,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,9 +40,19 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallSplit
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
@@ -82,18 +99,23 @@ fun PullRequestsScreen(
     onBack: () -> Unit,
     onOpenPullRequest: (GithubPullRequest) -> Unit,
     onOpenExternal: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCreate: (() -> Unit)? = null
 ) {
     val states = GithubPullRequestState.entries
     val draftFilters = PullRequestDraftFilter.entries
     var orderingOpen by remember { mutableStateOf(false) }
     GithubDetailScaffold(
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = state.name,
         subtitle = stringResource(R.string.github_pull_requests),
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
         actions = {
+            if (onCreate != null) IconButton(onClick = onCreate) {
+                Icon(Icons.Default.Add, stringResource(R.string.github_create_pr))
+            }
             GithubOpenOnGithubButton {
                 onOpenExternal(GithubWebUrls.pullRequests(state.fullName))
             }
@@ -116,7 +138,8 @@ fun PullRequestsScreen(
                 clearContentDescription = stringResource(R.string.github_clear_search),
                 orderingContentDescription = stringResource(R.string.github_list_sort_and_filter),
                 onOpenOrdering = { orderingOpen = true },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                compact = true
             )
             GithubListLoadingState(
                 isLoading = state.isLoading,
@@ -125,7 +148,7 @@ fun PullRequestsScreen(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
 
-            LazyColumn(
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
             ) {
@@ -136,7 +159,7 @@ fun PullRequestsScreen(
                         modifier = Modifier.animateItem()
                     )
                 }
-                item(key = "list-status") {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
                         itemCount = state.visibleItems.size,
                         isInitialLoading = state.isLoading,
@@ -194,7 +217,7 @@ fun PullRequestDetailScreen(
     state: PullRequestDetailUiState,
     onAction: (PullRequestDetailAction) -> Unit,
     onBack: () -> Unit,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onSignIn: () -> Unit,
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -267,18 +290,21 @@ fun PullRequestDetailScreen(
             reviewerSaveRequested = false
         }
     }
+    val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     GithubDetailScaffold(
         title = "#${state.number}",
         subtitle = state.fullName,
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         actions = {
-            if (canWrite && state.pullRequest != null) {
+            if (state.pullRequest != null) {
                 IconButton(
                     onClick = {
                         managementOpen = true
-                    }
+                    },
+                    enabled = state.canManage
                 ) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,
@@ -309,16 +335,13 @@ fun PullRequestDetailScreen(
             pullRequest != null -> BoxWithConstraints(
                 modifier = Modifier.fillMaxSize().padding(padding)
             ) {
-                if (
-                    maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth &&
-                    state.selectedSection != PullRequestSection.OVERVIEW
-                ) {
+                if (maxWidth >= GithubAdaptiveLayout.detailWorkspaceWidth * fontScale) {
                     PullRequestDetailExpanded(
                         state = state,
                         pullRequest = pullRequest,
                         sections = sections,
                         sectionStateHolder = sectionStateHolder,
-                        canWrite = canWrite,
+                        isSignedIn = isSignedIn,
                         onAction = onAction,
                         onSignIn = onSignIn,
                         onOpenExternal = onOpenExternal
@@ -329,7 +352,7 @@ fun PullRequestDetailScreen(
                         pullRequest = pullRequest,
                         sections = sections,
                         sectionStateHolder = sectionStateHolder,
-                        canWrite = canWrite,
+                        isSignedIn = isSignedIn,
                         onAction = onAction,
                         onSignIn = onSignIn,
                         onOpenExternal = onOpenExternal
@@ -344,6 +367,10 @@ fun PullRequestDetailScreen(
             pullRequest = managedPullRequest,
             isBusy = state.isUpdatingState || state.isUpdatingLock,
             hasError = state.stateUpdateError || state.lockUpdateError,
+            canEditContent = state.canEditContent,
+            canTriage = state.canTriage,
+            canChangeState = state.canChangeState,
+            canLock = state.canLock,
             onEditContent = {
                 managementOpen = false
                 editTitle = managedPullRequest.title
@@ -529,7 +556,7 @@ private fun PullRequestDetailCompact(
     pullRequest: GithubPullRequest,
     sections: List<PullRequestSection>,
     sectionStateHolder: SaveableStateHolder,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onAction: (PullRequestDetailAction) -> Unit,
     onSignIn: () -> Unit,
     onOpenExternal: (String) -> Unit
@@ -541,7 +568,7 @@ private fun PullRequestDetailCompact(
             state = state,
             pullRequest = pullRequest,
             sectionStateHolder = sectionStateHolder,
-            canWrite = canWrite,
+            isSignedIn = isSignedIn,
             onAction = onAction,
             onSignIn = onSignIn,
             onOpenExternal = onOpenExternal
@@ -555,21 +582,22 @@ private fun PullRequestDetailExpanded(
     pullRequest: GithubPullRequest,
     sections: List<PullRequestSection>,
     sectionStateHolder: SaveableStateHolder,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onAction: (PullRequestDetailAction) -> Unit,
     onSignIn: () -> Unit,
     onOpenExternal: (String) -> Unit
 ) {
     Row(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier.width(380.dp).fillMaxHeight(),
+            modifier = Modifier.width(380.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)).fillMaxHeight(),
             contentPadding = PaddingValues(16.dp)
         ) {
             item(key = "overview-panel") {
                 PullRequestOverviewCard(
                     pullRequest = pullRequest,
                     fullName = state.fullName,
-                    onOpenExternal = onOpenExternal
+                    onOpenExternal = onOpenExternal,
+                    showDescription = false
                 )
             }
         }
@@ -584,10 +612,11 @@ private fun PullRequestDetailExpanded(
                 state = state,
                 pullRequest = pullRequest,
                 sectionStateHolder = sectionStateHolder,
-                canWrite = canWrite,
+                isSignedIn = isSignedIn,
                 onAction = onAction,
                 onSignIn = onSignIn,
-                onOpenExternal = onOpenExternal
+                onOpenExternal = onOpenExternal,
+                overviewInSidebar = true
             )
         }
     }
@@ -623,17 +652,19 @@ private fun PullRequestSelectedSection(
     state: PullRequestDetailUiState,
     pullRequest: GithubPullRequest,
     sectionStateHolder: SaveableStateHolder,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onAction: (PullRequestDetailAction) -> Unit,
     onSignIn: () -> Unit,
-    onOpenExternal: (String) -> Unit
+    onOpenExternal: (String) -> Unit,
+    overviewInSidebar: Boolean = false
 ) {
     sectionStateHolder.SaveableStateProvider(state.selectedSection.name) {
         when (state.selectedSection) {
             PullRequestSection.OVERVIEW -> PullRequestOverviewContent(
                 pullRequest = pullRequest,
                 fullName = state.fullName,
-                onOpenExternal = onOpenExternal
+                onOpenExternal = onOpenExternal,
+                descriptionOnly = overviewInSidebar
             )
             PullRequestSection.FILES -> PullRequestFilesContent(
                 state = state,
@@ -643,7 +674,7 @@ private fun PullRequestSelectedSection(
             PullRequestSection.ACTIVITY -> PullRequestActivityContent(
                 state = state,
                 pullRequest = pullRequest,
-                canWrite = canWrite,
+                isSignedIn = isSignedIn,
                 onAction = onAction,
                 onSignIn = onSignIn,
                 onOpenExternal = onOpenExternal
@@ -656,14 +687,21 @@ private fun PullRequestSelectedSection(
 private fun PullRequestOverviewContent(
     pullRequest: GithubPullRequest,
     fullName: String,
-    onOpenExternal: (String) -> Unit
+    onOpenExternal: (String) -> Unit,
+    descriptionOnly: Boolean = false
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
     ) {
         item(key = "overview") {
-            PullRequestOverviewCard(
+            if (descriptionOnly) {
+                Surface(shape = GithubExpressiveShapes.container, color = MaterialTheme.colorScheme.surfaceContainerLow) {
+                    Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                        PullRequestDescription(pullRequest, fullName, onOpenExternal)
+                    }
+                }
+            } else PullRequestOverviewCard(
                 pullRequest = pullRequest,
                 fullName = fullName,
                 onOpenExternal = onOpenExternal
@@ -709,7 +747,7 @@ private fun PullRequestFilesContent(
 private fun PullRequestActivityContent(
     state: PullRequestDetailUiState,
     pullRequest: GithubPullRequest,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
     onAction: (PullRequestDetailAction) -> Unit,
     onSignIn: () -> Unit,
     onOpenExternal: (String) -> Unit
@@ -777,7 +815,7 @@ private fun PullRequestActivityContent(
         item(key = "review-composer") {
             PullRequestReviewComposer(
                 body = state.reviewBody,
-                canWrite = canWrite,
+                canWrite = isSignedIn,
                 isValidationError = state.reviewValidationError,
                 isSubmitError = state.reviewSubmitError,
                 isSubmitting = state.isSubmittingReview,
@@ -802,7 +840,7 @@ private fun PullRequestActivityContent(
                 activeReactions = state.activeReactions[comment.id].orEmpty(),
                 isReactionUpdating = comment.id in state.reactionBusyCommentIds,
                 hasReactionError = comment.id in state.reactionErrorCommentIds,
-                canReact = canWrite,
+                canReact = isSignedIn,
                 onReaction = { reaction ->
                     onAction(PullRequestDetailAction.ToggleCommentReaction(comment.id, reaction))
                 }
@@ -826,7 +864,7 @@ private fun PullRequestActivityContent(
             GithubCommentComposer(
                 value = state.commentDraft,
                 maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
-                canWrite = canWrite,
+                canWrite = isSignedIn,
                 isValidationError = state.commentValidationError,
                 isSubmitError = state.commentSubmitError,
                 isSubmitting = state.isSubmittingComment,
@@ -843,7 +881,8 @@ private fun PullRequestActivityContent(
         item(key = "pull-request-actions") {
             PullRequestActionsCard(
                 pullRequest = pullRequest,
-                canWrite = canWrite,
+                isSignedIn = isSignedIn,
+                canMerge = state.canMerge,
                 isMerging = state.isMerging,
                 mergeError = state.mergeError,
                 mergeValidationError = state.mergeValidationError,
@@ -868,6 +907,10 @@ private fun PullRequestManagementSheet(
     pullRequest: GithubPullRequest,
     isBusy: Boolean,
     hasError: Boolean,
+    canEditContent: Boolean,
+    canTriage: Boolean,
+    canChangeState: Boolean,
+    canLock: Boolean,
     onEditContent: () -> Unit,
     onEditLabels: () -> Unit,
     onEditAssignees: () -> Unit,
@@ -883,34 +926,40 @@ private fun PullRequestManagementSheet(
             subtitle = stringResource(R.string.github_pr_number, pullRequest.number),
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
         )
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp)) {
             PullRequestManagementButton(
+                icon = Icons.Default.Edit,
                 label = stringResource(R.string.github_edit_pr_content),
-                enabled = !isBusy,
+                enabled = canEditContent && !isBusy,
                 onClick = onEditContent
             )
             PullRequestManagementButton(
+                icon = Icons.AutoMirrored.Filled.Label,
                 label = stringResource(R.string.github_edit_labels),
-                enabled = !isBusy,
+                enabled = canTriage && !isBusy,
                 onClick = onEditLabels
             )
             PullRequestManagementButton(
+                icon = Icons.Default.Group,
                 label = stringResource(R.string.github_edit_assignees),
-                enabled = !isBusy,
+                enabled = canTriage && !isBusy,
                 onClick = onEditAssignees
             )
             PullRequestManagementButton(
+                icon = Icons.Default.Flag,
                 label = stringResource(R.string.github_edit_milestone),
-                enabled = !isBusy,
+                enabled = canTriage && !isBusy,
                 onClick = onEditMilestone
             )
             PullRequestManagementButton(
+                icon = Icons.Default.Group,
                 label = stringResource(R.string.github_edit_reviewers),
-                enabled = !isBusy,
+                enabled = canTriage && !isBusy,
                 onClick = onEditReviewers
             )
             if (!pullRequest.isMerged) {
                 PullRequestManagementButton(
+                    icon = if (pullRequest.state == GithubPullRequestState.OPEN) Icons.Default.CheckCircle else Icons.Default.RadioButtonChecked,
                     label = stringResource(
                         if (pullRequest.state == GithubPullRequestState.OPEN) {
                             R.string.github_close_pr
@@ -918,15 +967,16 @@ private fun PullRequestManagementSheet(
                             R.string.github_reopen_pr
                         }
                     ),
-                    enabled = !isBusy,
+                    enabled = canChangeState && !isBusy,
                     onClick = onToggleState
                 )
             }
             PullRequestManagementButton(
+                icon = if (pullRequest.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
                 label = stringResource(
                     if (pullRequest.isLocked) R.string.github_unlock_pr else R.string.github_lock_pr
                 ),
-                enabled = !isBusy,
+                enabled = canLock && !isBusy,
                 onClick = onToggleLock
             )
             if (isBusy) {
@@ -950,17 +1000,25 @@ private fun PullRequestManagementSheet(
 
 @Composable
 private fun PullRequestManagementButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
     label: String,
     enabled: Boolean,
     onClick: () -> Unit
 ) {
-    OutlinedButton(
+    Surface(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        shape = GithubExpressiveShapes.control
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 6.dp),
+        shape = GithubExpressiveShapes.compact,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Text(label)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Text(label, modifier = Modifier.weight(1f).padding(start = 12.dp))
+        }
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -40,6 +41,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.github.design.GithubExpressiveShapes
+import takagi.ru.monica.github.design.LocalDesignStyle
+import takagi.ru.monica.data.DesignStyle
 
 /**
  * A small, consistent lead-in used below the app bar. The app bar owns the
@@ -114,7 +117,11 @@ fun GithubAuthPromptCard(
             }
             Button(
                 onClick = onAction,
-                modifier = Modifier.align(Alignment.End).padding(top = 12.dp),
+                modifier = (if (LocalDesignStyle.current == DesignStyle.MATERIAL) {
+                    Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                } else {
+                    Modifier.align(Alignment.End)
+                }).padding(top = 12.dp),
                 shape = GithubExpressiveShapes.control
             ) {
                 Text(actionLabel)
@@ -134,14 +141,20 @@ fun GithubPreferenceGroup(
         shape = GithubExpressiveShapes.container,
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Column(content = content)
+        Column(
+            modifier = Modifier.padding(vertical = 4.dp),
+            content = content
+        )
     }
 }
 
 @Composable
 fun GithubPreferenceGroupDivider(modifier: Modifier = Modifier) {
     HorizontalDivider(
-        modifier = modifier.padding(start = 52.dp),
+        modifier = modifier.padding(
+            start = if (LocalDesignStyle.current == DesignStyle.MATERIAL) 60.dp else 72.dp,
+            end = if (LocalDesignStyle.current == DesignStyle.MATERIAL) 16.dp else 20.dp
+        ),
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
     )
 }

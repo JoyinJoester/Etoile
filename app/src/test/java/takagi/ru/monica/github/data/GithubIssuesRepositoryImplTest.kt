@@ -141,6 +141,23 @@ class GithubIssuesRepositoryImplTest {
     }
 
     @Test
+    fun creationSendsTemplateMetadataButEditingContentDoesNotReplaceIssueMetadata() = runTest {
+        server.enqueue(MockResponse().setResponseCode(201).setBody(ISSUE_JSON))
+        server.enqueue(MockResponse().setResponseCode(200).setBody(ISSUE_JSON))
+        val source = repository()
+        val draft = GithubIssueDraft.fromInput(
+            "[Bug] Crash", "## Steps\n\nOpen app", listOf("bug", "needs triage"), listOf("alice")
+        ).getOrThrow()
+        source.createIssue("openai", "codex", draft).getOrThrow()
+        assertEquals(
+            """{"title":"[Bug] Crash","body":"## Steps\n\nOpen app","labels":["bug","needs triage"],"assignees":["alice"]}""",
+            server.takeRequest().body.readUtf8()
+        )
+        source.updateIssue("openai", "codex", 42, draft).getOrThrow()
+        assertEquals("""{"title":"[Bug] Crash","body":"## Steps\n\nOpen app"}""", server.takeRequest().body.readUtf8())
+    }
+
+    @Test
     fun issueLockUsesPutOrDeleteAndRefreshesIssue() = runTest {
         server.enqueue(MockResponse().setResponseCode(204))
         server.enqueue(MockResponse().setResponseCode(200).setBody(ISSUE_JSON.replace("\"locked\": false", "\"locked\": true")))
@@ -342,6 +359,133 @@ class GithubIssuesRepositoryImplTest {
         assertEquals("/repos/openai/codex/issues/comments/77/reactions/502", deleteRequest.path)
         assertEquals(false, result.active)
         assertEquals(502L, result.reactionId)
+    }
+
+    @Test
+    fun editAndDeleteUseCommentResourceAndSurfacePermissionFailure() = runTest {
+        val cache = TestGithubCacheStore()
+        val repository = repository(cache)
+        server.enqueue(MockResponse().setBody(COMMENTS_JSON.trim().removePrefix("[").removeSuffix("]").trim()))
+        assertTrue(repository.editComment("openai", "codex", 42,
+            GithubIssueCommentDraft.fromInput("Updated reply").getOrThrow()).isSuccess)
+        val edit = server.takeRequest()
+        assertEquals("PATCH", edit.method)
+        assertEquals("/repos/openai/codex/issues/comments/42", edit.path)
+        assertTrue(edit.body.readUtf8().contains("Updated reply"))
+        server.enqueue(MockResponse().setResponseCode(403))
+        assertTrue(repository.deleteComment("openai", "codex", 42).isFailure)
+        server.takeRequest()
+        server.enqueue(MockResponse().setResponseCode(204))
+        assertTrue(repository.deleteComment("openai", "codex", 42).isSuccess)
+        assertEquals("DELETE", server.takeRequest().method)
+    }
+
+    @Test
+    fun forbiddenWritesCarryWhetherTheQuotaWasSpent() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(403)
+                .setHeader("X-RateLimit-Resource", "core")
+                .setHeader("X-RateLimit-Remaining", "0")
+                .setHeader("X-RateLimit-Reset", "1790000000")
+        )
+        val throttled = repository().deleteComment("openai", "codex", 42)
+            .exceptionOrNull() as GithubApiException
+        server.takeRequest()
+
+        server.enqueue(MockResponse().setResponseCode(403).setHeader("X-RateLimit-Remaining", "4821"))
+        val refused = repository().deleteComment("openai", "codex", 42)
+            .exceptionOrNull() as GithubApiException
+        server.takeRequest()
+
+        assertEquals(403, throttled.statusCode)
+        assertTrue(throttled.rateLimited)
+        assertFalse(refused.rateLimited)
+    }
+
+    @Test
+    fun repositoryIssueSearchUsesQualifiersAndPaginatesFromTotalCount() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setBody(
+                    """{"total_count": 200, "items": ${ISSUES_JSON.trim()}}"""
+                )
+        )
+        val repository = repository()
+
+        val page = repository.searchInRepository(
+            owner = "openai",
+            name = "codex",
+            text = "Crash   when\n opening",
+            query = GithubIssueListQuery(
+                state = GithubIssueState.OPEN,
+                sort = GithubListSort.CREATED,
+                direction = GithubSortDirection.ASC
+            ),
+            page = 2,
+            perPage = 30
+        ).getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("/search/issues", request.requestUrl?.encodedPath)
+        assertEquals(
+            "repo:openai/codex is:issue state:open Crash when opening",
+            request.requestUrl?.queryParameter("q")
+        )
+        assertEquals("created", request.requestUrl?.queryParameter("sort"))
+        assertEquals("asc", request.requestUrl?.queryParameter("order"))
+        assertEquals("2", request.requestUrl?.queryParameter("page"))
+        assertEquals(1, page.items.size)
+        assertEquals(42, page.items.single().number)
+        assertEquals(3, page.nextPage)
+    }
+
+    @Test
+    fun repositoryIssueSearchKeepsQualifiersWhenThePhraseIsTooLong() = runTest {
+        server.enqueue(MockResponse().setResponseCode(200).setBody("""{"total_count": 0, "items": []}"""))
+        val repository = repository()
+
+        repository.searchInRepository(
+            "openai",
+            "codex",
+            "x".repeat(400),
+            GithubIssueListQuery(GithubIssueState.CLOSED),
+            page = 1,
+            perPage = 30
+        ).getOrThrow()
+        val query = server.takeRequest().requestUrl?.queryParameter("q").orEmpty()
+
+        val qualifiers = "repo:openai/codex is:issue state:closed"
+        assertEquals(qualifiers + " " + "x".repeat(256 - qualifiers.length - 1), query)
+    }
+
+    @Test
+    fun repositoryIssueSearchCachesSeparatelyFromTheIssueList() = runTest {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("ETag", "\"search-v1\"")
+                .setBody("""{"total_count": 1, "items": [${ISSUE_JSON}]}""")
+        )
+        server.enqueue(MockResponse().setResponseCode(304))
+        server.enqueue(MockResponse().setResponseCode(200).setBody("[]"))
+        val repository = repository(TestGithubCacheStore())
+        val query = GithubIssueListQuery(GithubIssueState.OPEN)
+
+        repository.searchInRepository("openai", "codex", "Crash", query, page = 1, perPage = 30).getOrThrow()
+        server.takeRequest()
+        val revalidated = repository
+            .searchInRepository("openai", "codex", "Crash", query, page = 1, perPage = 30)
+            .getOrThrow()
+        val searchRequest = server.takeRequest()
+        repository.issues("openai", "codex", query, page = 1, perPage = 30).getOrThrow()
+        val listRequest = server.takeRequest()
+
+        assertEquals("\"search-v1\"", searchRequest.getHeader("If-None-Match"))
+        assertEquals(42, revalidated.items.single().number)
+        assertNull(listRequest.getHeader("If-None-Match"))
+        assertEquals("/repos/openai/codex/issues", listRequest.requestUrl?.encodedPath)
     }
 
     private fun repository(cacheStore: GithubCacheStore = NoOpGithubCacheStore) = GithubIssuesRepositoryImpl(

@@ -23,15 +23,17 @@ data class CommitsUiState(
     val items: List<GithubCommit> = emptyList(),
     val nextPage: Int? = null,
     val isLoading: Boolean = true,
+    val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: Boolean = false
 ) {
     val fullName: String get() = "$owner/$name"
-    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isLoadingMore
+    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
 }
 
 sealed interface CommitsAction {
     data object Retry : CommitsAction
+    data object Refresh : CommitsAction
     data object LoadMore : CommitsAction
 }
 
@@ -44,6 +46,7 @@ class CommitsViewModel(
     private val _state = MutableStateFlow(CommitsUiState(owner = owner, name = name, ref = ref))
     val state: StateFlow<CommitsUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
+    private var failedReset = true
 
     init {
         load(reset = true)
@@ -51,39 +54,62 @@ class CommitsViewModel(
 
     fun onAction(action: CommitsAction) {
         when (action) {
-            CommitsAction.Retry -> load(reset = _state.value.items.isEmpty())
+            CommitsAction.Retry -> load(
+                reset = failedReset,
+                preserveExisting = failedReset && _state.value.items.isNotEmpty(),
+                forceRefresh = failedReset
+            )
+            CommitsAction.Refresh -> load(
+                reset = true,
+                preserveExisting = _state.value.items.isNotEmpty(),
+                forceRefresh = true
+            )
             CommitsAction.LoadMore -> load(reset = false)
         }
     }
 
-    private fun load(reset: Boolean) {
+    private fun load(
+        reset: Boolean,
+        preserveExisting: Boolean = false,
+        forceRefresh: Boolean = false
+    ) {
         val current = _state.value
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
         _state.update {
             it.copy(
-                isLoading = reset,
+                isLoading = reset && !preserveExisting,
+                isRefreshing = reset && preserveExisting,
                 isLoadingMore = !reset,
                 error = false,
-                items = if (reset) emptyList() else it.items
+                items = if (reset && !preserveExisting) emptyList() else it.items
             )
         }
         loadJob = viewModelScope.launch {
-            repository.commits(owner, name, ref, requestedPage).fold(
+            val result = if (forceRefresh) {
+                repository.refreshCommits(owner, name, ref, requestedPage)
+            } else {
+                repository.commits(owner, name, ref, requestedPage)
+            }
+            result.fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         state.copy(
                             items = page.mergeItems(state.items, reset, GithubCommit::sha),
                             nextPage = page.nextPage,
                             isLoading = false,
+                            isRefreshing = false,
                             isLoadingMore = false,
                             error = false
                         )
                     }
                 },
                 onFailure = {
-                    _state.update { it.copy(isLoading = false, isLoadingMore = false, error = true) }
+                    failedReset = reset
+                    _state.update {
+                        it.copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = true)
+                    }
                 }
             )
         }

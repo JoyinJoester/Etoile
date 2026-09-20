@@ -2,6 +2,14 @@ package takagi.ru.monica.ui.components
 
 import android.graphics.Bitmap
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
 import androidx.compose.ui.Modifier
 import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
 import com.mikepenz.markdown.compose.components.markdownComponents
@@ -22,15 +30,35 @@ import com.mikepenz.markdown.m3.markdownTypography
 fun MarkdownPreviewText(
     markdown: String,
     imageBitmaps: Map<String, Bitmap> = emptyMap(),
-    onOpenExternalLink: (String) -> Unit = {},
+    onOpenExternalLink: ((String) -> Unit)? = null,
     renderImages: Boolean = true,
     maxElements: Int = Int.MAX_VALUE,
     modifier: Modifier = Modifier
 ) {
+    val defaultUriHandler = LocalUriHandler.current
+    val uriHandler = object : UriHandler {
+        override fun openUri(uri: String) {
+            if (onOpenExternalLink != null) onOpenExternalLink(uri)
+            else defaultUriHandler.openUri(uri)
+        }
+    }
+    val body = MaterialTheme.typography.bodyLarge
+    val typography = if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        // Reading headings should not inherit the dotted display typography.
+        markdownTypography(
+            h1 = body.copy(fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Medium),
+            h2 = body.copy(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.Medium),
+            h3 = body.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium),
+            h4 = body.copy(fontWeight = FontWeight.Medium),
+            h5 = body.copy(fontWeight = FontWeight.Medium),
+            h6 = body.copy(fontWeight = FontWeight.Medium)
+        )
+    } else markdownTypography()
+    CompositionLocalProvider(LocalUriHandler provides uriHandler) {
     Markdown(
         content = markdown,
         colors = markdownColor(),
-        typography = markdownTypography(),
+        typography = typography,
         imageTransformer = Coil3ImageTransformerImpl,
         components = if (renderImages) {
             markdownComponents()
@@ -40,4 +68,5 @@ fun MarkdownPreviewText(
         },
         modifier = modifier
     )
+    }
 }

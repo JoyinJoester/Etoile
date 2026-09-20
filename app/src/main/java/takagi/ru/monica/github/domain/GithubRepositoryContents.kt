@@ -30,13 +30,44 @@ data class GithubContentItem(
 )
 
 sealed interface GithubFileContent {
-    data class Text(val value: String) : GithubFileContent
+    data class Text(val value: String, val sha: String? = null) : GithubFileContent
 
     data object Binary : GithubFileContent
     data object TooLarge : GithubFileContent
 }
 
 interface GithubRepositoryContentsRepository {
+    suspend fun resolveRef(
+        owner: String,
+        name: String,
+        ref: String
+    ): Result<String> = Result.failure(UnsupportedOperationException("Ref resolution unavailable"))
+
+    suspend fun createBranch(
+        owner: String,
+        name: String,
+        branch: String,
+        fromSha: String
+    ): Result<GithubBranch> = Result.failure(UnsupportedOperationException("Branch creation unavailable"))
+
+    suspend fun deleteBranch(owner: String, name: String, branch: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Branch deletion unavailable"))
+
+    suspend fun renameBranch(owner: String, name: String, branch: String, newName: String): Result<GithubBranch> =
+        Result.failure(UnsupportedOperationException("Branch rename unavailable"))
+
+    suspend fun createTag(
+        owner: String,
+        name: String,
+        tag: String,
+        fromSha: String
+    ): Result<GithubTag> = Result.failure(UnsupportedOperationException("Tag creation unavailable"))
+
+    suspend fun deleteTag(owner: String, name: String, tag: String): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Tag deletion unavailable"))
+
+    suspend fun write(owner: String, name: String, change: GithubFileWrite): Result<GithubFileWriteResult> =
+        Result.failure(UnsupportedOperationException("File writing unavailable"))
     suspend fun branches(
         owner: String,
         name: String,

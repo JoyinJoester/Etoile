@@ -89,6 +89,57 @@ class MyConversationsViewModelTest {
         assertTrue(viewModel.state.value.items.isEmpty())
     }
 
+    @Test
+    fun changingFilterRestartsPaginationAndUsesSelectedState() = runTest(dispatcher) {
+        val repository = FakeSearchRepository()
+        val viewModel = MyConversationsViewModel(repository, MyConversationsKind.ISSUES)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(MyConversationsAction.LoadMore)
+        advanceUntilIdle()
+
+        viewModel.onAction(MyConversationsAction.SelectFilter(MyConversationsFilter.CLOSED))
+        assertTrue(viewModel.state.value.items.isEmpty())
+        assertEquals(null, viewModel.state.value.nextPage)
+        advanceUntilIdle()
+        assertEquals("is:closed involves:joyins" to 1, repository.issueQueries.last())
+        assertEquals(listOf(1L, 2L), viewModel.state.value.items.map { it.id })
+
+        viewModel.onAction(MyConversationsAction.LoadMore)
+        advanceUntilIdle()
+        assertEquals("is:closed involves:joyins" to 2, repository.issueQueries.last())
+    }
+
+    @Test
+    fun refreshAfterLastPageStartsAgainAndKeepsAllFilter() = runTest(dispatcher) {
+        val repository = FakeSearchRepository()
+        val viewModel = MyConversationsViewModel(repository, MyConversationsKind.PULL_REQUESTS)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(MyConversationsAction.SelectFilter(MyConversationsFilter.ALL))
+        advanceUntilIdle()
+        viewModel.onAction(MyConversationsAction.LoadMore)
+        advanceUntilIdle()
+        viewModel.onAction(MyConversationsAction.Refresh)
+        advanceUntilIdle()
+        assertEquals("involves:joyins" to 1, repository.pullRequestQueries.last())
+        assertEquals(MyConversationsFilter.ALL, viewModel.state.value.filter)
+        assertEquals(listOf(1L, 2L), viewModel.state.value.items.map { it.id })
+    }
+
+    @Test
+    fun sessionLoadingClearsPreviousAccountAndPreventsRefresh() = runTest(dispatcher) {
+        val repository = FakeSearchRepository()
+        val viewModel = MyConversationsViewModel(repository, MyConversationsKind.ISSUES)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onSessionChanged(GithubSession.Loading)
+        viewModel.onAction(MyConversationsAction.Refresh)
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.items.isEmpty())
+        assertEquals(1, repository.issueQueries.size)
+    }
+
     private fun signedInSession(login: String) = GithubSession.SignedIn(
         GithubAccount(
             id = 1,

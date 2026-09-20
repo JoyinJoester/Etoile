@@ -13,8 +13,13 @@ data class GithubPublicUser(
     val publicRepositories: Int,
     val followers: Int,
     val following: Int,
-    val isHireable: Boolean?
-)
+    val isHireable: Boolean?,
+    /** ISO-8601 注册时间，用于本地推导"开源老兵"类成就。 */
+    val createdAt: String? = null,
+    val type: String = "User"
+) {
+    val isOrganization: Boolean get() = type.equals("Organization", ignoreCase = true)
+}
 
 enum class GithubUserConnectionKind { FOLLOWERS, FOLLOWING }
 
@@ -37,4 +42,13 @@ interface GithubPublicUserRepository {
         page: Int = 1,
         perPage: Int = 50
     ): Result<GithubPage<GithubUserSummary>>
+
+    suspend fun blockedUsers(
+        page: Int = 1,
+        perPage: Int = 50
+    ): Result<GithubPage<GithubUserSummary>>
+
+    suspend fun viewerBlocks(login: String): Result<Boolean>
+
+    suspend fun setBlocked(login: String, blocked: Boolean): Result<Unit>
 }

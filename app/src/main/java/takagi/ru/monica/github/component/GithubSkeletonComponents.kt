@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
+import takagi.ru.monica.data.DesignStyle
+import takagi.ru.monica.github.design.LocalDesignStyle
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 
 /**
@@ -51,6 +53,10 @@ fun GithubListLoadingState(
     rowCount: Int = DEFAULT_ROW_COUNT
 ) {
     if (!isLoading) return
+    if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        GithubCenteredProgress(modifier)
+        return
+    }
     if (hasItems) {
         LinearProgressIndicator(modifier = modifier.fillMaxWidth())
     } else {
@@ -82,6 +88,10 @@ fun GithubSkeletonList(
     modifier: Modifier = Modifier,
     rowCount: Int = DEFAULT_ROW_COUNT
 ) {
+    if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        GithubCenteredProgress(modifier)
+        return
+    }
     val brush = rememberGithubSkeletonBrush()
     val description = stringResource(R.string.github_loading)
     Column(

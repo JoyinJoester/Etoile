@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -30,6 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubLabelRow
 import takagi.ru.monica.github.component.githubRelativeTime
@@ -50,7 +52,7 @@ internal fun PullRequestListRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)
+        modifier = modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).heightIn(min = 56.dp).padding(vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             PullRequestStateIcon(pullRequest)
@@ -131,7 +133,8 @@ internal fun PullRequestOverviewCard(
     pullRequest: GithubPullRequest,
     fullName: String,
     onOpenExternal: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showDescription: Boolean = true
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -190,24 +193,9 @@ internal fun PullRequestOverviewCard(
             if (pullRequest.labels.isNotEmpty()) {
                 GithubLabelRow(pullRequest.labels, modifier = Modifier.padding(top = 12.dp))
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 18.dp))
-            if (pullRequest.body.isNullOrBlank()) {
-                Text(
-                    stringResource(R.string.github_pr_body_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                MarkdownPreviewText(
-                    markdown = pullRequest.body,
-                    imageBitmaps = emptyMap(),
-                    onOpenExternalLink = { target ->
-                        onOpenExternal(
-                            GithubWebUrls.resolveMarkdownLink(fullName, pullRequest.head.sha, "", target)
-                        )
-                    },
-                    renderImages = false,
-                    maxElements = 300
-                )
+            if (showDescription) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 18.dp))
+                PullRequestDescription(pullRequest, fullName, onOpenExternal)
             }
 
             Spacer(Modifier.height(20.dp))
@@ -260,6 +248,23 @@ internal fun PullRequestOverviewCard(
                 modifier = Modifier.padding(top = 18.dp)
             )
         }
+    }
+}
+
+@Composable
+internal fun PullRequestDescription(pullRequest: GithubPullRequest, fullName: String, onOpenExternal: (String) -> Unit) {
+    if (pullRequest.body.isNullOrBlank()) {
+        Text(stringResource(R.string.github_pr_body_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+    } else {
+        MarkdownPreviewText(
+            markdown = pullRequest.body,
+            imageBitmaps = emptyMap(),
+            onOpenExternalLink = { target ->
+                onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, pullRequest.head.sha, "", target))
+            },
+            renderImages = false,
+            maxElements = 300
+        )
     }
 }
 

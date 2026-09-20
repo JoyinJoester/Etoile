@@ -29,16 +29,18 @@ class GithubNotificationsRepositoryImpl(
 
     override suspend fun notifications(
         page: Int,
-        perPage: Int
+        perPage: Int,
+        includeRead: Boolean
     ): Result<GithubPage<GithubNotification>> = withContext(Dispatchers.IO) {
         githubRunCatching {
             val url = apiBaseUrl.newBuilder()
                 .addPathSegment("notifications")
-                .addQueryParameter("all", "false")
+                .addQueryParameter("all", includeRead.toString())
                 .addQueryParameter("participating", "false")
                 .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
                 .addQueryParameter("page", page.coerceAtLeast(1).toString())
                 .build()
+            // The cache key carries the full URL, so read and unread queries never share an entry.
             val cacheKey = GithubCacheKeys.endpoint("notifications", requests.cacheScope(), url.toString())
             cachedGet.execute(
                 client = client,
@@ -63,7 +65,7 @@ class GithubNotificationsRepositoryImpl(
                 .patch(EMPTY_JSON)
                 .build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
         }
@@ -89,7 +91,7 @@ class GithubNotificationsRepositoryImpl(
             val body = "{\"last_read_at\":\"${Instant.now()}\"}".toRequestBody(JSON_MEDIA_TYPE)
             val request = requests.builder(endpoint("notifications")).put(body).build()
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
         }
@@ -173,7 +175,7 @@ class GithubNotificationsRepositoryImpl(
     private fun delete(url: String) {
         val request = requests.builder(url).delete().build()
         client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) throw GithubApiException(response.code)
+            if (!response.isSuccessful) throw GithubApiException.of(response)
         }
     }
 }

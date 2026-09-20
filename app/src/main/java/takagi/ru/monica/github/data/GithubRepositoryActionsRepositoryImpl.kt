@@ -48,7 +48,7 @@ class GithubRepositoryActionsRepositoryImpl(
                 requestBuilder.delete().build()
             }
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { starred }
             }
         }
@@ -70,7 +70,7 @@ class GithubRepositoryActionsRepositoryImpl(
                 requestBuilder.delete().build()
             }
             client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException(response.code)
+                if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { watching }
             }
         }
@@ -83,7 +83,7 @@ class GithubRepositoryActionsRepositoryImpl(
                     .post(EMPTY_BODY)
                     .build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw GithubApiException(response.code)
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         json.decodeFromString(
                             GithubRepositoryDto.serializer(),
@@ -100,7 +100,7 @@ class GithubRepositoryActionsRepositoryImpl(
             when (response.code) {
                 204 -> true
                 404 -> false
-                else -> throw GithubApiException(response.code)
+                else -> throw GithubApiException.of(response)
             }
         }
     }
@@ -110,7 +110,7 @@ class GithubRepositoryActionsRepositoryImpl(
         return client.newCall(request).execute().use { response ->
             when {
                 response.code == 404 -> false
-                !response.isSuccessful -> throw GithubApiException(response.code)
+                !response.isSuccessful -> throw GithubApiException.of(response)
                 else -> json.decodeFromString(
                     SubscriptionResponse.serializer(),
                     response.body?.string().orEmpty()

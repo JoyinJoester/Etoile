@@ -119,6 +119,10 @@ class GithubUserConnectionsViewModelTest {
         var failNextPage = false
         var failRefresh = false
         private var firstPageRequests = 0
+        override suspend fun blockedUsers(page: Int, perPage: Int): Result<GithubPage<GithubUserSummary>> =
+            error("unused")
+        override suspend fun viewerBlocks(login: String): Result<Boolean> = error("unused")
+        override suspend fun setBlocked(login: String, blocked: Boolean): Result<Unit> = error("unused")
 
         override suspend fun user(login: String) = Result.success(
             GithubPublicUser(

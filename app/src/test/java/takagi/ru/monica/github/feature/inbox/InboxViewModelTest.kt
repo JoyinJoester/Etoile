@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.feature.inbox
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -42,6 +43,58 @@ class InboxViewModelTest {
     }
 
     @Test
+    fun unreadViewsShareOneQueryAndOnlyTheReadViewAsksTheServer() = runTest(dispatcher) {
+        val repository = RecordingNotificationsRepository()
+        val viewModel = InboxViewModel(repository)
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+
+        viewModel.onAction(InboxAction.SelectFilter(InboxFilter.MENTIONS))
+        viewModel.onAction(InboxAction.SelectFilter(InboxFilter.REVIEWS))
+        assertEquals(listOf(1 to false), repository.queries)
+
+        viewModel.onAction(InboxAction.SelectFilter(InboxFilter.READ))
+        advanceUntilIdle()
+        assertEquals(listOf(1 to false, 1 to true), repository.queries)
+
+        viewModel.onAction(InboxAction.SelectFilter(InboxFilter.UNREAD))
+        advanceUntilIdle()
+        assertEquals(listOf(1 to false, 1 to true, 1 to false), repository.queries)
+    }
+
+    @Test
+    fun readViewListsOnlyThreadsThatAreNoLongerUnread() = runTest(dispatcher) {
+        val viewModel = InboxViewModel(RecordingNotificationsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+
+        viewModel.onAction(InboxAction.SelectFilter(InboxFilter.READ))
+        advanceUntilIdle()
+
+        assertEquals(listOf("1"), viewModel.state.value.visibleItems.map(GithubNotification::id))
+    }
+
+    @Test
+    fun openingANotificationRemovesItFromEveryUnreadView() = runTest(dispatcher) {
+        val viewModel = InboxViewModel(RecordingNotificationsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        assertEquals(
+            listOf("1", "2"),
+            viewModel.state.value.visibleItems.map(GithubNotification::id)
+        )
+
+        viewModel.onAction(InboxAction.SelectFilter(InboxFilter.REVIEWS))
+        assertEquals(listOf("1"), viewModel.state.value.visibleItems.map(GithubNotification::id))
+
+        viewModel.onAction(InboxAction.OpenNotification("1"))
+        advanceUntilIdle()
+
+        assertTrue(viewModel.state.value.visibleItems.isEmpty())
+        assertEquals(listOf("1", "2"), viewModel.state.value.items.map(GithubNotification::id))
+    }
+
+    @Test
     fun openingNotificationMarksOnlyThatNotificationRead() = runTest(dispatcher) {
         val viewModel = loadedViewModel()
         val initial = viewModel.state.value
@@ -63,6 +116,63 @@ class InboxViewModelTest {
         advanceUntilIdle()
 
         assertTrue(viewModel.state.value.unreadIds.isEmpty())
+    }
+
+    @Test
+    fun failedReadFromPreviousSessionDoesNotRestoreUnreadState() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun markRead(id: String) = pending.await()
+        }
+        val viewModel = InboxViewModel(repository)
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        viewModel.onAction(InboxAction.OpenNotification("1"))
+        advanceUntilIdle()
+        viewModel.onSessionChanged(GithubSession.SignedOut)
+        pending.complete(Result.failure(IllegalStateException("Late response")))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.unreadIds.isEmpty())
+        assertFalse(viewModel.state.value.actionError)
+    }
+
+    @Test
+    fun failedMarkAllPreservesUnreadNotificationsLoadedWhileRequestWasPending() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun markAllRead() = pending.await()
+        }
+        val viewModel = InboxViewModel(repository)
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        val original = viewModel.state.value.unreadIds
+        viewModel.onAction(InboxAction.MarkAllRead)
+        viewModel.onAction(InboxAction.LoadMore)
+        advanceUntilIdle()
+        val newlyLoaded = viewModel.state.value.unreadIds
+        assertTrue(newlyLoaded.isNotEmpty())
+        pending.complete(Result.failure(IllegalStateException("Read failed")))
+        advanceUntilIdle()
+        assertEquals(original + newlyLoaded, viewModel.state.value.unreadIds)
+    }
+
+    @Test
+    fun failedMarkAllFromPreviousAccountDoesNotOverwriteNewAccount() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun markAllRead() = pending.await()
+        }
+        val viewModel = InboxViewModel(repository)
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        viewModel.onAction(InboxAction.MarkAllRead)
+        advanceUntilIdle()
+        viewModel.onSessionChanged(GithubSession.SignedIn(account().copy(login = "another")))
+        advanceUntilIdle()
+        val current = viewModel.state.value
+        pending.complete(Result.failure(IllegalStateException("Late response")))
+        advanceUntilIdle()
+        assertEquals(current, viewModel.state.value)
     }
 
     @Test
@@ -207,7 +317,7 @@ class InboxViewModelTest {
         val doneIds = mutableListOf<String>()
         val unsubscribeIds = mutableListOf<String>()
 
-        override suspend fun notifications(page: Int, perPage: Int) = Result.success(
+        override suspend fun notifications(page: Int, perPage: Int, includeRead: Boolean) = Result.success(
             GithubPage(
                 items = listOf(notifications[page - 1]),
                 nextPage = if (page == 1) 2 else null
@@ -236,7 +346,7 @@ class InboxViewModelTest {
     private class FailingPageNotificationsRepository : GithubNotificationsRepository {
         var failNextPage = true
 
-        override suspend fun notifications(page: Int, perPage: Int): Result<GithubPage<GithubNotification>> {
+        override suspend fun notifications(page: Int, perPage: Int, includeRead: Boolean): Result<GithubPage<GithubNotification>> {
             if (page == 2 && failNextPage) return Result.failure(IllegalStateException("Page failed"))
             return Result.success(
                 GithubPage(
@@ -258,13 +368,34 @@ class InboxViewModelTest {
 
         override suspend fun notifications(
             page: Int,
-            perPage: Int
+            perPage: Int,
+            includeRead: Boolean
         ): Result<GithubPage<GithubNotification>> {
             requestCount++
             if (requestCount > 1 && failRefresh) {
                 return Result.failure(IllegalStateException("Refresh failed"))
             }
             return Result.success(GithubPage(listOf(notifications.first()), nextPage = 2))
+        }
+
+        override suspend fun markRead(id: String) = Result.success(Unit)
+        override suspend fun markAllRead() = Result.success(Unit)
+        override suspend fun markDone(id: String) = Result.success(Unit)
+        override suspend fun unsubscribeAndMarkDone(id: String) = Result.success(Unit)
+    }
+
+    private class RecordingNotificationsRepository : GithubNotificationsRepository {
+        val queries = mutableListOf<Pair<Int, Boolean>>()
+
+        override suspend fun notifications(
+            page: Int,
+            perPage: Int,
+            includeRead: Boolean
+        ): Result<GithubPage<GithubNotification>> {
+            queries += page to includeRead
+            return Result.success(
+                GithubPage(if (includeRead) readThreads else notifications, nextPage = null)
+            )
         }
 
         override suspend fun markRead(id: String) = Result.success(Unit)
@@ -280,5 +411,7 @@ class InboxViewModelTest {
             GithubNotification("1", GithubNotificationReason.REVIEW_REQUESTED, true, "Review", "PullRequest", "etoile/mobile", "https://github.com/etoile/mobile", "2026-08-16"),
             GithubNotification("2", GithubNotificationReason.MENTION, true, "Mention", "Issue", "etoile/mobile", "https://github.com/etoile/mobile", "2026-08-16")
         )
+
+        val readThreads = listOf(notifications.first().copy(unread = false), notifications.last())
     }
 }

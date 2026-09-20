@@ -2,15 +2,20 @@ package takagi.ru.monica.github.feature.explore
 
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubCodeSearchResult
@@ -19,13 +24,18 @@ import takagi.ru.monica.github.domain.GithubIssueSearchResult
 import takagi.ru.monica.github.domain.GithubRepositorySearchRepository
 import takagi.ru.monica.github.domain.GithubUserSearchResult
 import takagi.ru.monica.github.domain.GithubPage
+import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.github.domain.mergeItems
 
-enum class ExploreTopic(val query: String) {
-    FOR_YOU("stars:>1000 sort:stars-desc"),
+enum class ExploreTopic(private val template: String) {
+    // "为你推荐"跟踪近 30 天冒出的新星仓库，而不是全时段高星老项目。
+    FOR_YOU("created:>{date} stars:>50 sort:stars-desc"),
     KOTLIN("language:kotlin stars:>1000"),
     ANDROID("android stars:>1000"),
-    COMPOSE("compose language:kotlin")
+    COMPOSE("compose language:kotlin");
+
+    fun query(today: java.time.LocalDate = java.time.LocalDate.now()): String =
+        template.replace("{date}", today.minusDays(30).toString())
 }
 
 enum class ExploreSearchKind { REPOSITORIES, USERS, CODE, ISSUES, PULL_REQUESTS }
@@ -61,14 +71,53 @@ sealed interface ExploreAction {
 
 class ExploreViewModel(
     private val repository: GithubRepositorySearchRepository,
-    private val globalSearch: GithubGlobalSearchRepository? = null
+    private val globalSearch: GithubGlobalSearchRepository? = null,
+    private val savedStateHandle: SavedStateHandle = SavedStateHandle()
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ExploreUiState())
+    private val _state = MutableStateFlow(ExploreUiState(
+        query = savedStateHandle["query"] ?: "",
+        searchKind = ExploreSearchKind.entries.firstOrNull { it.name == savedStateHandle.get<String>("searchKind") }
+            ?: ExploreSearchKind.REPOSITORIES,
+        selectedTopic = ExploreTopic.entries.firstOrNull { it.name == savedStateHandle.get<String>("topic") }
+            ?: ExploreTopic.FOR_YOU
+    ))
     val state: StateFlow<ExploreUiState> = _state.asStateFlow()
     private var searchJob: Job? = null
+    private var searchGeneration = 0L
+    private var sessionObserved = false
+    private var accountId: Long? = null
+    private var accountLogin: String? = null
+    private var searchesEnabled = true
 
     init {
-        searchNow(ExploreTopic.FOR_YOU.query)
+        if (_state.value.query.isNotBlank() || _state.value.searchKind == ExploreSearchKind.REPOSITORIES) {
+            searchNow(currentSearchQuery())
+        } else {
+            _state.update { it.copy(isLoading = false) }
+        }
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val next = (session as? GithubSession.SignedIn)?.account
+        val canSearch = session is GithubSession.SignedIn || session == GithubSession.SignedOut
+        if (sessionObserved && accountId == next?.id &&
+            accountLogin.equals(next?.login, ignoreCase = true) && searchesEnabled == canSearch
+        ) return
+        sessionObserved = true
+        accountId = next?.id
+        accountLogin = next?.login
+        searchesEnabled = canSearch
+        invalidateSearch()
+        _state.update {
+            // Keep the user's search intent, but never retain results fetched with another account's token.
+            it.copy(
+                repositories = emptyList(), users = emptyList(), code = emptyList(), conversations = emptyList(),
+                nextPage = null, isLoading = false, isLoadingMore = false, error = false
+            )
+        }
+        if (canSearch && (_state.value.query.isNotBlank() || _state.value.searchKind == ExploreSearchKind.REPOSITORIES)) {
+            searchNow(currentSearchQuery())
+        }
     }
 
     fun onAction(action: ExploreAction) {
@@ -79,10 +128,13 @@ class ExploreViewModel(
             ExploreAction.Retry -> retry()
             ExploreAction.LoadMore -> loadMore()
         }
+        savedStateHandle["query"] = _state.value.query
+        savedStateHandle["searchKind"] = _state.value.searchKind.name
+        savedStateHandle["topic"] = _state.value.selectedTopic.name
     }
 
     private fun updateQuery(query: String) {
-        searchJob?.cancel()
+        invalidateSearch()
         _state.update {
             it.copy(
                 query = query,
@@ -100,20 +152,17 @@ class ExploreViewModel(
         }
         if (query.isBlank()) {
             if (_state.value.searchKind == ExploreSearchKind.REPOSITORIES) {
-                searchNow(ExploreTopic.FOR_YOU.query)
+                searchNow(ExploreTopic.FOR_YOU.query())
             } else {
                 _state.update { it.copy(isLoading = false) }
             }
             return
         }
-        searchJob = viewModelScope.launch {
-            delay(350)
-            request(query.trim(), page = 1, reset = true)
-        }
+        requestDebounced(query.trim())
     }
 
     private fun selectTopic(topic: ExploreTopic) {
-        searchJob?.cancel()
+        invalidateSearch()
         _state.update {
             it.copy(
                 query = "",
@@ -129,11 +178,11 @@ class ExploreViewModel(
                 error = false
             )
         }
-        searchNow(topic.query)
+        searchNow(topic.query())
     }
 
     private fun selectSearchKind(kind: ExploreSearchKind) {
-        searchJob?.cancel()
+        invalidateSearch()
         _state.update {
             it.copy(
                 searchKind = kind,
@@ -143,13 +192,13 @@ class ExploreViewModel(
                 code = emptyList(),
                 conversations = emptyList(),
                 nextPage = null,
-                isLoading = kind != ExploreSearchKind.REPOSITORIES && it.query.isBlank().not(),
+                isLoading = kind == ExploreSearchKind.REPOSITORIES || it.query.isNotBlank(),
                 isLoadingMore = false,
                 error = false
             )
         }
         if (kind == ExploreSearchKind.REPOSITORIES) {
-            if (_state.value.query.isBlank()) searchNow(ExploreTopic.FOR_YOU.query)
+            if (_state.value.query.isBlank()) searchNow(ExploreTopic.FOR_YOU.query())
             else requestDebounced(_state.value.query.trim())
         } else if (_state.value.query.isNotBlank()) {
             requestDebounced(_state.value.query.trim())
@@ -157,7 +206,7 @@ class ExploreViewModel(
     }
 
     private fun searchNow(query: String) {
-        searchJob?.cancel()
+        invalidateSearch()
         _state.update {
             it.copy(
                 repositories = emptyList(),
@@ -170,32 +219,39 @@ class ExploreViewModel(
                 error = false
             )
         }
-        searchJob = viewModelScope.launch { request(query, page = 1, reset = true) }
+        launchRequest(query, page = 1, reset = true)
     }
 
     private fun retry() {
         val state = _state.value
+        if (state.query.isBlank() && state.searchKind != ExploreSearchKind.REPOSITORIES) return
         val reset = state.itemCount == 0
         val page = if (reset) 1 else state.nextPage ?: 1
-        searchJob?.cancel()
+        invalidateSearch()
         _state.update {
             it.copy(isLoading = reset, isLoadingMore = !reset, error = false)
         }
-        searchJob = viewModelScope.launch { request(currentSearchQuery(), page, reset) }
+        launchRequest(currentSearchQuery(), page, reset)
     }
 
     private fun loadMore() {
         val state = _state.value
         if (!state.canLoadMore) return
         val page = state.nextPage ?: return
-        searchJob?.cancel()
+        invalidateSearch()
         _state.update { it.copy(isLoadingMore = true, error = false) }
-        searchJob = viewModelScope.launch { request(currentSearchQuery(), page, reset = false) }
+        launchRequest(currentSearchQuery(), page, reset = false)
     }
 
-    private suspend fun request(query: String, page: Int, reset: Boolean) {
+    private suspend fun request(
+        query: String,
+        kind: ExploreSearchKind,
+        page: Int,
+        reset: Boolean,
+        generation: Long
+    ) {
         try {
-            val result: Result<SearchPayload> = when (_state.value.searchKind) {
+            val result: Result<SearchPayload> = when (kind) {
                 ExploreSearchKind.REPOSITORIES -> repository.search(query, page).map { SearchPayload.Repositories(it) }
                 ExploreSearchKind.USERS -> globalSearch?.users(query, page)?.map { SearchPayload.Users(it) }
                     ?: Result.failure(IllegalStateException("global search is unavailable"))
@@ -208,6 +264,7 @@ class ExploreViewModel(
                     ?.map { SearchPayload.Conversations(it) }
                     ?: Result.failure(IllegalStateException("global search is unavailable"))
             }
+            if (generation != searchGeneration || !currentCoroutineContext().isActive) return
             result.fold(
                 onSuccess = { payload ->
                     _state.update { state ->
@@ -264,13 +321,29 @@ class ExploreViewModel(
     }
 
     private fun currentSearchQuery(): String = _state.value.query.trim().ifBlank {
-        _state.value.selectedTopic.query
+        _state.value.selectedTopic.query()
     }
 
     private fun requestDebounced(query: String) {
+        launchRequest(query, page = 1, reset = true, debounced = true)
+    }
+
+    private fun invalidateSearch() {
+        searchGeneration++
+        searchJob?.cancel()
+        searchJob = null
+    }
+
+    private fun launchRequest(query: String, page: Int, reset: Boolean, debounced: Boolean = false) {
+        if (!searchesEnabled) {
+            _state.update { it.copy(isLoading = false, isLoadingMore = false) }
+            return
+        }
+        val generation = searchGeneration
+        val kind = _state.value.searchKind
         searchJob = viewModelScope.launch {
-            delay(350)
-            request(query, page = 1, reset = true)
+            if (debounced) delay(350)
+            request(query, kind, page, reset, generation)
         }
     }
 
@@ -285,6 +358,12 @@ class ExploreViewModel(
         private val repository: GithubRepositorySearchRepository,
         private val globalSearch: GithubGlobalSearchRepository? = null
     ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
+            require(modelClass.isAssignableFrom(ExploreViewModel::class.java))
+            return ExploreViewModel(repository, globalSearch, extras.createSavedStateHandle()) as T
+        }
+
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(ExploreViewModel::class.java))

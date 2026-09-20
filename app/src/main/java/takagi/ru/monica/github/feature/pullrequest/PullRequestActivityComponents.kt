@@ -7,6 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.CheckCircle
@@ -108,6 +112,7 @@ internal fun PullRequestReviewCommentCard(
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var diffExpanded by rememberSaveable(comment.id) { mutableStateOf(false) }
     Surface(
         modifier = modifier.fillMaxWidth().padding(bottom = 12.dp),
         shape = GithubExpressiveShapes.container,
@@ -139,12 +144,22 @@ internal fun PullRequestReviewCommentCard(
                     shape = GithubExpressiveShapes.compact,
                     modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
                 ) {
+                    Column {
+                    SelectionContainer {
                     Text(
                         text = comment.diffHunk,
-                        style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(10.dp),
-                        maxLines = 4
+                        style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(10.dp),
+                        softWrap = false,
+                        maxLines = if (diffExpanded) Int.MAX_VALUE else 4
                     )
+                    }
+                    if (comment.diffHunk.lineSequence().take(5).count() > 4) {
+                        TextButton(onClick = { diffExpanded = !diffExpanded }) {
+                            Text(stringResource(if (diffExpanded) R.string.github_collapse_diff else R.string.github_expand_diff))
+                        }
+                    }
+                    }
                 }
             }
             MarkdownPreviewText(
@@ -195,6 +210,7 @@ internal fun PullRequestReviewComposer(
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = body,
+                    readOnly = isSubmitting,
                     onValueChange = onBodyChanged,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.github_review_body)) },
@@ -266,7 +282,8 @@ internal fun PullRequestReviewComposer(
 @Composable
 internal fun PullRequestActionsCard(
     pullRequest: GithubPullRequest,
-    canWrite: Boolean,
+    isSignedIn: Boolean,
+    canMerge: Boolean,
     isMerging: Boolean,
     mergeError: Boolean,
     mergeValidationError: Boolean,
@@ -389,12 +406,15 @@ internal fun PullRequestActionsCard(
                             fontWeight = FontWeight.SemiBold
                         )
                     }
-                    !canWrite -> {
+                    !isSignedIn -> {
                         GithubMessageState(
                             title = stringResource(R.string.github_sign_in_to_write),
                             actionLabel = stringResource(R.string.github_sign_in),
                             onAction = onSignIn
                         )
+                    }
+                    !canMerge -> {
+                        GithubMessageState(title = stringResource(R.string.github_write_access_required))
                     }
                     pullRequest.state == GithubPullRequestState.OPEN -> {
                         Text(

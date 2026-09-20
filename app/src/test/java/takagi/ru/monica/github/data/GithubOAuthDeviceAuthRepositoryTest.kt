@@ -52,7 +52,7 @@ class GithubOAuthDeviceAuthRepositoryTest {
         assertEquals("application/json", request.getHeader("Accept"))
         assertNull(request.getHeader("Authorization"))
         assertEquals(
-            "client_id=Iv1.12345678901234567890&scope=notifications%20read%3Auser%20repo",
+            "client_id=Iv1.12345678901234567890&scope=notifications%20read%3Auser%20repo%20user%3Afollow",
             request.body.readUtf8()
         )
         assertEquals("ABCD-EFGH", authorization.userCode)

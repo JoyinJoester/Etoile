@@ -80,18 +80,29 @@ data class GithubIssueComment(
 
 class GithubIssueDraft private constructor(
     val title: String,
-    val body: String?
+    val body: String?,
+    val labels: List<String>,
+    val assignees: List<String>
 ) {
     companion object {
         const val MAX_TITLE_LENGTH = 256
         const val MAX_BODY_LENGTH = 65_536
 
-        fun fromInput(title: String, body: String?): Result<GithubIssueDraft> = runCatching {
+        fun fromInput(
+            title: String,
+            body: String?,
+            labels: List<String> = emptyList(),
+            assignees: List<String> = emptyList()
+        ): Result<GithubIssueDraft> = runCatching {
             val normalizedTitle = title.trim()
             val normalizedBody = body?.trim()?.takeIf(String::isNotEmpty)
             require(normalizedTitle.isNotEmpty() && normalizedTitle.length <= MAX_TITLE_LENGTH)
             require(normalizedBody == null || normalizedBody.length <= MAX_BODY_LENGTH)
-            GithubIssueDraft(title = normalizedTitle, body = normalizedBody)
+            GithubIssueDraft(
+                title = normalizedTitle, body = normalizedBody,
+                labels = labels.map(String::trim).filter(String::isNotEmpty).distinct(),
+                assignees = assignees.map(String::trim).filter(String::isNotEmpty).distinct()
+            )
         }
     }
 }
@@ -112,6 +123,16 @@ interface GithubIssuesRepository {
     suspend fun issues(
         owner: String,
         name: String,
+        query: GithubIssueListQuery,
+        page: Int = 1,
+        perPage: Int = 30
+    ): Result<GithubPage<GithubIssue>>
+
+    /** Free-text search within one repository; the plain issues endpoint has no text parameter. */
+    suspend fun searchInRepository(
+        owner: String,
+        name: String,
+        text: String,
         query: GithubIssueListQuery,
         page: Int = 1,
         perPage: Int = 30
@@ -146,6 +167,13 @@ interface GithubIssuesRepository {
         number: Int,
         draft: GithubIssueCommentDraft
     ): Result<GithubIssueComment>
+
+    suspend fun editComment(owner: String, name: String, commentId: Long,
+        draft: GithubIssueCommentDraft): Result<GithubIssueComment> =
+        Result.failure(UnsupportedOperationException("Comment editing unavailable"))
+
+    suspend fun deleteComment(owner: String, name: String, commentId: Long): Result<Unit> =
+        Result.failure(UnsupportedOperationException("Comment deletion unavailable"))
 
     suspend fun toggleCommentReaction(
         owner: String,

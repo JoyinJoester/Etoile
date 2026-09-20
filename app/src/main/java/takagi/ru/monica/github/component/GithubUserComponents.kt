@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
@@ -75,6 +78,46 @@ fun GithubUserRow(
     }
 }
 
+@Composable
+fun GithubUserTile(
+    login: String,
+    avatarUrl: String?,
+    supportingText: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().heightIn(min = 128.dp),
+        shape = GithubExpressiveShapes.compact,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            GithubAvatar(login = login, avatarUrl = avatarUrl, size = 56.dp)
+            Spacer(Modifier.height(10.dp))
+            Text(
+                text = login,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = supportingText,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun GithubUserGroup(
@@ -99,6 +142,7 @@ fun GithubUserGroup(
                 key(user.login) {
                     Surface(
                         onClick = { navigate(user.login) },
+                        modifier = Modifier.heightIn(min = 48.dp),
                         shape = GithubExpressiveShapes.control,
                         color = MaterialTheme.colorScheme.secondaryContainer
                     ) {

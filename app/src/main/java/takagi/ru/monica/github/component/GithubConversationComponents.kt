@@ -53,8 +53,8 @@ fun GithubCommentComposer(
     onValueChange: (String) -> Unit,
     onSubmit: () -> Unit,
     onSignIn: () -> Unit,
+    modifier: Modifier = Modifier,
     disabledMessage: String? = null,
-    modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         GithubSectionHeader(title = stringResource(R.string.github_write_comment))

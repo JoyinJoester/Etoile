@@ -20,7 +20,7 @@ class GithubAccountApi(
         githubRunCatching {
             val request = GithubRequestFactory.authenticatedBuilder("https://api.github.com/user", token)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.newCall(request).readAuthResponse { response ->
                 if (response.code == 401 || response.code == 403) throw GithubAuthenticationException()
                 check(response.isSuccessful) { "GitHub account request failed" }
                 val payload = response.body?.string().orEmpty()

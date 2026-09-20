@@ -1,0 +1,16 @@
+[
+  {
+    "width": 1440,
+    "localLinks": 33,
+    "result": "PASS",
+    "overflow": false,
+    "pageErrors": []
+  },
+  {
+    "width": 375,
+    "localLinks": 33,
+    "result": "PASS",
+    "overflow": false,
+    "pageErrors": []
+  }
+]

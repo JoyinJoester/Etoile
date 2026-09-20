@@ -3,6 +3,12 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application>
+        <!-- Local UI fixtures only; excluded from release builds. -->
+        <activity
+            android:name="takagi.ru.monica.debug.DesignAuditActivity"
+            android:exported="true"
+            android:windowSoftInputMode="adjustResize"
+            android:label="Etoile UI samples" />
         <activity android:name="androidx.activity.ComponentActivity" tools:node="remove" />
         <activity android:name="androidx.compose.ui.tooling.PreviewActivity" tools:node="remove" />
     </application>

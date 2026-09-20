@@ -1,5 +1,9 @@
 package takagi.ru.monica.github.feature.mywork
 
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,6 +26,8 @@ import takagi.ru.monica.github.component.GithubIssueSearchResultRow
 import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubPagedListStatus
+import takagi.ru.monica.github.component.GithubRefreshButton
+import takagi.ru.monica.github.component.GithubWrappedFilterRow
 import takagi.ru.monica.github.domain.GithubIssueSearchResult
 import takagi.ru.monica.github.domain.GithubSession
 
@@ -37,6 +43,7 @@ fun MyConversationsScreen(
     modifier: Modifier = Modifier
 ) {
     GithubDetailScaffold(
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = stringResource(
             when (kind) {
                 MyConversationsKind.ISSUES -> R.string.github_my_issues
@@ -46,7 +53,15 @@ fun MyConversationsScreen(
         subtitle = stringResource(R.string.github_my_conversations_subtitle),
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
-        modifier = modifier
+        modifier = modifier,
+        actions = {
+            if (session is GithubSession.SignedIn) {
+                GithubRefreshButton(
+                    onClick = { onAction(MyConversationsAction.Refresh) },
+                    enabled = !state.isLoading && !state.isLoadingMore
+                )
+            }
+        }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
@@ -65,13 +80,25 @@ fun MyConversationsScreen(
                 }
 
                 else -> {
+                    if (session is GithubSession.SignedIn) {
+                        GithubWrappedFilterRow(
+                            labels = listOf(
+                                stringResource(R.string.github_issue_open),
+                                stringResource(R.string.github_issue_closed),
+                                stringResource(R.string.github_filter_all)
+                            ),
+                            selectedIndex = state.filter.ordinal,
+                            onSelected = { onAction(MyConversationsAction.SelectFilter(MyConversationsFilter.entries[it])) },
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
                     GithubListLoadingState(
                         isLoading = state.isLoading,
                         hasItems = state.items.isNotEmpty(),
                         row = GithubSkeletonRow.CARD,
                         modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                     )
-                    LazyColumn(
+                    GithubAdaptiveGrid(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
                     ) {
@@ -81,7 +108,7 @@ fun MyConversationsScreen(
                                 onClick = { onOpenConversation(result) }
                             )
                         }
-                        item(key = "list-status") {
+                        githubFullSpanItem(key = "list-status") {
                             GithubPagedListStatus(
                                 itemCount = state.items.size,
                                 isInitialLoading = state.isLoading,

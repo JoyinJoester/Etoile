@@ -7,9 +7,15 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import takagi.ru.monica.github.domain.GithubCollaboratorChange
+import takagi.ru.monica.github.domain.GithubCollaboratorInvite
 import takagi.ru.monica.github.domain.GithubCollaboratorRole
+import takagi.ru.monica.github.domain.GithubRepositorySettings
+import takagi.ru.monica.github.domain.GithubRepositoryFeatures
+import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 
 class GithubRepositoryDetailsRepositoryImplTest {
@@ -121,6 +127,145 @@ class GithubRepositoryDetailsRepositoryImplTest {
     }
 
     @Test
+    fun updateSettingsPatchesOnlyTheChangedFieldAndReadsTheSnapshot() = runTest {
+        server.enqueue(MockResponse().setResponseCode(200).setBody(SETTINGS_JSON))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val settings = repository
+            .updateSettings("openai", "codex", GithubRepositorySettingsEdit(isPrivate = true))
+            .getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("PATCH", request.method)
+        assertEquals("/repos/openai/codex", request.path)
+        assertEquals("application/vnd.github+json", request.getHeader("Accept"))
+        assertEquals("Bearer test_token_12345678901234567890", request.getHeader("Authorization"))
+        assertEquals("{\"private\":true}", request.body.readUtf8())
+        assertEquals(
+            GithubRepositorySettings(
+                isPrivate = true,
+                isArchived = false,
+                features = GithubRepositoryFeatures(hasIssues = true, hasWiki = false, hasProjects = true),
+                description = "A coding agent"
+            ),
+            settings
+        )
+    }
+
+    @Test
+    fun everyFeatureToggleSendsOnlyItsOwnField() = runTest {
+        val cases = listOf(
+            GithubRepositorySettingsEdit(hasIssues = false) to "{\"has_issues\":false}",
+            GithubRepositorySettingsEdit(hasWiki = true) to "{\"has_wiki\":true}",
+            GithubRepositorySettingsEdit(hasProjects = false) to "{\"has_projects\":false}"
+        )
+        cases.forEach { (edit, expectedBody) ->
+            server.enqueue(MockResponse().setResponseCode(200).setBody(SETTINGS_JSON))
+            val repository = repository(token = "test_token_12345678901234567890")
+
+            repository.updateSettings("openai", "codex", edit).getOrThrow()
+            val request = server.takeRequest()
+
+            assertEquals("PATCH", request.method)
+            assertEquals(expectedBody, request.body.readUtf8())
+        }
+    }
+
+    @Test
+    fun descriptionIsTheOnlyFieldSentAndIsEncodedAsJsonText() = runTest {
+        val cases = listOf(
+            // A quote has to arrive escaped, and an empty string means "clear it" rather than "leave it alone".
+            "Rust \"core\" agent" to "{\"description\":\"Rust \\\"core\\\" agent\"}",
+            "安卓 GitHub 客户端" to "{\"description\":\"安卓 GitHub 客户端\"}",
+            "" to "{\"description\":\"\"}"
+        )
+        cases.forEach { (description, expectedBody) ->
+            server.enqueue(MockResponse().setResponseCode(200).setBody(SETTINGS_JSON))
+            val repository = repository(token = "test_token_12345678901234567890")
+
+            repository.updateSettings(
+                "openai",
+                "codex",
+                GithubRepositorySettingsEdit(description = description)
+            ).getOrThrow()
+            val request = server.takeRequest()
+
+            assertEquals("PATCH", request.method)
+            assertEquals("application/json; charset=utf-8", request.getHeader("Content-Type"))
+            assertEquals(expectedBody, request.body.readUtf8())
+        }
+    }
+
+    @Test
+    fun aClearedDescriptionReadsBackAsNoDescription() = runTest {
+        server.enqueue(MockResponse().setResponseCode(200).setBody(BLANK_DESCRIPTION_JSON))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val settings = repository
+            .updateSettings("openai", "codex", GithubRepositorySettingsEdit(description = ""))
+            .getOrThrow()
+
+        assertNull(settings.description)
+    }
+
+    @Test
+    fun acceptedSettingsClearTheCacheAndRejectionsDoNot() = runTest {
+        val cacheStore = TestGithubCacheStore()
+        val repository = repository(
+            token = "test_token_12345678901234567890",
+            cacheStore = cacheStore
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("ETag", "\"details-v1\"")
+                .setBody(DETAILS_JSON)
+        )
+        repository.details("openai", "codex").getOrThrow()
+        server.takeRequest()
+        assertEquals(false, cacheStore.isEmpty())
+
+        server.enqueue(MockResponse().setResponseCode(422))
+        repository.updateSettings("openai", "codex", GithubRepositorySettingsEdit(isArchived = true))
+        server.takeRequest()
+        assertEquals(false, cacheStore.isEmpty())
+
+        server.enqueue(MockResponse().setResponseCode(200).setBody(SETTINGS_JSON))
+        repository.updateSettings("openai", "codex", GithubRepositorySettingsEdit(isArchived = true))
+        assertEquals(true, cacheStore.isEmpty())
+    }
+
+    @Test
+    fun rejectedSettingsKeepTheStatusAndQuotaSignals() = runTest {
+        val repository = repository(token = "test_token_12345678901234567890")
+        listOf(403 to false, 404 to false, 422 to false, 429 to true).forEach { (code, rateLimited) ->
+            server.enqueue(MockResponse().setResponseCode(code))
+
+            val error = repository
+                .updateSettings("openai", "codex", GithubRepositorySettingsEdit(isArchived = true))
+                .exceptionOrNull() as GithubApiException
+            server.takeRequest()
+
+            assertEquals(code, error.statusCode)
+            assertEquals(rateLimited, error.rateLimited)
+        }
+    }
+
+    @Test
+    fun settingsNeverLeaveTheDeviceWithoutASession() = runTest {
+        val repository = repository(token = null)
+
+        val result = repository.updateSettings(
+            "openai",
+            "codex",
+            GithubRepositorySettingsEdit(isArchived = true)
+        )
+
+        assertTrue(result.exceptionOrNull() is GithubSignedOutException)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test
     fun collaboratorsMapRolesAndPagination() = runTest {
         server.enqueue(
             MockResponse()
@@ -160,6 +305,111 @@ class GithubRepositoryDetailsRepositoryImplTest {
         assertEquals("OK", page.items.single().lastResponseStatus)
     }
 
+    @Test
+    fun invitingACollaboratorSendsNothingButThePermission() = runTest {
+        server.enqueue(MockResponse().setResponseCode(201))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val change = repository
+            .setCollaborator("openai", "codex", invite("bob", GithubCollaboratorRole.WRITE))
+            .getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("PUT", request.method)
+        assertEquals("/repos/openai/codex/collaborators/bob", request.path)
+        assertEquals("application/vnd.github+json", request.getHeader("Accept"))
+        assertEquals("application/json; charset=utf-8", request.getHeader("Content-Type"))
+        assertEquals("Bearer test_token_12345678901234567890", request.getHeader("Authorization"))
+        assertEquals("{\"permission\":\"push\"}", request.body.readUtf8())
+        assertEquals(GithubCollaboratorChange.Invited, change)
+    }
+
+    @Test
+    fun aCollaboratorAlreadyPresentIsReportedAsAnUpdateNotAnInvitation() = runTest {
+        server.enqueue(MockResponse().setResponseCode(204))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val change = repository
+            .setCollaborator("openai", "codex", invite("bob", GithubCollaboratorRole.READ))
+            .getOrThrow()
+
+        assertEquals(GithubCollaboratorChange.Updated, change)
+    }
+
+    @Test
+    fun removalSendsAnEmptyDeleteAndAcceptsNoContent() = runTest {
+        server.enqueue(MockResponse().setResponseCode(204))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        repository.removeCollaborator("openai", "codex", "bob").getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("DELETE", request.method)
+        assertEquals("/repos/openai/codex/collaborators/bob", request.path)
+        assertEquals(0L, request.bodySize)
+        assertEquals("Bearer test_token_12345678901234567890", request.getHeader("Authorization"))
+    }
+
+    @Test
+    fun collaboratorWritesClearTheCacheOnlyWhenGithubAccepts() = runTest {
+        val cacheStore = TestGithubCacheStore()
+        val repository = repository(
+            token = "test_token_12345678901234567890",
+            cacheStore = cacheStore
+        )
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("ETag", "\"details-v1\"")
+                .setBody(DETAILS_JSON)
+        )
+        repository.details("openai", "codex").getOrThrow()
+        server.takeRequest()
+        assertEquals(false, cacheStore.isEmpty())
+
+        server.enqueue(MockResponse().setResponseCode(403))
+        repository.setCollaborator("openai", "codex", invite("bob", GithubCollaboratorRole.ADMIN))
+        server.takeRequest()
+        assertEquals(false, cacheStore.isEmpty())
+
+        server.enqueue(MockResponse().setResponseCode(204))
+        repository.removeCollaborator("openai", "codex", "bob")
+        assertEquals(true, cacheStore.isEmpty())
+    }
+
+    @Test
+    fun rejectedCollaboratorWritesKeepTheStatusAndQuotaSignals() = runTest {
+        val repository = repository(token = "test_token_12345678901234567890")
+        listOf(401 to false, 403 to false, 404 to false, 422 to false, 429 to true).forEach { (code, rateLimited) ->
+            server.enqueue(MockResponse().setResponseCode(code))
+
+            val error = repository
+                .setCollaborator("openai", "codex", invite("bob", GithubCollaboratorRole.WRITE))
+                .exceptionOrNull() as GithubApiException
+            server.takeRequest()
+
+            assertEquals(code, error.statusCode)
+            assertEquals(rateLimited, error.rateLimited)
+        }
+    }
+
+    @Test
+    fun collaboratorWritesNeverLeaveTheDeviceWithoutASession() = runTest {
+        val repository = repository(token = null)
+
+        val invite = repository.setCollaborator("openai", "codex", invite("bob", GithubCollaboratorRole.WRITE))
+        val remove = repository.removeCollaborator("openai", "codex", "bob")
+
+        assertTrue(invite.exceptionOrNull() is GithubSignedOutException)
+        assertTrue(remove.exceptionOrNull() is GithubSignedOutException)
+        assertEquals(0, server.requestCount)
+    }
+
+    private fun invite(
+        login: String,
+        role: GithubCollaboratorRole
+    ) = GithubCollaboratorInvite.fromInput(login, role).getOrThrow()
+
     private fun repository(
         token: String?,
         cacheStore: GithubCacheStore = NoOpGithubCacheStore
@@ -197,6 +447,33 @@ class GithubRepositoryDetailsRepositoryImplTest {
               "topics": ["ai", "developer-tools"],
               "archived": false,
               "fork": false
+            }
+        """.trimIndent()
+
+        val SETTINGS_JSON = """
+            {
+              "id": 11,
+              "name": "codex",
+              "full_name": "openai/codex",
+              "html_url": "https://github.com/openai/codex",
+              "description": "A coding agent",
+              "private": true,
+              "archived": false,
+              "has_issues": true,
+              "has_wiki": false,
+              "has_projects": true
+            }
+        """.trimIndent()
+
+        val BLANK_DESCRIPTION_JSON = """
+            {
+              "id": 11,
+              "name": "codex",
+              "full_name": "openai/codex",
+              "html_url": "https://github.com/openai/codex",
+              "description": "",
+              "private": false,
+              "archived": false
             }
         """.trimIndent()
 

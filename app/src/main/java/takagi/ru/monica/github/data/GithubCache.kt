@@ -26,6 +26,10 @@ data class GithubCachedResponse(
  * and can use an in-memory implementation in unit tests.
  */
 interface GithubCacheStore {
+    /** Freshness window used when a caller does not provide a more specific policy. */
+    val defaultMaxAgeMillis: Long
+        get() = GithubCachePolicy.DEFAULT_MAX_AGE_MILLIS
+
     fun read(key: String): GithubCachedResponse?
     fun write(key: String, response: GithubCachedResponse)
     fun clear()
@@ -97,6 +101,9 @@ class GithubInvalidatingCacheStore(
     private val delegate: GithubCacheStore,
     private val onInvalidated: () -> Unit
 ) : GithubCacheStore {
+    override val defaultMaxAgeMillis: Long
+        get() = delegate.defaultMaxAgeMillis
+
     override fun read(key: String): GithubCachedResponse? = delegate.read(key)
 
     override fun write(key: String, response: GithubCachedResponse) {
@@ -112,6 +119,19 @@ class GithubInvalidatingCacheStore(
 object GithubCacheKeys {
     fun endpoint(namespace: String, scope: String, url: String): String =
         "$namespace:$scope:$url"
+}
+
+/**
+ * Default freshness window for read-only GitHub data.
+ *
+ * A short local window keeps navigation between related screens from issuing
+ * another quota-consuming request while still allowing data to refresh during
+ * a normal session. Callers that need a different policy can override
+ * [GithubCachedGetExecutor.execute]'s maxAgeMillis, and `0` keeps the
+ * validator-only behaviour used by explicit refresh flows and tests.
+ */
+object GithubCachePolicy {
+    const val DEFAULT_MAX_AGE_MILLIS = 2 * 60 * 1000L
 }
 
 fun Request.Builder.withCacheValidator(etag: String?): Request.Builder = apply {
@@ -184,15 +204,28 @@ class GithubCachedGetExecutor(
         client: OkHttpClient,
         cacheKey: String,
         request: (etag: String?) -> Request,
-        decode: (body: String, linkHeader: String?) -> T
+        decode: (body: String, linkHeader: String?) -> T,
+        maxAgeMillis: Long = store.defaultMaxAgeMillis
     ): T {
         val cached = store.read(cacheKey)
+        val now = nowEpochMillis()
+        if (cached != null && cached.isFresh(now, maxAgeMillis)) {
+            statusReporter.onValidated(cacheKey)
+            return decode(cached.body, cached.linkHeader)
+        }
         val preparedRequest = request(cached?.etag)
         return try {
             client.newCall(preparedRequest).execute().use { response ->
                 when {
                     response.code == 304 && cached != null -> {
                         val decoded = decode(cached.body, cached.linkHeader)
+                        store.write(
+                            cacheKey,
+                            cached.copy(
+                                etag = response.header("ETag") ?: cached.etag,
+                                savedAtEpochMillis = nowEpochMillis()
+                            )
+                        )
                         statusReporter.onValidated(cacheKey)
                         decoded
                     }
@@ -212,7 +245,7 @@ class GithubCachedGetExecutor(
                         statusReporter.onValidated(cacheKey)
                         decoded
                     }
-                    response.code >= 500 && cached != null -> {
+                    (response.code >= 500 || response.isRateLimitExhausted()) && cached != null -> {
                         val decoded = decode(cached.body, cached.linkHeader)
                         statusReporter.onFallback(
                             cacheKey = cacheKey,
@@ -221,7 +254,7 @@ class GithubCachedGetExecutor(
                         )
                         decoded
                     }
-                    else -> throw GithubApiException(response.code)
+                    else -> throw GithubApiException.of(response)
                 }
             }
         } catch (networkError: IOException) {
@@ -238,6 +271,15 @@ class GithubCachedGetExecutor(
         }
     }
 }
+
+private fun GithubCachedResponse.isFresh(nowEpochMillis: Long, maxAgeMillis: Long): Boolean {
+    if (maxAgeMillis <= 0L || savedAtEpochMillis <= 0L) return false
+    val age = nowEpochMillis - savedAtEpochMillis
+    return age in 0..maxAgeMillis
+}
+
+private fun okhttp3.Response.isRateLimitExhausted(): Boolean =
+    code == 403 && header("X-RateLimit-Remaining")?.toIntOrNull() == 0
 
 fun sha256Hex(value: String): String {
     val digest = MessageDigest.getInstance("SHA-256").digest(value.toByteArray(Charsets.UTF_8))

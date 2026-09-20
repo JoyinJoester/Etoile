@@ -1,5 +1,12 @@
 package takagi.ru.monica.github.feature.issues
 
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
+import takagi.ru.monica.github.component.githubFullSpanItem
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import takagi.ru.monica.github.component.GithubAdaptiveDetailLayout
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
@@ -16,11 +23,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
@@ -28,12 +40,13 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -46,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.Role
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubCommentCard
 import takagi.ru.monica.github.component.GithubListLoadingState
@@ -98,6 +112,7 @@ fun IssuesScreen(
     val issueStates = GithubIssueState.entries
     var orderingOpen by remember { mutableStateOf(false) }
     GithubDetailScaffold(
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = state.name,
         subtitle = stringResource(R.string.github_issues),
         backContentDescription = stringResource(R.string.github_back),
@@ -125,41 +140,42 @@ fun IssuesScreen(
             GithubListSearchField(
                 value = state.searchQuery,
                 onValueChange = { onAction(IssuesAction.SearchChanged(it)) },
-                label = stringResource(R.string.github_search_loaded_issues),
+                label = stringResource(R.string.github_search_repository_issues),
                 clearContentDescription = stringResource(R.string.github_clear_search),
                 orderingContentDescription = stringResource(R.string.github_list_sort_and_filter),
                 onOpenOrdering = { orderingOpen = true },
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                compact = true
             )
             GithubListLoadingState(
                 isLoading = state.isLoading,
-                hasItems = state.visibleItems.isNotEmpty(),
+                hasItems = state.items.isNotEmpty(),
                 row = GithubSkeletonRow.LIST,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
             )
 
-            LazyColumn(
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
             ) {
-                items(state.visibleItems, key = GithubIssue::id) { issue ->
+                items(state.items, key = GithubIssue::id) { issue ->
                     IssueRow(
                         issue = issue,
                         onClick = { onOpenIssue(issue) },
                         modifier = Modifier.animateItem()
                     )
                 }
-                item(key = "list-status") {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
-                        itemCount = state.visibleItems.size,
+                        itemCount = state.items.size,
                         isInitialLoading = state.isLoading,
                         isLoadingMore = state.isLoadingMore,
                         hasError = state.error,
                         canLoadMore = state.canLoadMore,
                         errorMessage = stringResource(R.string.github_issue_list_error),
                         emptyMessage = stringResource(
-                            if (state.hasLocalFilters) {
-                                R.string.github_no_loaded_issues_match
+                            if (state.isSearching) {
+                                R.string.github_no_issue_matches
                             } else {
                                 R.string.github_no_issues
                             }
@@ -237,11 +253,21 @@ fun IssueDetailScreen(
     }
     GithubDetailScaffold(
         title = "#${state.number}",
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         subtitle = state.fullName,
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
         actions = {
+            IconButton(
+                onClick = { managementOpen = true },
+                enabled = state.issue != null && state.canManage
+            ) {
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = stringResource(R.string.github_manage_issue)
+                )
+            }
             GithubOpenOnGithubButton {
                 onOpenExternal(GithubWebUrls.issue(state.fullName, state.number))
             }
@@ -262,81 +288,112 @@ fun IssueDetailScreen(
                 onAction = { onAction(IssueDetailAction.RetryIssue) },
                 modifier = Modifier.padding(padding).padding(horizontal = 20.dp)
             )
-            issue != null -> LazyColumn(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                item {
-                    IssueBody(
-                        issue = issue,
-                        fullName = state.fullName,
-                        canWrite = canWrite,
-                        isManaging = state.isUpdatingState || state.isUpdatingLock ||
-                            state.isUpdatingLabels || state.isUpdatingAssignees ||
-                            state.isUpdatingMilestone || state.isUpdatingContent,
-                        managementError = state.stateUpdateError || state.lockUpdateError ||
-                            state.labelsUpdateError || state.assigneesUpdateError ||
-                            state.milestoneUpdateError || state.contentUpdateError,
-                        onManage = { managementOpen = true },
-                        onOpenExternal = onOpenExternal
-                    )
-                }
-                item { GithubSectionHeader(title = stringResource(R.string.github_comments)) }
-                if (state.isLoadingComments) {
-                    item {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+            issue != null -> GithubAdaptiveDetailLayout(
+                modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding(),
+                sidebar = { paneModifier ->
+                  LazyColumn(
+                        modifier = paneModifier,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    ) {
+                        item(key = "issue-summary") {
+                            IssueBody(
+                                issue = issue,
+                                fullName = state.fullName,
+                                managementError = state.stateUpdateError || state.lockUpdateError ||
+                                    state.labelsUpdateError || state.assigneesUpdateError ||
+                                    state.milestoneUpdateError || state.contentUpdateError,
+                                onOpenExternal = onOpenExternal,
+                                showDescription = false
+                            )
                         }
                     }
                 }
-                items(state.comments, key = GithubIssueComment::id) { comment ->
-                    GithubCommentCard(
-                        comment = comment,
-                        fullName = state.fullName,
-                        onOpenExternal = onOpenExternal,
-                        activeReactions = state.activeReactions[comment.id].orEmpty(),
-                        isReactionUpdating = comment.id in state.reactionBusyCommentIds,
-                        hasReactionError = comment.id in state.reactionErrorCommentIds,
-                        canReact = canWrite,
-                        onReaction = { reaction ->
-                            onAction(IssueDetailAction.ToggleCommentReaction(comment.id, reaction))
-                        }
-                    )
-                }
-                item(key = "comments-status") {
-                    GithubPagedListStatus(
-                        itemCount = state.comments.size,
-                        isInitialLoading = state.isLoadingComments,
-                        isLoadingMore = state.isLoadingMoreComments,
-                        hasError = state.commentsError,
-                        canLoadMore = state.canLoadMoreComments,
-                        errorMessage = stringResource(R.string.github_comments_load_error),
-                        emptyMessage = stringResource(R.string.github_no_comments),
-                        onRetry = { onAction(IssueDetailAction.RetryComments) },
-                        onLoadMore = { onAction(IssueDetailAction.LoadMoreComments) },
-                        compact = true
-                    )
-                }
-                item {
-                    GithubCommentComposer(
-                        value = state.commentDraft,
-                        maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
-                        canWrite = canWrite,
-                        isValidationError = state.commentValidationError,
-                        isSubmitError = state.commentSubmitError,
-                        isSubmitting = state.isSubmittingComment,
-                        onValueChange = { onAction(IssueDetailAction.CommentChanged(it)) },
-                        onSubmit = { onAction(IssueDetailAction.SubmitComment) },
-                        onSignIn = onSignIn,
-                        disabledMessage = if (issue.isLocked) {
-                            stringResource(R.string.github_locked_comment_disabled)
+            ) { paneModifier, expanded ->
+                LazyColumn(
+                    modifier = paneModifier,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    item(key = "issue-body") {
+                        if (expanded) {
+                            Surface(
+                                shape = GithubExpressiveShapes.container,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow
+                            ) {
+                                Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                                    IssueDescription(issue, state.fullName, onOpenExternal)
+                                }
+                            }
                         } else {
-                            null
+                            IssueBody(
+                                issue = issue,
+                                fullName = state.fullName,
+                                managementError = state.stateUpdateError || state.lockUpdateError ||
+                                    state.labelsUpdateError || state.assigneesUpdateError ||
+                                    state.milestoneUpdateError || state.contentUpdateError,
+                                onOpenExternal = onOpenExternal
+                            )
                         }
-                    )
+                    }
+                    item { GithubSectionHeader(title = stringResource(R.string.github_comments)) }
+                    if (state.isLoadingComments) {
+                        item {
+                            Box(
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
+                    items(state.comments, key = GithubIssueComment::id) { comment ->
+                        GithubCommentCard(
+                            comment = comment,
+                            fullName = state.fullName,
+                            onOpenExternal = onOpenExternal,
+                            activeReactions = state.activeReactions[comment.id].orEmpty(),
+                            isReactionUpdating = comment.id in state.reactionBusyCommentIds,
+                            hasReactionError = comment.id in state.reactionErrorCommentIds,
+                            canReact = canWrite,
+                            onReaction = { reaction ->
+                                onAction(IssueDetailAction.ToggleCommentReaction(comment.id, reaction))
+                            }
+                        )
+                        if (state.viewerLogin != null && state.viewerLogin.equals(comment.author.login, true)) {
+                            IssueCommentActions(comment, state.commentMutationBusy, state.commentMutationError, onAction)
+                        }
+                    }
+                    item(key = "comments-status") {
+                        GithubPagedListStatus(
+                            itemCount = state.comments.size,
+                            isInitialLoading = state.isLoadingComments,
+                            isLoadingMore = state.isLoadingMoreComments,
+                            hasError = state.commentsError,
+                            canLoadMore = state.canLoadMoreComments,
+                            errorMessage = stringResource(R.string.github_comments_load_error),
+                            emptyMessage = stringResource(R.string.github_no_comments),
+                            onRetry = { onAction(IssueDetailAction.RetryComments) },
+                            onLoadMore = { onAction(IssueDetailAction.LoadMoreComments) },
+                            compact = true
+                        )
+                    }
+                    item {
+                        GithubCommentComposer(
+                            value = state.commentDraft,
+                            maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
+                            canWrite = canWrite,
+                            isValidationError = state.commentValidationError,
+                            isSubmitError = state.commentSubmitError,
+                            isSubmitting = state.isSubmittingComment,
+                            onValueChange = { onAction(IssueDetailAction.CommentChanged(it)) },
+                            onSubmit = { onAction(IssueDetailAction.SubmitComment) },
+                            onSignIn = onSignIn,
+                            disabledMessage = if (issue.isLocked) {
+                                stringResource(R.string.github_locked_comment_disabled)
+                            } else {
+                                null
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -415,6 +472,10 @@ fun IssueDetailScreen(
     if (managementOpen && state.issue != null) {
         IssueManagementSheet(
             issue = state.issue,
+            canEditContent = state.canEditContent,
+            canTriage = state.canTriage,
+            canChangeState = state.canChangeState,
+            canLock = state.canLock,
             onEditContent = {
                 managementOpen = false
                 editTitle = state.issue.title
@@ -479,6 +540,10 @@ fun IssueDetailScreen(
 @Composable
 private fun IssueManagementSheet(
     issue: GithubIssue,
+    canEditContent: Boolean,
+    canTriage: Boolean,
+    canChangeState: Boolean,
+    canLock: Boolean,
     onEditContent: () -> Unit,
     onEditLabels: () -> Unit,
     onEditAssignees: () -> Unit,
@@ -493,37 +558,82 @@ private fun IssueManagementSheet(
             subtitle = stringResource(R.string.github_issue_number, issue.number),
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
         )
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp)) {
-            IssueManagementButton(stringResource(R.string.github_edit_issue_content), onEditContent)
-            IssueManagementButton(stringResource(R.string.github_edit_labels), onEditLabels)
-            IssueManagementButton(stringResource(R.string.github_edit_assignees), onEditAssignees)
-            IssueManagementButton(stringResource(R.string.github_edit_milestone), onEditMilestone)
+        Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp)) {
             IssueManagementButton(
+                Icons.Default.Edit,
+                stringResource(R.string.github_edit_issue_content),
+                canEditContent,
+                onEditContent
+            )
+            IssueManagementButton(
+                Icons.AutoMirrored.Filled.Label,
+                stringResource(R.string.github_edit_labels),
+                canTriage,
+                onEditLabels
+            )
+            IssueManagementButton(
+                Icons.Default.Group,
+                stringResource(R.string.github_edit_assignees),
+                canTriage,
+                onEditAssignees
+            )
+            IssueManagementButton(
+                Icons.Default.Flag,
+                stringResource(R.string.github_edit_milestone),
+                canTriage,
+                onEditMilestone
+            )
+            IssueManagementButton(
+                if (issue.state == GithubIssueState.OPEN) Icons.Default.CheckCircle else Icons.Default.RadioButtonChecked,
                 stringResource(
                     if (issue.state == GithubIssueState.OPEN) R.string.github_close_issue
                     else R.string.github_reopen_issue
                 ),
+                canChangeState,
                 onToggleState
             )
             IssueManagementButton(
+                if (issue.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
                 stringResource(
                     if (issue.isLocked) R.string.github_unlock_issue else R.string.github_lock_issue
                 ),
+                canLock,
                 onToggleLock
             )
+            if (!canTriage) {
+                Text(
+                    text = stringResource(R.string.github_write_access_required),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 10.dp)
+                )
+            }
             Spacer(Modifier.size(12.dp))
         }
     }
 }
 
 @Composable
-private fun IssueManagementButton(label: String, onClick: () -> Unit) {
-    OutlinedButton(
+private fun IssueManagementButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    enabled: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-        shape = GithubExpressiveShapes.control
+        enabled = enabled,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 6.dp),
+        shape = GithubExpressiveShapes.compact,
+        color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Text(label)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            Text(label, modifier = Modifier.weight(1f).padding(start = 12.dp))
+        }
     }
 }
 
@@ -534,7 +644,8 @@ private fun IssueRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)
+        modifier = modifier.fillMaxWidth().heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClick = onClick).padding(vertical = 10.dp)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Icon(
@@ -604,11 +715,9 @@ private fun IssueRow(
 private fun IssueBody(
     issue: GithubIssue,
     fullName: String,
-    canWrite: Boolean,
-    isManaging: Boolean,
     managementError: Boolean,
-    onManage: () -> Unit,
-    onOpenExternal: (String) -> Unit
+    onOpenExternal: (String) -> Unit,
+    showDescription: Boolean = true
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -675,24 +784,9 @@ private fun IssueBody(
                     modifier = Modifier.padding(top = 12.dp)
                 )
             }
-            HorizontalDivider(modifier = Modifier.padding(vertical = 18.dp))
-            if (issue.body.isNullOrBlank()) {
-                Text(
-                    stringResource(R.string.github_issue_body_empty),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                MarkdownPreviewText(
-                    markdown = issue.body,
-                    imageBitmaps = emptyMap(),
-                    onOpenExternalLink = { target ->
-                        onOpenExternal(
-                            GithubWebUrls.resolveMarkdownLink(fullName, "HEAD", "", target)
-                        )
-                    },
-                    renderImages = false,
-                    maxElements = 300
-                )
+            if (showDescription) {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 18.dp))
+                IssueDescription(issue, fullName, onOpenExternal)
             }
             if (managementError) {
                 Text(
@@ -702,24 +796,24 @@ private fun IssueBody(
                     modifier = Modifier.padding(top = 14.dp)
                 )
             }
-            if (canWrite) {
-                OutlinedButton(
-                    onClick = onManage,
-                    enabled = !isManaging,
-                    modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-                    shape = GithubExpressiveShapes.control
-                ) {
-                    if (isManaging) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            strokeWidth = 2.dp
-                        )
-                        Spacer(Modifier.width(8.dp))
-                    }
-                    Text(stringResource(R.string.github_manage_issue))
-                }
-            }
         }
+    }
+}
+
+@Composable
+private fun IssueDescription(issue: GithubIssue, fullName: String, onOpenExternal: (String) -> Unit) {
+    if (issue.body.isNullOrBlank()) {
+        Text(stringResource(R.string.github_issue_body_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+    } else {
+        MarkdownPreviewText(
+            markdown = issue.body,
+            imageBitmaps = emptyMap(),
+            onOpenExternalLink = { target ->
+                onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, "HEAD", "", target))
+            },
+            renderImages = false,
+            maxElements = 300
+        )
     }
 }
 

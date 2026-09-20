@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Paths exposed to the system installer via FileProvider when opening
+     downloaded APK files (store feature). -->
+<paths>
+    <files-path name="apks" path="apks/" />
+</paths>

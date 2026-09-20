@@ -1,0 +1,1085 @@
+{
+  "title": "Etoile · Issue 与 PR",
+  "brief": "列表按状态筛选，详情先上下文再讨论，编辑与提交保持键盘安全区。 示例数据仅用于布局。Nothing 是默认风格；本画布专门设计可切换的 Material 3 Expressive 模式，Miuix 另行保留。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": false,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "my-work",
+      "name": "我的工作",
+      "x": 0,
+      "y": 0,
+      "note": "在同一账户内查看 Issue 或 PR；筛选和分页状态始终可见。"
+    },
+    {
+      "id": "issues",
+      "name": "Issue",
+      "x": 492,
+      "y": 0,
+      "note": "创建入口只出现一次。刷新保留已有结果；失败可在当前列表重试。"
+    },
+    {
+      "id": "issue",
+      "name": "Issue #128",
+      "x": 984,
+      "y": 0,
+      "note": "状态与作者置于标题之后；标签编辑在独立面板，讨论使用全宽正文。"
+    },
+    {
+      "id": "create",
+      "name": "新建 Issue",
+      "x": 1476,
+      "y": 0,
+      "note": "草稿按仓库保存并恢复。标题必填；提交中禁用重复操作。键盘出现时表单与按钮可滚动到可见范围。"
+    },
+    {
+      "id": "metadata",
+      "name": "标签与负责人",
+      "x": 0,
+      "y": 972,
+      "note": "在有权限时编辑。选项可滚动，保存过程中禁用；失败保留当前选择。"
+    },
+    {
+      "id": "pulls",
+      "name": "Pull Request",
+      "x": 492,
+      "y": 972,
+      "note": "状态、分支、评论数分层显示，长标题不会挤压审查状态。"
+    },
+    {
+      "id": "pull",
+      "name": "PR #130",
+      "x": 984,
+      "y": 972,
+      "note": "概览、活动、文件按页签组织；审批表单仅在允许审查时可用。"
+    },
+    {
+      "id": "review",
+      "name": "审查更改",
+      "x": 1476,
+      "y": 972,
+      "note": "评论、批准、请求更改各自有明确按钮。草稿与展开状态恢复，失败保留评论；没有真实请求时不能显示成功。"
+    },
+    {
+      "id": "pull-wide",
+      "name": "PR #130 · 宽屏",
+      "x": 1968,
+      "y": 0,
+      "w": 1280,
+      "h": 800,
+      "note": "文件和活动页可用到 1200dp。达到 840dp × 字体倍数后分栏，摘要宽度随字号增长；不足时回到单栏。概览保持 840dp 阅读上限。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "my-work-group-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "my-work-item-1",
+          "kind": "topAppBar",
+          "label": "我的工作",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "my-work-group-2",
+      "x": 0,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "my-work-item-2",
+          "kind": "tabs",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "label": "Issue"
+            },
+            {
+              "label": "PR"
+            }
+          ],
+          "selected": 0
+        }
+      ]
+    },
+    {
+      "id": "my-work-group-3",
+      "x": 16,
+      "y": 168,
+      "axis": "x",
+      "items": [
+        {
+          "id": "my-work-chip-3-0",
+          "kind": "chip",
+          "label": "打开",
+          "icon": null,
+          "variant": "filled",
+          "checked": true
+        },
+        {
+          "id": "my-work-chip-3-1",
+          "kind": "chip",
+          "label": "已关闭",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        },
+        {
+          "id": "my-work-chip-3-2",
+          "kind": "chip",
+          "label": "全部",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "my-work-group-4",
+      "x": 16,
+      "y": 228,
+      "axis": "y",
+      "items": [
+        {
+          "id": "my-work-row-4-0",
+          "kind": "listItem",
+          "label": "修复窄屏布局",
+          "supporting": "Etoile / android · #128",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "issue",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "my-work-row-4-1",
+          "kind": "listItem",
+          "label": "完善页面设计",
+          "supporting": "Etoile / android · #130",
+          "icon": "call_split",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "pull",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-group-1",
+      "x": 492,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-item-1",
+          "kind": "topAppBar",
+          "label": "Issue",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-group-2",
+      "x": 508,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-chip-2-0",
+          "kind": "chip",
+          "label": "打开",
+          "icon": null,
+          "variant": "filled",
+          "checked": true
+        },
+        {
+          "id": "issues-chip-2-1",
+          "kind": "chip",
+          "label": "已关闭",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        },
+        {
+          "id": "issues-chip-2-2",
+          "kind": "chip",
+          "label": "全部",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "issues-group-3",
+      "x": 508,
+      "y": 168,
+      "axis": "y",
+      "items": [
+        {
+          "id": "issues-row-3-0",
+          "kind": "listItem",
+          "label": "修复窄屏布局",
+          "supporting": "#128 · 3 条评论",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "issue",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "issues-row-3-1",
+          "kind": "listItem",
+          "label": "支持新的筛选条件",
+          "supporting": "#126 · 1 条评论",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "issue",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-group-4",
+      "x": 724,
+      "y": 764,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-item-4",
+          "kind": "extendedFab",
+          "label": "新建 Issue",
+          "icon": "add",
+          "variant": "filled",
+          "action": {
+            "to": "create",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "issue-group-1",
+      "x": 984,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-item-1",
+          "kind": "topAppBar",
+          "label": "Issue #128",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "issue-group-2",
+      "x": 1000,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-item-2",
+          "kind": "card",
+          "label": "修复窄屏布局",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "打开 · Etoile / android",
+          "noImage": true,
+          "size": 380,
+          "size2": 132,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "issue-group-3",
+      "x": 1000,
+      "y": 252,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-item-3",
+          "kind": "button",
+          "label": "标签与负责人",
+          "icon": null,
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "metadata",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "issue-group-4",
+      "x": 1000,
+      "y": 328,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-item-4",
+          "kind": "card",
+          "label": "问题描述",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "在较窄窗口或系统大字体下，操作应保持可见，文本可以自然换行。",
+          "noImage": true,
+          "size": 380,
+          "size2": 176
+        }
+      ]
+    },
+    {
+      "id": "issue-group-5",
+      "x": 1000,
+      "y": 532,
+      "axis": "y",
+      "items": [
+        {
+          "id": "issue-row-5-0",
+          "kind": "listItem",
+          "label": "维护者",
+          "supporting": "感谢反馈，已准备布局修复。",
+          "icon": "person",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "issue-group-6",
+      "x": 1000,
+      "y": 632,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-item-6",
+          "kind": "textField",
+          "label": "发表评论",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "note": "提交前校验非空，失败保留输入；需要登录。"
+        }
+      ]
+    },
+    {
+      "id": "issue-group-7",
+      "x": 1000,
+      "y": 720,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-item-7",
+          "kind": "button",
+          "label": "发表评论",
+          "icon": "send",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "create-group-1",
+      "x": 1476,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "create-item-1",
+          "kind": "topAppBar",
+          "label": "新建 Issue",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "create-group-2",
+      "x": 1492,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "create-item-2",
+          "kind": "text",
+          "label": "Etoile / android",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "create-group-3",
+      "x": 1492,
+      "y": 152,
+      "axis": "x",
+      "items": [
+        {
+          "id": "create-item-3",
+          "kind": "textField",
+          "label": "标题",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "简短描述要处理的问题"
+        }
+      ]
+    },
+    {
+      "id": "create-group-4",
+      "x": 1492,
+      "y": 244,
+      "axis": "x",
+      "items": [
+        {
+          "id": "create-item-4",
+          "kind": "textField",
+          "label": "描述",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "支持 Markdown",
+          "note": "多行输入，随可用高度增长。"
+        }
+      ]
+    },
+    {
+      "id": "create-group-5",
+      "x": 1492,
+      "y": 340,
+      "axis": "x",
+      "items": [
+        {
+          "id": "create-item-5",
+          "kind": "card",
+          "label": "预览",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "提交前查看 Markdown 排版",
+          "noImage": true,
+          "size": 380,
+          "size2": 176,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "create-group-6",
+      "x": 1492,
+      "y": 548,
+      "axis": "x",
+      "items": [
+        {
+          "id": "create-item-6",
+          "kind": "button",
+          "label": "创建 Issue",
+          "icon": null,
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "issue",
+            "transition": "slide"
+          },
+          "note": "实际应用仅在请求成功后跳转。"
+        }
+      ]
+    },
+    {
+      "id": "metadata-group-1",
+      "x": 0,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "metadata-item-1",
+          "kind": "topAppBar",
+          "label": "标签与负责人",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "metadata-group-2",
+      "x": 16,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "metadata-item-2",
+          "kind": "searchBar",
+          "label": "搜索标签",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "metadata-group-3",
+      "x": 16,
+      "y": 1160,
+      "axis": "y",
+      "items": [
+        {
+          "id": "metadata-row-3-0",
+          "kind": "listItem",
+          "label": "bug",
+          "supporting": "问题修复",
+          "icon": "check",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "metadata-row-3-1",
+          "kind": "listItem",
+          "label": "enhancement",
+          "supporting": "功能改进",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "size": 380
+        },
+        {
+          "id": "metadata-row-3-2",
+          "kind": "listItem",
+          "label": "design",
+          "supporting": "界面与交互",
+          "icon": "check",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "metadata-group-4",
+      "x": 16,
+      "y": 1420,
+      "axis": "x",
+      "items": [
+        {
+          "id": "metadata-item-4",
+          "kind": "button",
+          "label": "保存更改",
+          "icon": null,
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulls-group-1",
+      "x": 492,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-item-1",
+          "kind": "topAppBar",
+          "label": "Pull Request",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulls-group-2",
+      "x": 508,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-chip-2-0",
+          "kind": "chip",
+          "label": "打开",
+          "icon": null,
+          "variant": "filled",
+          "checked": true
+        },
+        {
+          "id": "pulls-chip-2-1",
+          "kind": "chip",
+          "label": "已合并",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        },
+        {
+          "id": "pulls-chip-2-2",
+          "kind": "chip",
+          "label": "全部",
+          "icon": null,
+          "variant": "filled",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "pulls-group-3",
+      "x": 508,
+      "y": 1140,
+      "axis": "y",
+      "items": [
+        {
+          "id": "pulls-row-3-0",
+          "kind": "listItem",
+          "label": "完善页面设计",
+          "supporting": "#130 · feature/m3e → main",
+          "icon": "call_split",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "pull",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "pulls-row-3-1",
+          "kind": "listItem",
+          "label": "修复列表恢复",
+          "supporting": "#125 · 已合并",
+          "icon": "merge",
+          "variant": "filled",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "pull",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pull-group-1",
+      "x": 984,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-item-1",
+          "kind": "topAppBar",
+          "label": "PR #130",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pull-group-2",
+      "x": 1000,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-item-2",
+          "kind": "card",
+          "label": "完善页面设计",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "打开 · feature/m3e → main",
+          "noImage": true,
+          "size": 380,
+          "size2": 124
+        }
+      ]
+    },
+    {
+      "id": "pull-group-3",
+      "x": 984,
+      "y": 1220,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-item-3",
+          "kind": "tabs",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "label": "概览"
+            },
+            {
+              "label": "活动"
+            },
+            {
+              "label": "文件"
+            }
+          ],
+          "selected": 0
+        }
+      ]
+    },
+    {
+      "id": "pull-group-4",
+      "x": 1000,
+      "y": 1288,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-item-4",
+          "kind": "card",
+          "label": "变更说明",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "调整首页工作入口、通知阅读顺序与自适应布局。",
+          "noImage": true,
+          "size": 380,
+          "size2": 184
+        }
+      ]
+    },
+    {
+      "id": "pull-group-5",
+      "x": 1000,
+      "y": 1504,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-item-5",
+          "kind": "button",
+          "label": "审查更改",
+          "icon": "rate_review",
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "review",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "review-group-1",
+      "x": 1476,
+      "y": 972,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-item-1",
+          "kind": "topAppBar",
+          "label": "审查更改",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "review-group-2",
+      "x": 1492,
+      "y": 1076,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-item-2",
+          "kind": "card",
+          "label": "GithubNavChrome.kt",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "代码差异可展开和横向滚动",
+          "noImage": true,
+          "size": 380,
+          "size2": 216,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "review-group-3",
+      "x": 1492,
+      "y": 1320,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-item-3",
+          "kind": "textField",
+          "label": "审查意见",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "请求更改时说明原因"
+        }
+      ]
+    },
+    {
+      "id": "review-group-4",
+      "x": 1492,
+      "y": 1428,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-item-4",
+          "kind": "button",
+          "label": "提交评论",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "review-group-5",
+      "x": 1492,
+      "y": 1500,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-item-5",
+          "kind": "button",
+          "label": "批准",
+          "icon": null,
+          "variant": "tonal",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "review-group-6",
+      "x": 1492,
+      "y": 1572,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-item-6",
+          "kind": "button",
+          "label": "请求更改",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "pull-wide-group-1",
+      "x": 1968,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-wide-item-1",
+          "kind": "topAppBar",
+          "label": "PR #130 · 宽屏",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          },
+          "size": 1280
+        }
+      ]
+    },
+    {
+      "id": "pull-wide-group-2",
+      "x": 2008,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-wide-item-2",
+          "kind": "card",
+          "label": "完善页面设计",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "打开 · feature/m3e → main\n3 次提交 · 3 个文件\n+48 −12",
+          "noImage": true,
+          "size": 380,
+          "size2": 200,
+          "x": 40,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "pull-wide-group-3",
+      "x": 2008,
+      "y": 332,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-wide-item-3",
+          "kind": "card",
+          "label": "变更说明",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "让 PR 审查与 Actions 日志在大字体下保持完整的阅读空间。",
+          "noImage": true,
+          "size": 380,
+          "size2": 208,
+          "x": 40
+        }
+      ]
+    },
+    {
+      "id": "pull-wide-group-4",
+      "x": 2420,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-wide-item-4",
+          "kind": "tabs",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "size": 788,
+          "selected": 2,
+          "tabs": [
+            {
+              "label": "概览"
+            },
+            {
+              "label": "活动"
+            },
+            {
+              "label": "文件"
+            }
+          ],
+          "actions": {
+            "tab:0": {
+              "to": "pull",
+              "transition": "slide"
+            },
+            "tab:1": {
+              "to": "review",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pull-wide-group-5",
+      "x": 2420,
+      "y": 184,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-wide-item-5",
+          "kind": "card",
+          "label": "ActionsScreens.kt",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "+16 −4 · 代码差异可横向滚动\n\n+  根据系统字号选择单栏或双栏\n+  为长分支与构建日志保留空间",
+          "noImage": true,
+          "size": 788,
+          "size2": 256,
+          "x": 452,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "pull-wide-group-6",
+      "x": 2420,
+      "y": 468,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-wide-item-6",
+          "kind": "card",
+          "label": "PullRequestsScreens.kt",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "+16 −4 · 详情与审查区域独立滚动\n切换页签后保留各自的阅读位置。",
+          "noImage": true,
+          "size": 788,
+          "size2": 212,
+          "x": 452,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    }
+  ]
+}

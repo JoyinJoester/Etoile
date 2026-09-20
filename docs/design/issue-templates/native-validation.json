@@ -1,0 +1,322 @@
+{
+  "date": "2026-09-17",
+  "result": "PASS",
+  "scope": "Production Compose components with local debug repositories; no real GitHub issues were posted.",
+  "device": "emulator-5554",
+  "build": {
+    "result": "PASS",
+    "unitTests": {
+      "tests": 424,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "lint": {
+      "errors": 0,
+      "warnings": 104
+    },
+    "releaseChecks": [
+      "compileReleaseKotlin",
+      "processReleaseMainManifest",
+      "debug fixture package and activity absent"
+    ],
+    "debugApks": [
+      {
+        "filename": "Etoile-Android-armeabi-v7a-0.1.0-26091701-08.APK",
+        "abi": "armeabi-v7a",
+        "bytes": 6643539,
+        "dex": {
+          "classes.dex": {
+            "crc32": 3929684221,
+            "bytes": 7105584
+          },
+          "classes2.dex": {
+            "crc32": 4195880790,
+            "bytes": 4548044
+          }
+        }
+      },
+      {
+        "filename": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+        "abi": "arm64-v8a",
+        "bytes": 6761727,
+        "dex": {
+          "classes.dex": {
+            "crc32": 3929684221,
+            "bytes": 7105584
+          },
+          "classes2.dex": {
+            "crc32": 4195880790,
+            "bytes": 4548044
+          }
+        }
+      }
+    ],
+    "matchingDexPayloads": true
+  },
+  "phases": [
+    {
+      "phase": "builtins",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK",
+      "resumedAt": null
+    },
+    {
+      "phase": "flows",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "resumedAt": "Submission retry; earlier successful checks retain their original APK reference"
+    },
+    {
+      "phase": "layouts",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "resumedAt": null
+    }
+  ],
+  "checks": [
+    {
+      "check": "template chooser and YAML form",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "style": "MATERIAL",
+      "locale": "zh"
+    },
+    {
+      "check": "repository without templates offers all three Chinese and English built-in forms",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "built-in form language switching protects its draft and publication succeeds",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "built-in Chinese template layout",
+      "result": "PASS",
+      "style": "NOTHING",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "built-in Chinese template layout",
+      "result": "PASS",
+      "style": "MIUIX",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "required text, dropdowns, multiple selections, checkbox and preview",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "form draft survives window and font changes",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "cancelling template replacement retains the draft and form publication succeeds",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "Markdown preview and confirmed replacement clear the previous template",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "template loading error can retry",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-07.APK"
+    },
+    {
+      "check": "blank issue creation retries with its original draft after a write error",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK"
+    },
+    {
+      "check": "repository policy hides blank issue creation",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK"
+    },
+    {
+      "check": "320dp large text form controls",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "style": "NOTHING",
+      "fontScale": 1.5
+    },
+    {
+      "check": "320dp large text form controls",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "style": "MATERIAL",
+      "fontScale": 1.5
+    },
+    {
+      "check": "320dp large text form controls",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "style": "MIUIX",
+      "fontScale": 1.5
+    },
+    {
+      "check": "320dp form at 200 percent font scale",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "style": "MATERIAL",
+      "fontScale": 2.0
+    },
+    {
+      "check": "tablet form retains a centered readable width",
+      "result": "PASS",
+      "apk": "Etoile-Android-arm64-v8a-0.1.0-26091701-08.APK",
+      "maxWidthDp": 640
+    }
+  ],
+  "screenshots": [
+    {
+      "path": "screens/builtins-chinese-material.webp",
+      "source": "builtins-chinese-material.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/builtins-english-material.webp",
+      "source": "builtins-english-material.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/builtin-question-preview.webp",
+      "source": "builtin-question-preview.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/builtin-feature-nothing.webp",
+      "source": "builtin-feature-nothing.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/builtin-feature-miuix.webp",
+      "source": "builtin-feature-miuix.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/submission-failure-keeps-draft.webp",
+      "source": "submission-failure-keeps-draft.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/submission-retry-local.webp",
+      "source": "submission-retry-local.png",
+      "pixels": [
+        1080,
+        2400
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 1080x2400",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    },
+    {
+      "path": "screens/form-narrow-nothing.webp",
+      "source": "form-narrow-nothing.png",
+      "pixels": [
+        840,
+        2100
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 840x2100",
+      "density": "Physical density: 420",
+      "fontScale": "1.5"
+    },
+    {
+      "path": "screens/form-narrow-material.webp",
+      "source": "form-narrow-material.png",
+      "pixels": [
+        840,
+        2100
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 840x2100",
+      "density": "Physical density: 420",
+      "fontScale": "1.5"
+    },
+    {
+      "path": "screens/form-narrow-miuix.webp",
+      "source": "form-narrow-miuix.png",
+      "pixels": [
+        840,
+        2100
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 840x2100",
+      "density": "Physical density: 420",
+      "fontScale": "1.5"
+    },
+    {
+      "path": "screens/dropdown-font200-material.webp",
+      "source": "dropdown-font200-material.png",
+      "pixels": [
+        840,
+        2100
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 840x2100",
+      "density": "Physical density: 420",
+      "fontScale": "2.0"
+    },
+    {
+      "path": "screens/checkboxes-font200-material.webp",
+      "source": "checkboxes-font200-material.png",
+      "pixels": [
+        840,
+        2100
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 840x2100",
+      "density": "Physical density: 420",
+      "fontScale": "2.0"
+    },
+    {
+      "path": "screens/form-tablet-material.webp",
+      "source": "form-tablet-material.png",
+      "pixels": [
+        3360,
+        2100
+      ],
+      "size": "Physical size: 2208x1840\r\nOverride size: 3360x2100",
+      "density": "Physical density: 420",
+      "fontScale": "1.0"
+    }
+  ]
+}

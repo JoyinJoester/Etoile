@@ -7,8 +7,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import takagi.ru.monica.github.domain.GithubRepositoryDetails
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
+import takagi.ru.monica.github.domain.GithubRepositorySettings
+import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
 import takagi.ru.monica.github.domain.GithubBranchProtection
 import takagi.ru.monica.github.domain.GithubCollaborator
+import takagi.ru.monica.github.domain.GithubCollaboratorChange
+import takagi.ru.monica.github.domain.GithubCollaboratorInvite
 import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubUserSummary
@@ -64,7 +68,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 client.newCall(request).execute().use { response ->
                     when {
                         response.code == 404 -> null
-                        !response.isSuccessful -> throw GithubApiException(response.code)
+                        !response.isSuccessful -> throw GithubApiException.of(response)
                         else -> response.body?.string().orEmpty()
                     }
                 }
@@ -114,7 +118,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                     .put(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
                     .build()
                 client.newCall(request).execute().use { response ->
-                    if (!response.isSuccessful) throw GithubApiException(response.code)
+                    if (!response.isSuccessful) throw GithubApiException.of(response)
                     val body = response.body?.string().orEmpty()
                     val result = json.decodeFromString(TopicsResponseDto.serializer(), body)
                     cacheStore.clear()
@@ -123,13 +127,43 @@ class GithubRepositoryDetailsRepositoryImpl(
             }
         }
 
+    override suspend fun updateSettings(
+        owner: String,
+        name: String,
+        edit: GithubRepositorySettingsEdit
+    ): Result<GithubRepositorySettings> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val payload = buildJsonObject {
+                edit.isPrivate?.let { put("private", it) }
+                edit.isArchived?.let { put("archived", it) }
+                edit.hasIssues?.let { put("has_issues", it) }
+                edit.hasWiki?.let { put("has_wiki", it) }
+                edit.hasProjects?.let { put("has_projects", it) }
+                edit.description?.let { put("description", it) }
+            }
+            val request = requests.builder(repositoryEndpoint(owner, name))
+                .header("Accept", "application/vnd.github+json")
+                .patch(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                val dto = json.decodeFromString(
+                    GithubRepositoryDto.serializer(),
+                    response.body?.string().orEmpty()
+                )
+                cacheStore.clear()
+                dto.toSettings()
+            }
+        }
+    }
+
     override suspend fun collaborators(
         owner: String,
         name: String,
         page: Int,
         perPage: Int
     ): Result<GithubPage<GithubCollaborator>> = withContext(Dispatchers.IO) {
-        githubRunCatching {
+        val direct = githubRunCatching {
             val url = baseUrl.toHttpUrl().newBuilder()
                 .addPathSegment("repos")
                 .addPathSegment(owner)
@@ -144,13 +178,108 @@ class GithubRepositoryDetailsRepositoryImpl(
                 client = client,
                 cacheKey = cacheKey,
                 request = { etag ->
-                    requests.builder(url.toString()).get().withCacheValidator(etag).build()
+                    requests.optionalBuilder(url.toString()).get().withCacheValidator(etag).build()
                 },
                 decode = { body, linkHeader ->
                     GithubPage(
                         items = json.decodeFromString(
                             ListSerializer(CollaboratorDto.serializer()), body
                         ).map(CollaboratorDto::toDomain),
+                        nextPage = GithubPagination.nextPage(linkHeader)
+                    )
+                }
+            )
+        }
+        // /collaborators needs push access: for everyone else fall back to the public
+        // /contributors endpoint so the page still shows who builds the repository.
+        direct.recoverCatching { error ->
+            val recoverable = error is GithubApiException &&
+                (error.statusCode == 401 || error.statusCode == 403 || error.statusCode == 404)
+            if (!recoverable) throw error
+            contributors(owner, name, page, perPage).getOrThrow()
+        }
+    }
+
+    override suspend fun setCollaborator(
+        owner: String,
+        name: String,
+        invite: GithubCollaboratorInvite
+    ): Result<GithubCollaboratorChange> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val payload = buildJsonObject { put("permission", invite.permission) }
+            val request = requests.builder(collaboratorEndpoint(owner, name, invite.login))
+                .header("Accept", "application/vnd.github+json")
+                .put(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                // 201 created an invitation to accept; anything else restated an existing role.
+                val change = if (response.code == 201) {
+                    GithubCollaboratorChange.Invited
+                } else {
+                    GithubCollaboratorChange.Updated
+                }
+                cacheStore.clear()
+                change
+            }
+        }
+    }
+
+    override suspend fun removeCollaborator(
+        owner: String,
+        name: String,
+        login: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val request = requests.builder(collaboratorEndpoint(owner, name, login))
+                .header("Accept", "application/vnd.github+json")
+                .delete()
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.clear()
+            }
+        }
+    }
+
+    // The login is a path segment, so OkHttp is what keeps it from escaping into another endpoint.
+    private fun collaboratorEndpoint(owner: String, name: String, login: String): String =
+        baseUrl.toHttpUrl().newBuilder()
+            .addPathSegment("repos")
+            .addPathSegment(owner)
+            .addPathSegment(name)
+            .addPathSegment("collaborators")
+            .addPathSegment(login)
+            .build()
+            .toString()
+
+    private suspend fun contributors(
+        owner: String,
+        name: String,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubCollaborator>> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val url = baseUrl.toHttpUrl().newBuilder()
+                .addPathSegment("repos")
+                .addPathSegment(owner)
+                .addPathSegment(name)
+                .addPathSegment("contributors")
+                .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
+                .addQueryParameter("page", page.coerceAtLeast(1).toString())
+                .build()
+            val cacheKey = GithubCacheKeys.endpoint("repository-contributors", requests.cacheScope(), url.toString())
+            cachedGet.execute(
+                client = client,
+                cacheKey = cacheKey,
+                request = { etag ->
+                    requests.optionalBuilder(url.toString()).get().withCacheValidator(etag).build()
+                },
+                decode = { body, linkHeader ->
+                    GithubPage(
+                        items = json.decodeFromString(
+                            ListSerializer(ContributorDto.serializer()), body
+                        ).map(ContributorDto::toDomain),
                         nextPage = GithubPagination.nextPage(linkHeader)
                     )
                 }
@@ -270,6 +399,20 @@ class GithubRepositoryDetailsRepositoryImpl(
         val maintain: Boolean = false,
         val admin: Boolean = false
     )
+
+    @Serializable
+    private data class ContributorDto(
+        val login: String,
+        @SerialName("avatar_url") val avatarUrl: String? = null,
+        @SerialName("html_url") val htmlUrl: String = "",
+        val contributions: Int = 0
+    ) {
+        fun toDomain() = GithubCollaborator(
+            user = GithubUserSummary(login, avatarUrl, htmlUrl),
+            role = GithubCollaboratorRole.UNKNOWN,
+            contributions = contributions
+        )
+    }
 
     @Serializable
     private data class WebhookDto(

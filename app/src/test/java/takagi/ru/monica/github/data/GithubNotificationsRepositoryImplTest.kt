@@ -80,6 +80,34 @@ class GithubNotificationsRepositoryImplTest {
     }
 
     @Test
+    fun readQueryUsesAllTrueAndKeepsItsOwnCacheEntry() = runTest {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setHeader("ETag", "\"unread-v1\"").setBody(NOTIFICATIONS_JSON)
+        )
+        server.enqueue(
+            MockResponse().setResponseCode(200).setHeader("ETag", "\"read-v1\"").setBody(READ_NOTIFICATION_JSON)
+        )
+        server.enqueue(MockResponse().setResponseCode(304))
+        val cache = TestGithubCacheStore()
+        val repository = repository(cache)
+
+        val unread = repository.notifications(page = 1, perPage = 50).getOrThrow()
+        val read = repository.notifications(page = 1, perPage = 50, includeRead = true).getOrThrow()
+        val repeated = repository.notifications(page = 1, perPage = 50, includeRead = true).getOrThrow()
+
+        assertEquals("/notifications?all=false&participating=false&per_page=50&page=1", server.takeRequest().path)
+        assertEquals("/notifications?all=true&participating=false&per_page=50&page=1", server.takeRequest().path)
+        val validated = server.takeRequest()
+        assertEquals("/notifications?all=true&participating=false&per_page=50&page=1", validated.path)
+        assertEquals("\"read-v1\"", validated.getHeader("If-None-Match"))
+
+        assertEquals("123", unread.items.single().id)
+        assertEquals("999", read.items.single().id)
+        assertEquals(read.items, repeated.items)
+        assertEquals(NOTIFICATIONS_JSON, cache.read(cacheKeyForNotifications())?.body)
+    }
+
+    @Test
     fun markReadUsesThreadPatchEndpoint() = runTest {
         server.enqueue(MockResponse().setResponseCode(205))
 
@@ -151,6 +179,26 @@ class GithubNotificationsRepositoryImplTest {
                   "title": "Review this change",
                   "type": "PullRequest",
                   "url": "https://api.github.com/repos/etoile/mobile/pulls/42"
+                },
+                "repository": {
+                  "full_name": "etoile/mobile",
+                  "html_url": "https://github.com/etoile/mobile"
+                }
+              }
+            ]
+        """.trimIndent()
+
+        val READ_NOTIFICATION_JSON = """
+            [
+              {
+                "id": "999",
+                "reason": "subscribed",
+                "unread": false,
+                "updated_at": "2026-08-15T00:00:00Z",
+                "subject": {
+                  "title": "Already handled",
+                  "type": "Issue",
+                  "url": "https://api.github.com/repos/etoile/mobile/issues/7"
                 },
                 "repository": {
                   "full_name": "etoile/mobile",

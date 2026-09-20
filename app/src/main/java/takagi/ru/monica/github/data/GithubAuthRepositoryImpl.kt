@@ -1,10 +1,13 @@
 package takagi.ru.monica.github.data
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import takagi.ru.monica.github.domain.GithubDeviceAccessToken
 import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubAuthRepository
 import takagi.ru.monica.github.domain.GithubSession
@@ -12,7 +15,8 @@ import takagi.ru.monica.github.domain.GithubSession
 class GithubAuthRepositoryImpl(
     private val tokenStore: GithubTokenStore,
     private val accountApi: GithubAccountRemoteDataSource,
-    private val cacheStore: GithubCacheStore = NoOpGithubCacheStore
+    private val cacheStore: GithubCacheStore = NoOpGithubCacheStore,
+    private val credentialRefresher: GithubCredentialRefresher? = null
 ) : GithubAuthRepository {
     private val mutationMutex = Mutex()
     private val _session = MutableStateFlow<GithubSession>(GithubSession.Loading)
@@ -24,26 +28,30 @@ class GithubAuthRepositoryImpl(
         restoreLocked()
     }
 
-    override suspend fun signInWithToken(token: String): Result<GithubAccount> = mutationMutex.withLock {
+    override suspend fun signInWithToken(token: String): Result<GithubAccount> = signIn(token, null)
+
+    override suspend fun signInWithOAuth(token: GithubDeviceAccessToken): Result<GithubAccount> =
+        signIn(token.accessToken, token)
+
+    private suspend fun signIn(token: String, oauth: GithubDeviceAccessToken?): Result<GithubAccount> = mutationMutex.withLock {
         val normalized = token.trim()
         if (!isValidTokenInput(normalized)) {
             return@withLock Result.failure(IllegalArgumentException("Invalid token format"))
         }
-        val previousSession = stableSessionBeforeMutation()
-        _session.value = GithubSession.Loading
-        accountApi.authenticatedUser(normalized).fold(
-            onSuccess = { account ->
-                cacheStore.clear()
-                tokenStore.save(account, normalized)
-                refreshAccounts()
-                _session.value = GithubSession.SignedIn(account)
-                Result.success(account)
-            },
-            onFailure = { error ->
-                _session.value = previousSession
-                Result.failure(error)
-            }
-        )
+        // Validation belongs to the sign-in form. Keep the current account usable
+        // until another credential has actually been verified.
+        githubRunCatching {
+            val account = accountApi.authenticatedUser(normalized).getOrThrow()
+            // A remote implementation may finish after its caller was cancelled.
+            // Never persist that response or replace the active account.
+            currentCoroutineContext().ensureActive()
+            cacheStore.clear()
+            if (oauth == null) tokenStore.save(account, normalized)
+            else tokenStore.saveOAuth(account, oauth)
+            refreshAccounts()
+            _session.value = GithubSession.SignedIn(account)
+            account
+        }
     }
 
     override suspend fun switchAccount(accountId: Long): Result<GithubAccount> = mutationMutex.withLock {
@@ -52,12 +60,15 @@ class GithubAuthRepositoryImpl(
         val credential = tokenStore.storedCredentials().firstOrNull { it.account.id == accountId }
             ?: return@withLock Result.failure(IllegalArgumentException("Unknown GitHub account"))
         val previousSession = stableSessionBeforeMutation()
-        accountApi.authenticatedUser(credential.token).fold(
+        val usableToken = credentialRefresher?.token(accountId)?.getOrElse {
+            return@withLock Result.failure(it)
+        } ?: credential.token
+        accountApi.authenticatedUser(usableToken).fold(
             onSuccess = { verifiedAccount ->
                 if (verifiedAccount.id != credential.account.id) {
                     tokenStore.remove(credential.account.id)
                 }
-                tokenStore.save(verifiedAccount, credential.token)
+                tokenStore.save(verifiedAccount, usableToken)
                 cacheStore.clear()
                 refreshAccounts()
                 _session.value = GithubSession.SignedIn(verifiedAccount)
@@ -98,7 +109,12 @@ class GithubAuthRepositoryImpl(
         val activeCredential = tokenStore.activeAccountId()?.let { activeId ->
             credentials.firstOrNull { it.account.id == activeId }
         } ?: credentials.firstOrNull()
-        val token = activeCredential?.token ?: tokenStore.read()
+        val token = if (activeCredential != null && credentialRefresher != null) {
+            credentialRefresher.token(activeCredential.account.id).getOrElse {
+                _session.value = GithubSession.Error(recoverable = true)
+                return Result.failure(it)
+            }
+        } else activeCredential?.token ?: tokenStore.read()
         if (token == null) {
             refreshAccounts()
             _session.value = GithubSession.SignedOut

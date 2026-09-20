@@ -4,6 +4,6 @@ enum class GithubDestination {
     HOME,
     INBOX,
     EXPLORE,
-    COPILOT,
+    STORE,
     PROFILE
 }

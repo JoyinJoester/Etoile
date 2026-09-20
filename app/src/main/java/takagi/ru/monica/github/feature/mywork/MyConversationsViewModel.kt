@@ -17,6 +17,7 @@ import takagi.ru.monica.github.domain.mergeItems
 
 @Immutable
 data class MyConversationsUiState(
+    val filter: MyConversationsFilter = MyConversationsFilter.OPEN,
     val items: List<GithubIssueSearchResult> = emptyList(),
     val nextPage: Int? = null,
     val isLoading: Boolean = false,
@@ -28,6 +29,8 @@ data class MyConversationsUiState(
 }
 
 sealed interface MyConversationsAction {
+    data object Refresh : MyConversationsAction
+    data class SelectFilter(val filter: MyConversationsFilter) : MyConversationsAction
     data object Retry : MyConversationsAction
     data object LoadMore : MyConversationsAction
 }
@@ -40,16 +43,28 @@ class MyConversationsViewModel(
     val state: StateFlow<MyConversationsUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var currentLogin: String? = null
+    private var requestVersion = 0
 
     fun onSessionChanged(session: GithubSession) {
         when (session) {
-            GithubSession.Loading -> _state.update { it.copy(isLoading = true, error = false) }
+            GithubSession.Loading -> {
+                requestVersion++
+                loadJob?.cancel()
+                currentLogin = null
+                _state.value = MyConversationsUiState(isLoading = true)
+            }
             GithubSession.SignedOut -> {
                 currentLogin = null
+                requestVersion++
                 loadJob?.cancel()
                 _state.value = MyConversationsUiState(requiresAuthentication = true)
             }
-            is GithubSession.Error -> _state.update { it.copy(isLoading = false, requiresAuthentication = false, error = true) }
+            is GithubSession.Error -> {
+                requestVersion++
+                loadJob?.cancel()
+                currentLogin = null
+                _state.value = MyConversationsUiState(requiresAuthentication = false, error = true)
+            }
             is GithubSession.SignedIn -> {
                 currentLogin = session.account.login
                 load(login = session.account.login, reset = true)
@@ -59,6 +74,12 @@ class MyConversationsViewModel(
 
     fun onAction(action: MyConversationsAction) {
         when (action) {
+            MyConversationsAction.Refresh -> load(login = currentLogin, reset = true)
+            is MyConversationsAction.SelectFilter -> {
+                if (action.filter == _state.value.filter) return
+                _state.update { it.copy(filter = action.filter) }
+                load(login = currentLogin, reset = true)
+            }
             MyConversationsAction.Retry -> load(login = currentLogin, reset = _state.value.items.isEmpty())
             MyConversationsAction.LoadMore -> load(login = currentLogin, reset = false)
         }
@@ -69,10 +90,12 @@ class MyConversationsViewModel(
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
         val user = login ?: return
+        val version = ++requestVersion
         loadJob?.cancel()
         _state.update {
             it.copy(
                 items = if (reset) emptyList() else it.items,
+                nextPage = if (reset) null else it.nextPage,
                 isLoading = reset,
                 isLoadingMore = !reset,
                 requiresAuthentication = false,
@@ -80,11 +103,12 @@ class MyConversationsViewModel(
             )
         }
         loadJob = viewModelScope.launch {
-            val query = "is:open involves:$user"
+            val query = listOfNotNull(current.filter.qualifier, "involves:$user").joinToString(" ")
             val result = when (kind) {
                 MyConversationsKind.ISSUES -> searchRepository.issues(query, requestedPage)
                 MyConversationsKind.PULL_REQUESTS -> searchRepository.pullRequests(query, requestedPage)
             }
+            if (version != requestVersion) return@launch
             result.fold(
                 onSuccess = { page ->
                     _state.update { state ->
@@ -117,3 +141,7 @@ class MyConversationsViewModel(
 }
 
 enum class MyConversationsKind { ISSUES, PULL_REQUESTS }
+
+enum class MyConversationsFilter(val qualifier: String?) {
+    OPEN("is:open"), CLOSED("is:closed"), ALL(null)
+}
