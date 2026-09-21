@@ -286,7 +286,8 @@ internal fun ActionsLogPanel(
     modifier: Modifier = Modifier
 ) {
     val formattedLog = remember(log.text) { formatGithubActionsLog(log.text) }
-    var wrapLines by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    // Mobile readers should see the complete first line immediately; horizontal scrolling remains opt-in.
+    var wrapLines by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(true) }
     Column(modifier = modifier) {
         GithubSectionHeader(
             title = stringResource(R.string.github_job_log),

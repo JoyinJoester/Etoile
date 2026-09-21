@@ -40,7 +40,7 @@
       "name": "作业日志",
       "x": 1476,
       "y": 0,
-      "note": "步骤名称全宽，状态在名称下方。日志可切换自动换行或横向滚动，截断必须说明。"
+      "note": "步骤名称全宽，状态在名称下方。首次打开自动换行，确保手机上长路径完整可读；可切换横向滚动查看原始日志，截断必须说明。"
     },
     {
       "id": "app",
@@ -423,13 +423,13 @@
         {
           "id": "job-item-3",
           "kind": "button",
-          "label": "自动换行",
-          "icon": "wrap_text",
+          "label": "横向滚动",
+          "icon": "swap_horiz",
           "variant": "tonal",
           "size": 380,
           "toggle": {
-            "label": "横向滚动",
-            "icon": "swap_horiz",
+            "label": "自动换行",
+            "icon": "wrap_text",
             "variant": "filled"
           }
         }
