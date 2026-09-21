@@ -162,7 +162,7 @@ internal fun LargeScreenSamples(page: String, onBack: () -> Unit, onReport: (Str
         )
         "webhooks" -> RepositoryWebhooksScreen(
             RepositoryWebhooksUiState("etoile", "android-client", isLoading = false, items = List(4) {
-                GithubRepositoryWebhook(it.toLong(), "Delivery ${it + 1}", url = null, isActive = it % 2 == 0, events = listOf("push", "pull_request", "issues", "release"), lastResponseCode = 200, lastResponseStatus = "OK", lastResponseMessage = "Delivery accepted")
+                GithubRepositoryWebhook(it.toLong(), "Delivery ${it + 1}", url = "https://example.test/hooks/${it + 1}", isActive = it % 2 == 0, events = listOf("push", "pull_request", "issues", "release"), lastResponseCode = 200, lastResponseStatus = "OK", lastResponseMessage = "Delivery accepted")
             }),
             onAction = { onReport("Webhooks: $it") }, onBack = onBack, onOpenExternal = onReport
         )

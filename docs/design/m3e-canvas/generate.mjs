@@ -283,7 +283,7 @@ webhooks.part('divider', 16, 360);
 webhooks.part('listItem', 16, 392, 'web · #109', { supporting: 'https://example.test/issues', icon: 'link', switch: true, checked: false, size: 380 });
 webhooks.caption(480, 'issues · 最近响应：200 OK');
 const hookDelete = screen(ops, 'webhook-delete', 'Webhooks · 删除确认', '原生使用 AlertDialog 覆盖列表。取消保持列表；确认后等待 DELETE 完成，失败显示原因并保留该行。此画面用于设计确认状态，不是新原生路由。');
-hookDelete.part('dialog', 50, 280, '删除 Webhook', { supporting: '删除 https://example.test/build？此操作无法撤销。', icon: 'delete' });
+hookDelete.part('dialog', 50, 280, '删除 Webhook', { supporting: '删除“https://example.test/build”Webhook？此操作无法撤销。', icon: 'delete' });
 hookDelete.button(528, '取消', 'back', { variant: 'text', size: 182 });
 hookDelete.button(528, '删除 Webhook', 'webhook-empty', { x: 214, size: 182, note: '原生只有服务端成功才移除行；画布链接仅演示成功后的空列表。' });
 const hookFailure = screen(ops, 'webhook-failure', 'Webhooks · 操作失败', 'HTTP 403 显示权限失败说明，422 显示输入被拒，网络失败保留服务端确认的开关值与原行。');

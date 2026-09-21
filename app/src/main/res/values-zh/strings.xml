@@ -835,7 +835,7 @@
     <string name="github_webhook_inactive">Webhook 已停用</string>
     <string name="github_webhook_no_events">未订阅事件</string>
     <string name="github_webhook_delete">删除 Webhook</string>
-    <string name="github_webhook_delete_confirm">停止向“%1$s”投递？此操作无法撤销。</string>
+    <string name="github_webhook_delete_confirm">删除“%1$s”Webhook？此操作无法撤销。</string>
     <string name="github_webhook_last_response">最近响应：%1$s</string>
     <string name="github_edit_pr_content">编辑拉取请求</string>
     <string name="github_edit_pr_content_subtitle">更新标题与 Markdown 描述。</string>

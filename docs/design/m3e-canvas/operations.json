@@ -924,7 +924,7 @@
           "label": "删除 Webhook",
           "icon": "delete",
           "variant": "filled",
-          "supporting": "删除 https://example.test/build？此操作无法撤销。"
+          "supporting": "删除“https://example.test/build”Webhook？此操作无法撤销。"
         }
       ]
     },
