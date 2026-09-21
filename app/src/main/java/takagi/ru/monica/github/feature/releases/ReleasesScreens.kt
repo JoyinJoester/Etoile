@@ -107,6 +107,7 @@ fun ReleasesScreen(
     onBack: () -> Unit,
     onOpenRelease: (GithubRelease) -> Unit,
     onOpenExternal: (String) -> Unit,
+    enableAssetAttachments: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var dialog by rememberSaveable { mutableStateOf<String?>(null) }
@@ -122,23 +123,25 @@ fun ReleasesScreen(
     val attach = state.pendingMutation as? ReleaseMutation.Attach
     val outcome = state.mutationOutcome
     val context = LocalContext.current
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        val releaseId = attachTarget
-        attachTarget = 0L
-        if (uri != null && releaseId > 0L) {
-            val fileName = uri.attachmentName(context.contentResolver)
-            onAction(
-                ReleasesAction.Attach(
-                    releaseId = releaseId,
-                    fileName = fileName,
-                    label = "",
-                    contentType = context.contentResolver.getType(uri),
-                    contentLength = uri.attachmentSize(context.contentResolver),
-                    open = { uri.assetInput(context.contentResolver) }
+    val picker = if (enableAssetAttachments) {
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            val releaseId = attachTarget
+            attachTarget = 0L
+            if (uri != null && releaseId > 0L) {
+                val fileName = uri.attachmentName(context.contentResolver)
+                onAction(
+                    ReleasesAction.Attach(
+                        releaseId = releaseId,
+                        fileName = fileName,
+                        label = "",
+                        contentType = context.contentResolver.getType(uri),
+                        contentLength = uri.attachmentSize(context.contentResolver),
+                        open = { uri.assetInput(context.contentResolver) }
+                    )
                 )
-            )
+            }
         }
-    }
+    } else null
 
     fun open(kind: String, release: GithubRelease?) {
         dialog = kind
@@ -313,7 +316,7 @@ fun ReleasesScreen(
                             )
                         },
                         onDelete = { open("delete", release) },
-                        onAttach = { attachTarget = release.id; picker.launch(arrayOf("*/*")) },
+                        onAttach = { if (picker != null) { attachTarget = release.id; picker.launch(arrayOf("*/*")) } },
                         isUploading = attach?.releaseId == release.id
                     )
                 }

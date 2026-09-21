@@ -109,7 +109,8 @@ internal fun LargeScreenSamples(page: String, onBack: () -> Unit, onReport: (Str
         "releases" -> ReleasesScreen(
             ReleasesUiState("etoile", "android-client", items = List(count) { wideRelease.copy(id = 100L + it, tagName = "v1.${it}.0", name = "Release ${it + 1}: ${wideTitles[it % wideTitles.size]}") }, nextPage = nextPage, isLoading = false),
             onAction = { if (it == ReleasesAction.LoadMore) count += 4 else onReport("Releases: $it") },
-            onBack = onBack, onOpenRelease = { onReport(it.displayName) }, onOpenExternal = onReport
+            onBack = onBack, onOpenRelease = { onReport(it.displayName) }, onOpenExternal = onReport,
+            enableAssetAttachments = false
         )
         "release" -> ReleaseDetailScreen(
             ReleaseDetailUiState("etoile", "android-client", ReleaseReference.Id(wideRelease.id), release = wideRelease, isLoading = false),
