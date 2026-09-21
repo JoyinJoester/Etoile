@@ -28,6 +28,7 @@ import takagi.ru.monica.github.domain.GithubRepositorySettings
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
+import takagi.ru.monica.github.domain.GithubWebhookDelivery
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RepositoryWebhooksViewModelTest {
@@ -226,6 +227,12 @@ class RepositoryWebhooksViewModelTest {
             deletes += id
             return deleteResult ?: Result.success(Unit)
         }
+
+        override suspend fun webhookDeliveries(
+            owner: String, name: String, id: Long, page: Int, perPage: Int
+        ): Result<GithubPage<GithubWebhookDelivery>> = Result.failure(UnsupportedOperationException())
+        override suspend fun redeliverWebhook(owner: String, name: String, id: Long, deliveryId: Long): Result<Unit> =
+            Result.failure(UnsupportedOperationException())
 
         override suspend fun details(owner: String, name: String): Result<GithubRepositoryDetails> =
             Result.failure(UnsupportedOperationException())

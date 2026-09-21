@@ -18,6 +18,7 @@ import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubUserSummary
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
+import takagi.ru.monica.github.domain.GithubWebhookDelivery
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -365,6 +366,61 @@ class GithubRepositoryDetailsRepositoryImpl(
         }
     }
 
+    override suspend fun webhookDeliveries(
+        owner: String,
+        name: String,
+        id: Long,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubWebhookDelivery>> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val url = webhookEndpoint(owner, name, id).toHttpUrl().newBuilder()
+                .addPathSegment("deliveries")
+                .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
+                .addQueryParameter("page", page.coerceAtLeast(1).toString())
+                .build()
+            val cacheKey = GithubCacheKeys.endpoint("repository-webhook-deliveries", requests.cacheScope(), url.toString())
+            cachedGet.execute(
+                client = client,
+                cacheKey = cacheKey,
+                request = { etag ->
+                    requests.builder(url.toString()).get().withCacheValidator(etag).build()
+                },
+                decode = { body, linkHeader ->
+                    GithubPage(
+                        items = json.decodeFromString(
+                            ListSerializer(WebhookDeliveryDto.serializer()), body
+                        ).map(WebhookDeliveryDto::toDomain),
+                        nextPage = GithubPagination.nextPage(linkHeader)
+                    )
+                }
+            )
+        }
+    }
+
+    override suspend fun redeliverWebhook(
+        owner: String,
+        name: String,
+        id: Long,
+        deliveryId: Long
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val url = webhookEndpoint(owner, name, id).toHttpUrl().newBuilder()
+                .addPathSegment("deliveries")
+                .addPathSegment(deliveryId.toString())
+                .addPathSegment("attempts")
+                .build()
+            val request = requests.builder(url.toString())
+                .header("Accept", "application/vnd.github+json")
+                .post("".toRequestBody("application/json; charset=utf-8".toMediaType()))
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.clear()
+            }
+        }
+    }
+
     // The id is a path segment, so OkHttp is what keeps it from escaping into another endpoint.
     private fun webhookEndpoint(owner: String, name: String, id: Long): String =
         baseUrl.toHttpUrl().newBuilder()
@@ -494,6 +550,31 @@ class GithubRepositoryDetailsRepositoryImpl(
     private data class WebhookConfigDto(
         @SerialName("url") val url: String? = null
     )
+
+    @Serializable
+    private data class WebhookDeliveryDto(
+        val id: Long,
+        val guid: String? = null,
+        @SerialName("delivered_at") val deliveredAt: String? = null,
+        val redelivery: Boolean = false,
+        val duration: Int? = null,
+        val status: String? = null,
+        @SerialName("status_code") val statusCode: Int? = null,
+        val event: String? = null,
+        val action: String? = null
+    ) {
+        fun toDomain() = GithubWebhookDelivery(
+            id = id,
+            guid = guid,
+            deliveredAt = deliveredAt,
+            redelivery = redelivery,
+            durationMs = duration,
+            status = status,
+            statusCode = statusCode,
+            event = event,
+            action = action
+        )
+    }
 
     @Serializable
     private data class WebhookLastResponseDto(

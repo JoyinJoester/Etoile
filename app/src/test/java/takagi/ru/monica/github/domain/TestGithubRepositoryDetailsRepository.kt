@@ -52,6 +52,21 @@ class TestGithubRepositoryDetailsRepository(
 
     override suspend fun webhooks(owner: String, name: String, page: Int, perPage: Int) =
         Result.success(GithubPage<GithubRepositoryWebhook>(emptyList(), null))
+
+    override suspend fun webhookDeliveries(
+        owner: String,
+        name: String,
+        id: Long,
+        page: Int,
+        perPage: Int
+    ): Result<GithubPage<GithubWebhookDelivery>> = Result.failure(UnsupportedOperationException())
+
+    override suspend fun redeliverWebhook(
+        owner: String,
+        name: String,
+        id: Long,
+        deliveryId: Long
+    ): Result<Unit> = Result.failure(UnsupportedOperationException())
     override suspend fun updateWebhook(
         owner: String, name: String, id: Long, edit: GithubWebhookEdit
     ): Result<GithubRepositoryWebhook> = Result.failure(UnsupportedOperationException())

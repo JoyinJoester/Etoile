@@ -148,6 +148,19 @@ data class GithubWebhookEdit(
     val active: Boolean? = null
 )
 
+// One past webhook delivery; the list is newest-first and each row can be re-POSTed (redelivered).
+data class GithubWebhookDelivery(
+    val id: Long,
+    val guid: String? = null,
+    val deliveredAt: String? = null,
+    val redelivery: Boolean = false,
+    val durationMs: Int? = null,
+    val status: String? = null,
+    val statusCode: Int? = null,
+    val event: String? = null,
+    val action: String? = null
+)
+
 interface GithubRepositoryDetailsRepository {
     suspend fun details(owner: String, name: String): Result<GithubRepositoryDetails>
     suspend fun readme(owner: String, name: String, ref: String? = null): Result<String?>
@@ -184,4 +197,18 @@ interface GithubRepositoryDetailsRepository {
         edit: GithubWebhookEdit
     ): Result<GithubRepositoryWebhook>
     suspend fun deleteWebhook(owner: String, name: String, id: Long): Result<Unit>
+    suspend fun webhookDeliveries(
+        owner: String,
+        name: String,
+        id: Long,
+        page: Int = 1,
+        perPage: Int = 30
+    ): Result<GithubPage<GithubWebhookDelivery>>
+    // A redelivery re-POSTs a past delivery; GitHub answers 202 with no body, so the caller gets Unit.
+    suspend fun redeliverWebhook(
+        owner: String,
+        name: String,
+        id: Long,
+        deliveryId: Long
+    ): Result<Unit>
 }

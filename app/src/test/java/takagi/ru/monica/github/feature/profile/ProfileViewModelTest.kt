@@ -32,6 +32,7 @@ import takagi.ru.monica.github.domain.GithubRepositorySettings
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
+import takagi.ru.monica.github.domain.GithubWebhookDelivery
 import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.github.domain.GithubUserConnectionKind
 import takagi.ru.monica.github.domain.GithubUserSummary
@@ -198,6 +199,10 @@ class ProfileViewModelTest {
         override suspend fun updateWebhook(owner: String, name: String, id: Long, edit: GithubWebhookEdit): Result<GithubRepositoryWebhook> =
             error("unused")
         override suspend fun deleteWebhook(owner: String, name: String, id: Long): Result<Unit> =
+            error("unused")
+        override suspend fun webhookDeliveries(owner: String, name: String, id: Long, page: Int, perPage: Int): Result<GithubPage<GithubWebhookDelivery>> =
+            error("unused")
+        override suspend fun redeliverWebhook(owner: String, name: String, id: Long, deliveryId: Long): Result<Unit> =
             error("unused")
         override suspend fun viewerFollows(login: String): Result<Boolean> = error("unused")
         override suspend fun setFollowing(login: String, following: Boolean): Result<Boolean> = error("unused")

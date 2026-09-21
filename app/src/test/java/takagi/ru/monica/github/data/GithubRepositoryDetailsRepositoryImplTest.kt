@@ -482,6 +482,39 @@ class GithubRepositoryDetailsRepositoryImplTest {
         }
     }
 
+    @Test
+    fun webhookDeliveriesMapTheLatestAttempts() = runTest {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """[{"id":77,"guid":"g-77","delivered_at":"2026-09-20T10:00:00Z","redelivery":false,"duration":120,"status":"ok","status_code":200,"event":"push","action":null}]"""
+            )
+        )
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val page = repository.webhookDeliveries("openai", "codex", 9).getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("/repos/openai/codex/hooks/9/deliveries?per_page=30&page=1", request.path)
+        val delivery = page.items.single()
+        assertEquals(77L, delivery.id)
+        assertEquals("push", delivery.event)
+        assertEquals("ok", delivery.status)
+        assertEquals(200, delivery.statusCode)
+        assertEquals(false, delivery.redelivery)
+    }
+
+    @Test
+    fun redeliverWebhookPostsTheAttemptsEndpointAndAccepts202() = runTest {
+        server.enqueue(MockResponse().setResponseCode(202))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        repository.redeliverWebhook("openai", "codex", 9, 77).getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("POST", request.method)
+        assertEquals("/repos/openai/codex/hooks/9/deliveries/77/attempts", request.path)
+    }
+
     private fun invite(
         login: String,
         role: GithubCollaboratorRole
