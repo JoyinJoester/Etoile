@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,6 +30,8 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Fullscreen
+import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
@@ -447,6 +450,7 @@ fun RepositoryFileScreen(
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var fullscreen by rememberSaveable { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val savedCommit = state.writtenCommit
     val savedMessage = if (savedCommit == null) {
@@ -480,24 +484,7 @@ fun RepositoryFileScreen(
         )
     }
     val content = state.content
-    GithubDetailScaffold(
-        title = state.fileName,
-        subtitle = state.ref,
-        backContentDescription = stringResource(R.string.github_back),
-        onBack = onBack,
-        modifier = modifier,
-        snackbarHostState = snackbarHostState,
-        actions = {
-            if (content is GithubFileContent.Text && !state.fileName.isMarkdownFile() && state.canWrite) {
-                TextButton(onClick = { onAction(RepositoryFileAction.StartEdit) }, enabled = !state.writing) {
-                    Text(stringResource(R.string.github_edit_file))
-                }
-            }
-            GithubOpenOnGithubButton {
-                onOpenExternal(GithubWebUrls.blob(state.fullName, state.ref, state.path))
-            }
-        }
-    ) { padding ->
+    val renderContent: @Composable (PaddingValues) -> Unit = { padding ->
         Box(modifier = Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -530,6 +517,52 @@ fun RepositoryFileScreen(
             }
         }
     }
+    if (fullscreen && content is GithubFileContent.Text) {
+        Column(Modifier.fillMaxSize().systemBarsPadding()) {
+            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = { fullscreen = false }) {
+                        Icon(Icons.Default.FullscreenExit, stringResource(R.string.github_exit_fullscreen))
+                    }
+                    Column(Modifier.weight(1f).padding(horizontal = 8.dp)) {
+                        Text(state.fileName, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(state.ref, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    GithubOpenOnGithubButton {
+                        onOpenExternal(GithubWebUrls.blob(state.fullName, state.ref, state.path))
+                    }
+                }
+            }
+            Box(Modifier.weight(1f).fillMaxWidth()) {
+                renderContent(PaddingValues())
+            }
+        }
+    } else GithubDetailScaffold(
+        title = state.fileName,
+        subtitle = state.ref,
+        backContentDescription = stringResource(R.string.github_back),
+        onBack = onBack,
+        modifier = modifier,
+        snackbarHostState = snackbarHostState,
+        actions = {
+            if (content is GithubFileContent.Text && !state.fileName.isMarkdownFile() && state.canWrite) {
+                TextButton(onClick = { onAction(RepositoryFileAction.StartEdit) }, enabled = !state.writing) {
+                    Text(stringResource(R.string.github_edit_file))
+                }
+            }
+            if (content is GithubFileContent.Text) {
+                IconButton(onClick = { fullscreen = true }) {
+                    Icon(Icons.Default.Fullscreen, stringResource(R.string.github_fullscreen))
+                }
+            }
+            GithubOpenOnGithubButton {
+                onOpenExternal(GithubWebUrls.blob(state.fullName, state.ref, state.path))
+            }
+        }
+    ) { padding -> renderContent(padding) }
 }
 
 @Composable

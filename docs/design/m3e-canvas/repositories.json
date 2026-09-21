@@ -36,44 +36,51 @@
       "note": "Markdown 使用正文尺度；代码支持双向滚动与选择。切换原文和预览不改变当前仓库上下文。"
     },
     {
-      "id": "refs",
-      "name": "分支与标签",
+      "id": "reader-fullscreen",
+      "name": "README.md · 全屏阅读",
       "x": 1476,
       "y": 0,
+      "note": "代码和正文占满屏幕；顶部只保留退出全屏、文件名、分支和打开 GitHub。选择与横向滚动仍然可用。"
+    },
+    {
+      "id": "refs",
+      "name": "分支与标签",
+      "x": 0,
+      "y": 972,
       "note": "两个数据集分别加载、分页和重试。没有匹配时保留搜索与清除入口。"
     },
     {
       "id": "releases",
       "name": "发布版本",
-      "x": 0,
+      "x": 492,
       "y": 972,
       "note": "状态标签区分正式版、预发布和草稿；有权限才展示管理动作。"
     },
     {
       "id": "release",
       "name": "Etoile 0.1",
-      "x": 492,
+      "x": 984,
       "y": 972,
       "note": "文件快捷入口跳到下载区。完整文件名、架构、大小与下载动作分行，长名称不能挤走按钮。"
     },
     {
       "id": "assets",
       "name": "下载文件",
-      "x": 984,
+      "x": 1476,
       "y": 972,
       "note": "所有名称完整换行；点击下载交给现有下载流程。错误、取消和再次尝试就地反馈。"
     },
     {
       "id": "commits",
       "name": "提交记录",
-      "x": 1476,
-      "y": 972,
+      "x": 0,
+      "y": 1944,
       "note": "提交标题优先，作者、时间和短 SHA 为次级信息。"
     },
     {
       "id": "commit",
       "name": "提交详情",
-      "x": 0,
+      "x": 492,
       "y": 1944,
       "note": "文件名独占一行。补丁可展开、折叠与横向滚动；二进制文件明确说明没有文本差异。"
     },
@@ -407,11 +414,32 @@
     {
       "id": "reader-group-4",
       "x": 1000,
-      "y": 204,
+      "y": 200,
       "axis": "x",
       "items": [
         {
           "id": "reader-item-4",
+          "kind": "button",
+          "label": "全屏阅读",
+          "icon": "fullscreen",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "reader-fullscreen",
+            "transition": "slide"
+          },
+          "note": "隐藏仓库导航，只保留文件名、分支、退出全屏和打开 GitHub；代码区域扩展到整屏。"
+        }
+      ]
+    },
+    {
+      "id": "reader-group-5",
+      "x": 1000,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-item-5",
           "kind": "card",
           "label": "Etoile",
           "icon": null,
@@ -424,13 +452,13 @@
       ]
     },
     {
-      "id": "reader-group-5",
+      "id": "reader-group-6",
       "x": 1000,
-      "y": 488,
+      "y": 548,
       "axis": "y",
       "items": [
         {
-          "id": "reader-row-5-0",
+          "id": "reader-row-6-0",
           "kind": "listItem",
           "label": "快速开始",
           "supporting": "阅读安装与登录说明",
@@ -439,7 +467,7 @@
           "size": 380
         },
         {
-          "id": "reader-row-5-1",
+          "id": "reader-row-6-1",
           "kind": "listItem",
           "label": "下载最新版本",
           "supporting": "打开发布版本",
@@ -455,9 +483,141 @@
       ]
     },
     {
-      "id": "refs-group-1",
+      "id": "reader-fullscreen-group-1",
       "x": 1476,
       "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-fullscreen-item-1",
+          "kind": "topAppBar",
+          "label": "README.md · 全屏阅读",
+          "icon": null,
+          "variant": "filled",
+          "actions": {}
+        }
+      ]
+    },
+    {
+      "id": "reader-fullscreen-group-2",
+      "x": 1476,
+      "y": 788,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-fullscreen-item-2",
+          "kind": "bottomNav",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "icon": "home",
+              "label": "首页"
+            },
+            {
+              "icon": "inbox",
+              "label": "通知"
+            },
+            {
+              "icon": "search",
+              "label": "探索"
+            },
+            {
+              "icon": "shopping_bag",
+              "label": "商店"
+            },
+            {
+              "icon": "person",
+              "label": "我的"
+            }
+          ],
+          "selected": 0,
+          "actions": {
+            "tab:0": {
+              "to": "home",
+              "transition": "fade"
+            },
+            "tab:1": {
+              "to": "inbox",
+              "transition": "fade"
+            },
+            "tab:2": {
+              "to": "explore",
+              "transition": "fade"
+            },
+            "tab:3": {
+              "to": "store",
+              "transition": "fade"
+            },
+            "tab:4": {
+              "to": "profile",
+              "transition": "fade"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "reader-fullscreen-group-3",
+      "x": 1492,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-fullscreen-item-3",
+          "kind": "text",
+          "label": "退出全屏  ·  Etoile / android · main",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "reader-fullscreen-group-4",
+      "x": 1492,
+      "y": 144,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-fullscreen-item-4",
+          "kind": "button",
+          "label": "退出全屏",
+          "icon": "fullscreen_exit",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "reader",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "reader-fullscreen-group-5",
+      "x": 1492,
+      "y": 208,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-fullscreen-item-5",
+          "kind": "card",
+          "label": "README.md",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "# Etoile\n\n你的 Android GitHub 工作空间。\n\n支持代码选择、搜索与横向滚动。",
+          "noImage": true,
+          "size": 380,
+          "size2": 560,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "refs-group-1",
+      "x": 0,
+      "y": 972,
       "axis": "x",
       "items": [
         {
@@ -477,8 +637,8 @@
     },
     {
       "id": "refs-group-2",
-      "x": 1492,
-      "y": 104,
+      "x": 16,
+      "y": 1076,
       "axis": "x",
       "items": [
         {
@@ -493,8 +653,8 @@
     },
     {
       "id": "refs-group-3",
-      "x": 1476,
-      "y": 176,
+      "x": 0,
+      "y": 1148,
       "axis": "x",
       "items": [
         {
@@ -517,8 +677,8 @@
     },
     {
       "id": "refs-group-4",
-      "x": 1492,
-      "y": 248,
+      "x": 16,
+      "y": 1220,
       "axis": "y",
       "items": [
         {
@@ -567,7 +727,7 @@
     },
     {
       "id": "releases-group-1",
-      "x": 0,
+      "x": 492,
       "y": 972,
       "axis": "x",
       "items": [
@@ -588,7 +748,7 @@
     },
     {
       "id": "releases-group-2",
-      "x": 16,
+      "x": 508,
       "y": 1076,
       "axis": "x",
       "items": [
@@ -604,7 +764,7 @@
     },
     {
       "id": "releases-group-3",
-      "x": 16,
+      "x": 508,
       "y": 1124,
       "axis": "y",
       "items": [
@@ -640,7 +800,7 @@
     },
     {
       "id": "release-group-1",
-      "x": 492,
+      "x": 984,
       "y": 972,
       "axis": "x",
       "items": [
@@ -661,7 +821,7 @@
     },
     {
       "id": "release-group-2",
-      "x": 508,
+      "x": 1000,
       "y": 1076,
       "axis": "x",
       "items": [
@@ -677,7 +837,7 @@
     },
     {
       "id": "release-group-3",
-      "x": 508,
+      "x": 1000,
       "y": 1116,
       "axis": "x",
       "items": [
@@ -697,7 +857,7 @@
     },
     {
       "id": "release-group-4",
-      "x": 508,
+      "x": 1000,
       "y": 1196,
       "axis": "x",
       "items": [
@@ -716,7 +876,7 @@
     },
     {
       "id": "release-group-5",
-      "x": 508,
+      "x": 1000,
       "y": 1464,
       "axis": "y",
       "items": [
@@ -738,7 +898,7 @@
     },
     {
       "id": "assets-group-1",
-      "x": 984,
+      "x": 1476,
       "y": 972,
       "axis": "x",
       "items": [
@@ -759,7 +919,7 @@
     },
     {
       "id": "assets-group-2",
-      "x": 1000,
+      "x": 1492,
       "y": 1084,
       "axis": "y",
       "items": [
@@ -794,8 +954,8 @@
     },
     {
       "id": "commits-group-1",
-      "x": 1476,
-      "y": 972,
+      "x": 0,
+      "y": 1944,
       "axis": "x",
       "items": [
         {
@@ -815,8 +975,8 @@
     },
     {
       "id": "commits-group-2",
-      "x": 1492,
-      "y": 1084,
+      "x": 16,
+      "y": 2056,
       "axis": "y",
       "items": [
         {
@@ -851,7 +1011,7 @@
     },
     {
       "id": "commit-group-1",
-      "x": 0,
+      "x": 492,
       "y": 1944,
       "axis": "x",
       "items": [
@@ -872,7 +1032,7 @@
     },
     {
       "id": "commit-group-2",
-      "x": 16,
+      "x": 508,
       "y": 2048,
       "axis": "x",
       "items": [
@@ -891,7 +1051,7 @@
     },
     {
       "id": "commit-group-3",
-      "x": 16,
+      "x": 508,
       "y": 2196,
       "axis": "y",
       "items": [
@@ -917,7 +1077,7 @@
     },
     {
       "id": "commit-group-4",
-      "x": 16,
+      "x": 508,
       "y": 2364,
       "axis": "x",
       "items": [

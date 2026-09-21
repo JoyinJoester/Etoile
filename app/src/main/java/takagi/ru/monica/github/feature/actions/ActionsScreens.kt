@@ -215,27 +215,32 @@ fun ActionsRunDetailScreen(
     onBack: () -> Unit,
     onOpenJob: (GithubWorkflowJob) -> Unit,
     onOpenExternal: (String) -> Unit,
+    enableArtifactDownloads: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val run = state.run
     val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     val context = LocalContext.current
     var downloadTarget by rememberSaveable { mutableStateOf(0L) }
-    val artifactPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("application/zip")
-    ) { uri ->
-        val artifact = state.artifacts.firstOrNull { it.id == downloadTarget }
-        if (uri != null && artifact != null) {
-            onAction(
-                ActionsRunDetailAction.DownloadArtifact(artifact.id) {
-                    uri.artifactOutput(context.contentResolver)
-                }
-            )
+    val artifactPicker = if (enableArtifactDownloads) {
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.CreateDocument("application/zip")
+        ) { uri ->
+            val artifact = state.artifacts.firstOrNull { it.id == downloadTarget }
+            if (uri != null && artifact != null) {
+                onAction(
+                    ActionsRunDetailAction.DownloadArtifact(artifact.id) {
+                        uri.artifactOutput(context.contentResolver)
+                    }
+                )
+            }
         }
-    }
+    } else null
     val requestDownload: (GithubWorkflowArtifact) -> Unit = { artifact ->
-        downloadTarget = artifact.id
-        artifactPicker.launch(artifact.zipFileName())
+        if (artifactPicker != null) {
+            downloadTarget = artifact.id
+            artifactPicker.launch(artifact.zipFileName())
+        }
     }
     GithubDetailScaffold(
         title = run?.let { stringResource(R.string.github_run_number, it.runNumber) } ?: "#${state.runId}",

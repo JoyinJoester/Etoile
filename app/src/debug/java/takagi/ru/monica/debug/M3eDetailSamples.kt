@@ -69,7 +69,8 @@ internal fun M3eDetailSamples(
             onAction = { onReport("Run: $it") },
             onBack = onBack,
             onOpenJob = { onOpenJob() },
-            onOpenExternal = onReport
+            onOpenExternal = onReport,
+            enableArtifactDownloads = false
         )
         "actions-job" -> ActionsJobDetailScreen(
             state = ActionsJobDetailUiState(

@@ -1036,6 +1036,8 @@
     <string name="github_pr_template_replace_message">Applying this template will replace your current description.</string>
     <string name="github_pr_template_apply">Apply template</string>
     <string name="github_edit_file">Edit file</string>
+    <string name="github_fullscreen">Open full screen</string>
+    <string name="github_exit_fullscreen">Exit full screen</string>
     <string name="github_save_file">Save file</string>
     <string name="github_save_file_success">Saved in commit %1$s</string>
     <string name="github_new_file">New file</string>
