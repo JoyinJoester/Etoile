@@ -70,6 +70,11 @@ internal fun RepositoryWriterSample() {
                 Result.failure<Unit>(UnsupportedOperationException("this sample never removes"))
             override suspend fun webhooks(owner: String, name: String, page: Int, perPage: Int) =
                 Result.success(GithubPage<GithubRepositoryWebhook>(emptyList(), null))
+            override suspend fun updateWebhook(
+                owner: String, name: String, id: Long, edit: GithubWebhookEdit
+            ): Result<GithubRepositoryWebhook> = Result.failure(UnsupportedOperationException())
+            override suspend fun deleteWebhook(owner: String, name: String, id: Long): Result<Unit> =
+                Result.failure(UnsupportedOperationException())
         }
     }
     val factory = remember(repository, details) { object : ViewModelProvider.Factory {

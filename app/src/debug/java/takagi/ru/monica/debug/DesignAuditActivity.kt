@@ -199,10 +199,10 @@ class DesignAuditActivity : ComponentActivity() {
                             state = RepositoryWebhooksUiState(
                                 owner = "sample", name = "android-client", isLoading = false,
                                 items = listOf(
-                                    GithubRepositoryWebhook(108, "web", true,
-                                        listOf("push", "pull_request", "issues", "release", "workflow_run", "discussion", "repository"),
-                                        503, "Service Unavailable", "The destination did not respond before the timeout. Check the receiver service and retry the delivery on GitHub."),
-                                    GithubRepositoryWebhook(109, "web", false, listOf("push"), 200, "OK", "Delivery accepted")
+                                    GithubRepositoryWebhook(108, "web", url = null, isActive = true,
+                                        events = listOf("push", "pull_request", "issues", "release", "workflow_run", "discussion", "repository"),
+                                        lastResponseCode = 503, lastResponseStatus = "Service Unavailable", lastResponseMessage = "The destination did not respond before the timeout. Check the receiver service and retry the delivery on GitHub."),
+                                    GithubRepositoryWebhook(109, "web", url = null, isActive = false, events = listOf("push"), lastResponseCode = 200, lastResponseStatus = "OK", lastResponseMessage = "Delivery accepted")
                                 )
                             ),
                             onAction = { report(it.toString()) }, onBack = { finish() },

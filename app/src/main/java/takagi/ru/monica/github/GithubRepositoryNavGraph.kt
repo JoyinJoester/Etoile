@@ -274,7 +274,9 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     }
                 },
                 onOpenWebhooks = { details ->
-                    scope.navController.navigate(GithubRepositoryWebhooksRoute(details.repository.fullName)) {
+                    scope.navController.navigate(
+                        GithubRepositoryWebhooksRoute(details.repository.fullName, details.viewerRole.canAdmin)
+                    ) {
                         launchSingleTop = true
                     }
                 },
@@ -504,11 +506,12 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
         }
         composable<GithubRepositoryWebhooksRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryWebhooksRoute>()
-            val factory = remember(route.fullName, scope.dependencies) {
+            val factory = remember(route.fullName, route.viewerCanAdmin, scope.dependencies) {
                 RepositoryWebhooksViewModel.Factory(
                     owner = route.owner,
                     name = route.name,
-                    repository = scope.dependencies.repositoryDetailsRepository
+                    repository = scope.dependencies.repositoryDetailsRepository,
+                    viewerCanAdmin = route.viewerCanAdmin
                 )
             }
             val webhooksViewModel: RepositoryWebhooksViewModel = viewModel(

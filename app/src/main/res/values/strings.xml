@@ -845,6 +845,8 @@
     <string name="github_webhook_active">Active webhook</string>
     <string name="github_webhook_inactive">Inactive webhook</string>
     <string name="github_webhook_no_events">No subscribed events</string>
+    <string name="github_webhook_delete">Delete webhook</string>
+    <string name="github_webhook_delete_confirm">Stop deliveries to “%1$s”? This cannot be undone.</string>
     <string name="github_webhook_last_response">Last response: %1$s</string>
     <string name="github_edit_pr_content">Edit pull request</string>
     <string name="github_edit_pr_content_subtitle">Update the title and Markdown description.</string>

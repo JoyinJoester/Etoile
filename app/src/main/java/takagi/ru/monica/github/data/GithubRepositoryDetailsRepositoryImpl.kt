@@ -17,6 +17,7 @@ import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubUserSummary
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
+import takagi.ru.monica.github.domain.GithubWebhookEdit
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -322,6 +323,59 @@ class GithubRepositoryDetailsRepositoryImpl(
         }
     }
 
+    override suspend fun updateWebhook(
+        owner: String,
+        name: String,
+        id: Long,
+        edit: GithubWebhookEdit
+    ): Result<GithubRepositoryWebhook> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val payload = buildJsonObject {
+                edit.active?.let { put("active", it) }
+            }
+            val request = requests.builder(webhookEndpoint(owner, name, id))
+                .header("Accept", "application/vnd.github+json")
+                .patch(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                val webhook = json.decodeFromString(
+                    WebhookDto.serializer(), response.body?.string().orEmpty()
+                ).toDomain()
+                cacheStore.clear()
+                webhook
+            }
+        }
+    }
+
+    override suspend fun deleteWebhook(
+        owner: String,
+        name: String,
+        id: Long
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val request = requests.builder(webhookEndpoint(owner, name, id))
+                .header("Accept", "application/vnd.github+json")
+                .delete()
+                .build()
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.clear()
+            }
+        }
+    }
+
+    // The id is a path segment, so OkHttp is what keeps it from escaping into another endpoint.
+    private fun webhookEndpoint(owner: String, name: String, id: Long): String =
+        baseUrl.toHttpUrl().newBuilder()
+            .addPathSegment("repos")
+            .addPathSegment(owner)
+            .addPathSegment(name)
+            .addPathSegment("hooks")
+            .addPathSegment(id.toString())
+            .build()
+            .toString()
+
     private fun repositoryEndpoint(
         owner: String,
         name: String,
@@ -421,11 +475,13 @@ class GithubRepositoryDetailsRepositoryImpl(
         val name: String = "web",
         val active: Boolean = false,
         val events: List<String> = emptyList(),
+        @SerialName("config") val config: WebhookConfigDto? = null,
         @SerialName("last_response") val lastResponse: WebhookLastResponseDto? = null
     ) {
         fun toDomain() = GithubRepositoryWebhook(
             id = id,
             name = name,
+            url = config?.url,
             isActive = active,
             events = events,
             lastResponseCode = lastResponse?.code,
@@ -433,6 +489,11 @@ class GithubRepositoryDetailsRepositoryImpl(
             lastResponseMessage = lastResponse?.message
         )
     }
+
+    @Serializable
+    private data class WebhookConfigDto(
+        @SerialName("url") val url: String? = null
+    )
 
     @Serializable
     private data class WebhookLastResponseDto(

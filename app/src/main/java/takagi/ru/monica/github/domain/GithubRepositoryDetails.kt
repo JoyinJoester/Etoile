@@ -135,11 +135,17 @@ data class GithubCollaborator(
 data class GithubRepositoryWebhook(
     val id: Long,
     val name: String,
+    val url: String? = null,
     val isActive: Boolean,
     val events: List<String>,
     val lastResponseCode: Int?,
     val lastResponseStatus: String?,
     val lastResponseMessage: String?
+)
+
+// A null field means "leave this hook property alone", matching the conditional PATCH payload.
+data class GithubWebhookEdit(
+    val active: Boolean? = null
 )
 
 interface GithubRepositoryDetailsRepository {
@@ -171,4 +177,11 @@ interface GithubRepositoryDetailsRepository {
         page: Int = 1,
         perPage: Int = 30
     ): Result<GithubPage<GithubRepositoryWebhook>>
+    suspend fun updateWebhook(
+        owner: String,
+        name: String,
+        id: Long,
+        edit: GithubWebhookEdit
+    ): Result<GithubRepositoryWebhook>
+    suspend fun deleteWebhook(owner: String, name: String, id: Long): Result<Unit>
 }

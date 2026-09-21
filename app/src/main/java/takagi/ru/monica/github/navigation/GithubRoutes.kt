@@ -126,7 +126,7 @@ data class GithubInviteCollaboratorRoute(val fullName: String) {
 }
 
 @Serializable
-data class GithubRepositoryWebhooksRoute(val fullName: String) {
+data class GithubRepositoryWebhooksRoute(val fullName: String, val viewerCanAdmin: Boolean = false) {
     val owner: String get() = fullName.substringBefore('/')
     val name: String get() = fullName.substringAfter('/')
 }

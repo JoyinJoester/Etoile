@@ -29,6 +29,7 @@ import takagi.ru.monica.github.domain.GithubCollaboratorChange
 import takagi.ru.monica.github.domain.GithubCollaboratorInvite
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
+import takagi.ru.monica.github.domain.GithubWebhookEdit
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
 import takagi.ru.monica.github.domain.GithubRepositorySettings
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
@@ -688,6 +689,11 @@ class RepositoryDetailViewModelTest {
             Result.failure(UnsupportedOperationException())
         override suspend fun webhooks(owner: String, name: String, page: Int, perPage: Int) =
             Result.success(GithubPage<GithubRepositoryWebhook>(emptyList(), null))
+        override suspend fun updateWebhook(
+            owner: String, name: String, id: Long, edit: GithubWebhookEdit
+        ): Result<GithubRepositoryWebhook> = Result.failure(UnsupportedOperationException())
+        override suspend fun deleteWebhook(owner: String, name: String, id: Long): Result<Unit> =
+            Result.failure(UnsupportedOperationException())
     }
 
     private class FakeActionsRepository : GithubRepositoryActionsRepository {

@@ -68,7 +68,28 @@
       "name": "Webhooks",
       "x": 1476,
       "y": 972,
-      "note": "目前原生页只读；管理按钮在 GitHub 打开指定 Webhook。相同名称用 ID 区分。"
+      "note": "管理员可启用、停用与删除；非管理员保持只读。行内开关等服务端确认后更新，请求期间禁用全部写按钮。名称下展示 URL，缺失时展示 ID。创建与编辑另列后续阶段。"
+    },
+    {
+      "id": "webhook-delete",
+      "name": "Webhooks · 删除确认",
+      "x": 0,
+      "y": 1944,
+      "note": "原生使用 AlertDialog 覆盖列表。取消保持列表；确认后等待 DELETE 完成，失败显示原因并保留该行。此画面用于设计确认状态，不是新原生路由。"
+    },
+    {
+      "id": "webhook-failure",
+      "name": "Webhooks · 操作失败",
+      "x": 492,
+      "y": 1944,
+      "note": "HTTP 403 显示权限失败说明，422 显示输入被拒，网络失败保留服务端确认的开关值与原行。"
+    },
+    {
+      "id": "webhook-empty",
+      "name": "Webhooks · 空列表",
+      "x": 984,
+      "y": 1944,
+      "note": "没有 Webhook 或删除最后一项后的状态。保留返回与在 GitHub 打开的入口。"
     },
     {
       "id": "run-wide",
@@ -725,50 +746,353 @@
       "items": [
         {
           "id": "webhooks-item-2",
-          "kind": "card",
-          "label": "web · #108",
+          "kind": "text",
+          "label": "etoile / android-client",
           "icon": null,
           "variant": "filled",
-          "supporting": "已启用 · push / pull_request\n最近响应：503 Service Unavailable",
-          "noImage": true,
-          "size": 380,
-          "size2": 184
+          "size": 14
         }
       ]
     },
     {
       "id": "webhooks-group-3",
       "x": 1492,
-      "y": 1284,
+      "y": 1116,
       "axis": "x",
       "items": [
         {
           "id": "webhooks-item-3",
-          "kind": "button",
-          "label": "在 GitHub 管理",
-          "icon": "open_in_new",
-          "variant": "tonal",
+          "kind": "listItem",
+          "label": "web · #108",
+          "icon": "link",
+          "variant": "filled",
+          "supporting": "https://example.test/build",
+          "switch": true,
+          "checked": true,
           "size": 380,
-          "note": "打开当前仓库的 /settings/hooks/108；不伪装为原生编辑。"
+          "note": "开关发起启用或停用请求，失败保留原值。"
         }
       ]
     },
     {
       "id": "webhooks-group-4",
       "x": 1492,
-      "y": 1372,
+      "y": 1204,
       "axis": "x",
       "items": [
         {
           "id": "webhooks-item-4",
-          "kind": "card",
-          "label": "web · #109",
+          "kind": "text",
+          "label": "push · pull_request",
           "icon": null,
           "variant": "filled",
-          "supporting": "已停用 · issues\n最近响应：200 OK",
-          "noImage": true,
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "webhooks-group-5",
+      "x": 1492,
+      "y": 1232,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-item-5",
+          "kind": "text",
+          "label": "最近响应：503 Service Unavailable",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "webhooks-group-6",
+      "x": 1768,
+      "y": 1268,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-item-6",
+          "kind": "iconButton",
+          "label": "删除 Webhook",
+          "icon": "delete",
+          "variant": "text",
+          "action": {
+            "to": "webhook-delete",
+            "transition": "fade"
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhooks-group-7",
+      "x": 1824,
+      "y": 1268,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-item-7",
+          "kind": "iconButton",
+          "label": "在 GitHub 打开",
+          "icon": "open_in_new",
+          "variant": "text",
+          "note": "打开该仓库 /settings/hooks/108。"
+        }
+      ]
+    },
+    {
+      "id": "webhooks-group-8",
+      "x": 1492,
+      "y": 1332,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-item-8",
+          "kind": "divider",
+          "label": "",
+          "icon": null,
+          "variant": "filled"
+        }
+      ]
+    },
+    {
+      "id": "webhooks-group-9",
+      "x": 1492,
+      "y": 1364,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-item-9",
+          "kind": "listItem",
+          "label": "web · #109",
+          "icon": "link",
+          "variant": "filled",
+          "supporting": "https://example.test/issues",
+          "switch": true,
+          "checked": false,
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "webhooks-group-10",
+      "x": 1492,
+      "y": 1452,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-item-10",
+          "kind": "text",
+          "label": "issues · 最近响应：200 OK",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "webhook-delete-group-1",
+      "x": 0,
+      "y": 1944,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-delete-item-1",
+          "kind": "topAppBar",
+          "label": "Webhooks · 删除确认",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhook-delete-group-2",
+      "x": 50,
+      "y": 2224,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-delete-item-2",
+          "kind": "dialog",
+          "label": "删除 Webhook",
+          "icon": "delete",
+          "variant": "filled",
+          "supporting": "删除 https://example.test/build？此操作无法撤销。"
+        }
+      ]
+    },
+    {
+      "id": "webhook-delete-group-3",
+      "x": 16,
+      "y": 2472,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-delete-item-3",
+          "kind": "button",
+          "label": "取消",
+          "icon": null,
+          "variant": "text",
+          "size": 182,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhook-delete-group-4",
+      "x": 214,
+      "y": 2472,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-delete-item-4",
+          "kind": "button",
+          "label": "删除 Webhook",
+          "icon": null,
+          "variant": "filled",
+          "size": 182,
+          "action": {
+            "to": "webhook-empty",
+            "transition": "slide"
+          },
+          "x": 214,
+          "note": "原生只有服务端成功才移除行；画布链接仅演示成功后的空列表。"
+        }
+      ]
+    },
+    {
+      "id": "webhook-failure-group-1",
+      "x": 492,
+      "y": 1944,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-failure-item-1",
+          "kind": "topAppBar",
+          "label": "Webhooks · 操作失败",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhook-failure-group-2",
+      "x": 508,
+      "y": 2048,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-failure-item-2",
+          "kind": "text",
+          "label": "没有权限执行此操作，请检查授权。",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "webhook-failure-group-3",
+      "x": 508,
+      "y": 2096,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-failure-item-3",
+          "kind": "listItem",
+          "label": "web · #108",
+          "icon": "link",
+          "variant": "filled",
+          "supporting": "https://example.test/build",
+          "switch": true,
+          "checked": true,
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "webhook-failure-group-4",
+      "x": 508,
+      "y": 2184,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-failure-item-4",
+          "kind": "text",
+          "label": "push · pull_request",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "webhook-empty-group-1",
+      "x": 984,
+      "y": 1944,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-empty-item-1",
+          "kind": "topAppBar",
+          "label": "Webhooks · 空列表",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhook-empty-group-2",
+      "x": 1000,
+      "y": 2104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-empty-item-2",
+          "kind": "text",
+          "label": "暂无 Webhook",
+          "icon": null,
+          "variant": "filled",
+          "size": 20
+        }
+      ]
+    },
+    {
+      "id": "webhook-empty-group-3",
+      "x": 1000,
+      "y": 2168,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhook-empty-item-3",
+          "kind": "button",
+          "label": "在 GitHub 打开",
+          "icon": "open_in_new",
+          "variant": "tonal",
           "size": 380,
-          "size2": 164
+          "note": "打开当前仓库的 /settings/hooks。"
         }
       ]
     },

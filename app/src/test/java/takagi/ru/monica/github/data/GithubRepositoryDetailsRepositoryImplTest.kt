@@ -17,6 +17,9 @@ import takagi.ru.monica.github.domain.GithubRepositorySettings
 import takagi.ru.monica.github.domain.GithubRepositoryFeatures
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
+import takagi.ru.monica.github.domain.GithubWebhookEdit
+import takagi.ru.monica.github.feature.repository.RepositoryWriteFailure
+import takagi.ru.monica.github.feature.repository.githubWriteFailure
 
 class GithubRepositoryDetailsRepositoryImplTest {
     private lateinit var server: MockWebServer
@@ -433,6 +436,50 @@ class GithubRepositoryDetailsRepositoryImplTest {
         assertTrue(invite.exceptionOrNull() is GithubSignedOutException)
         assertTrue(remove.exceptionOrNull() is GithubSignedOutException)
         assertEquals(0, server.requestCount)
+    }
+
+    @Test
+    fun updateWebhookSendsOnlyActiveAndMapsTheResponse() = runTest {
+        server.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """{"id":9,"name":"web","active":true,"events":["push"],"config":{"url":"https://example.test/hook"}}"""
+            )
+        )
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        val hook = repository.updateWebhook("openai", "codex", 9, GithubWebhookEdit(active = true)).getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("PATCH", request.method)
+        assertEquals("/repos/openai/codex/hooks/9", request.path)
+        assertEquals("{\"active\":true}", request.body.readUtf8())
+        assertEquals("https://example.test/hook", hook.url)
+        assertTrue(hook.isActive)
+    }
+
+    @Test
+    fun deleteWebhookSendsDeleteAndAcceptsNoContent() = runTest {
+        server.enqueue(MockResponse().setResponseCode(204))
+        val repository = repository(token = "test_token_12345678901234567890")
+
+        repository.deleteWebhook("openai", "codex", 9).getOrThrow()
+        val request = server.takeRequest()
+
+        assertEquals("DELETE", request.method)
+        assertEquals("/repos/openai/codex/hooks/9", request.path)
+        assertEquals(0L, request.bodySize)
+    }
+
+    @Test
+    fun webhookWriteFailuresKeepStatusForSharedClassification() = runTest {
+        val repository = repository(token = "test_token_12345678901234567890")
+        listOf(422 to RepositoryWriteFailure.InvalidInput, 403 to RepositoryWriteFailure.Forbidden).forEach { (code, expected) ->
+            server.enqueue(MockResponse().setResponseCode(code))
+            val error = repository.updateWebhook("openai", "codex", 9, GithubWebhookEdit(active = false)).exceptionOrNull()
+            server.takeRequest()
+            assertTrue(error is GithubApiException)
+            assertEquals(expected, githubWriteFailure(error!!))
+        }
     }
 
     private fun invite(

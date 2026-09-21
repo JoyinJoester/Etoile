@@ -272,7 +272,27 @@ const job = screen(ops, 'job', '作业日志', '步骤名称全宽，状态在�
 const app = screen(ops, 'app', 'Etoile', '仓库身份、发布版本与可安装文件分组。明确设备兼容性；下载完成后由系统安装器处理安装。'); app.card(104, 'Etoile', 'Android GitHub 工作空间', { icon: 'android', fill: 'primaryContainer', size2: 148 }); app.list(280, [['最新版本', '0.1 · 查看发布说明', 'new_releases'], ['arm64-v8a.apk', '适合当前设备 · 下载 APK', 'download']]); app.button(456, '下载 APK', null, { icon: 'download' }); app.part('linearProgress', 16, 540, '', { value: 42, wavy: true }); app.caption(588, '下载进度与取消操作就地显示');
 const sources = screen(ops, 'sources', '应用来源', '来源名称和地址分行。新增或移除只影响应用目录，失败保留输入。'); sources.list(112, [['推荐仓库', 'GitHub 公开 Android 项目', 'source'], ['F-Droid', '开源应用索引', 'android']]); sources.field(304, '仓库地址', { supporting: 'owner/repository 或 GitHub 仓库链接' }); sources.button(400, '添加来源', null, { icon: 'add' });
 const collaborators = screen(ops, 'collaborators', '协作者', '账户与角色分层展示。编辑只在拥有权限时出现；保存反馈属于具体用户。'); collaborators.list(112, [['etoile-maintainer', '管理员', 'person'], ['etoile-reviewer', '写入权限', 'person']]); collaborators.card(296, '角色与权限', '在可编辑时选择角色并保存。受限账户显示只读内容。', { size2: 148 });
-const webhooks = screen(ops, 'webhooks', 'Webhooks', '目前原生页只读；管理按钮在 GitHub 打开指定 Webhook。相同名称用 ID 区分。'); webhooks.card(104, 'web · #108', '已启用 · push / pull_request\n最近响应：503 Service Unavailable', { size2: 184 }); webhooks.button(312, '在 GitHub 管理', null, { variant: 'tonal', icon: 'open_in_new', note: '打开当前仓库的 /settings/hooks/108；不伪装为原生编辑。' }); webhooks.card(400, 'web · #109', '已停用 · issues\n最近响应：200 OK', { size2: 164 });
+const webhooks = screen(ops, 'webhooks', 'Webhooks', '管理员可启用、停用与删除；非管理员保持只读。行内开关等服务端确认后更新，请求期间禁用全部写按钮。名称下展示 URL，缺失时展示 ID。创建与编辑另列后续阶段。');
+webhooks.caption(104, 'etoile / android-client');
+webhooks.part('listItem', 16, 144, 'web · #108', { supporting: 'https://example.test/build', icon: 'link', switch: true, checked: true, size: 380, note: '开关发起启用或停用请求，失败保留原值。' });
+webhooks.caption(232, 'push · pull_request');
+webhooks.caption(260, '最近响应：503 Service Unavailable');
+webhooks.part('iconButton', 292, 296, '删除 Webhook', { icon: 'delete', variant: 'text', action: go('webhook-delete', 'fade') });
+webhooks.part('iconButton', 348, 296, '在 GitHub 打开', { icon: 'open_in_new', variant: 'text', note: '打开该仓库 /settings/hooks/108。' });
+webhooks.part('divider', 16, 360);
+webhooks.part('listItem', 16, 392, 'web · #109', { supporting: 'https://example.test/issues', icon: 'link', switch: true, checked: false, size: 380 });
+webhooks.caption(480, 'issues · 最近响应：200 OK');
+const hookDelete = screen(ops, 'webhook-delete', 'Webhooks · 删除确认', '原生使用 AlertDialog 覆盖列表。取消保持列表；确认后等待 DELETE 完成，失败显示原因并保留该行。此画面用于设计确认状态，不是新原生路由。');
+hookDelete.part('dialog', 50, 280, '删除 Webhook', { supporting: '删除 https://example.test/build？此操作无法撤销。', icon: 'delete' });
+hookDelete.button(528, '取消', 'back', { variant: 'text', size: 182 });
+hookDelete.button(528, '删除 Webhook', 'webhook-empty', { x: 214, size: 182, note: '原生只有服务端成功才移除行；画布链接仅演示成功后的空列表。' });
+const hookFailure = screen(ops, 'webhook-failure', 'Webhooks · 操作失败', 'HTTP 403 显示权限失败说明，422 显示输入被拒，网络失败保留服务端确认的开关值与原行。');
+hookFailure.caption(104, '没有权限执行此操作，请检查授权。');
+hookFailure.part('listItem', 16, 152, 'web · #108', { supporting: 'https://example.test/build', icon: 'link', switch: true, checked: true, size: 380 });
+hookFailure.caption(240, 'push · pull_request');
+const hookEmpty = screen(ops, 'webhook-empty', 'Webhooks · 空列表', '没有 Webhook 或删除最后一项后的状态。保留返回与在 GitHub 打开的入口。');
+hookEmpty.part('text', 16, 160, '暂无 Webhook', { size: 20 });
+hookEmpty.button(224, '在 GitHub 打开', null, { variant: 'tonal', icon: 'open_in_new', note: '打开当前仓库的 /settings/hooks。' });
 
 const wideRun = screen(ops, 'run-wide', 'Build #108 · 宽屏', '最大内容宽度 1200dp。只有可用宽度达到 840dp × 字体倍数才将摘要和作业分栏；大字体时回到同一滚动列表。', { wide: true });
 wideRun.card(104, '验证详情布局与构建日志', '成功 · feature/adaptive-detail-reading\n触发者：android-release-maintainer\n3 分钟 · pull_request', { x: 40, size: 380, size2: 248, fill: 'primaryContainer' });

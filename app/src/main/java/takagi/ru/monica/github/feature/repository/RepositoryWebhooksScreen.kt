@@ -18,13 +18,22 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Webhook
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PauseCircle
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -52,6 +61,7 @@ fun RepositoryWebhooksScreen(
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var pendingDelete by remember { mutableStateOf<GithubRepositoryWebhook?>(null) }
     GithubDetailScaffold(
         contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = stringResource(R.string.github_webhooks),
@@ -72,6 +82,15 @@ fun RepositoryWebhooksScreen(
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
           Column(modifier = Modifier.fillMaxSize()) {
+            // A refused write explains itself here rather than silently leaving the row unchanged.
+            state.webhookFailure?.let { failure ->
+                Text(
+                    text = repositoryActionFailureText(failure),
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                )
+            }
             GithubListLoadingState(
                 isLoading = state.isLoading,
                 hasItems = state.items.isNotEmpty(),
@@ -83,9 +102,16 @@ fun RepositoryWebhooksScreen(
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
             ) {
                 items(state.items, key = GithubRepositoryWebhook::id) { webhook ->
-                    RepositoryWebhookRow(webhook, onOpen = {
-                        onOpenExternal(GithubWebUrls.repositoryWebhookSettings(state.fullName, webhook.id))
-                    })
+                    RepositoryWebhookRow(
+                        webhook = webhook,
+                        canManage = state.canManage,
+                        isBusy = state.isUpdatingWebhook,
+                        onOpen = {
+                            onOpenExternal(GithubWebUrls.repositoryWebhookSettings(state.fullName, webhook.id))
+                        },
+                        onToggle = { enabled -> onAction(RepositoryWebhooksAction.SetEnabled(webhook.id, enabled)) },
+                        onRequestDelete = { pendingDelete = webhook }
+                    )
                 }
                 githubFullSpanItem(key = "webhooks-status") {
                     GithubPagedListStatus(
@@ -105,10 +131,49 @@ fun RepositoryWebhooksScreen(
           }
         }
     }
+
+    pendingDelete?.let { webhook ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text(stringResource(R.string.github_webhook_delete)) },
+            text = {
+                Text(
+                    stringResource(
+                        R.string.github_webhook_delete_confirm,
+                        webhook.url?.takeIf(String::isNotBlank)
+                            ?: webhook.name.takeIf(String::isNotBlank)
+                            ?: "#${webhook.id}"
+                    )
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onAction(RepositoryWebhooksAction.Delete(webhook.id))
+                        pendingDelete = null
+                    }
+                ) {
+                    Text(stringResource(R.string.github_webhook_delete), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) {
+                    Text(stringResource(R.string.github_cancel))
+                }
+            }
+        )
+    }
 }
 
 @Composable
-private fun RepositoryWebhookRow(webhook: GithubRepositoryWebhook, onOpen: () -> Unit) {
+private fun RepositoryWebhookRow(
+    webhook: GithubRepositoryWebhook,
+    canManage: Boolean,
+    isBusy: Boolean,
+    onOpen: () -> Unit,
+    onToggle: (Boolean) -> Unit,
+    onRequestDelete: () -> Unit
+) {
     Column(modifier = Modifier
         .fillMaxWidth()
         .heightIn(min = 56.dp)
@@ -116,6 +181,7 @@ private fun RepositoryWebhookRow(webhook: GithubRepositoryWebhook, onOpen: () ->
         .semantics(mergeDescendants = true) {
             contentDescription = listOfNotNull(
                 webhook.name.takeIf(String::isNotBlank),
+                webhook.url?.takeIf(String::isNotBlank),
                 webhook.lastResponseCode?.let { "HTTP $it" }
             ).joinToString(", ")
         }
@@ -134,17 +200,28 @@ private fun RepositoryWebhookRow(webhook: GithubRepositoryWebhook, onOpen: () ->
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            Icon(
-                imageVector = if (webhook.isActive) Icons.Default.CheckCircle else Icons.Default.PauseCircle,
-                contentDescription = stringResource(
-                    if (webhook.isActive) R.string.github_webhook_active else R.string.github_webhook_inactive
-                ),
-                tint = if (webhook.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-            )
+            if (canManage) {
+                // Active state is edited in place, so the switch replaces the read-only status glyph.
+                Switch(checked = webhook.isActive, onCheckedChange = onToggle, enabled = !isBusy)
+                IconButton(onClick = onRequestDelete, enabled = !isBusy) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.github_webhook_delete)
+                    )
+                }
+            } else {
+                Icon(
+                    imageVector = if (webhook.isActive) Icons.Default.CheckCircle else Icons.Default.PauseCircle,
+                    contentDescription = stringResource(
+                        if (webhook.isActive) R.string.github_webhook_active else R.string.github_webhook_inactive
+                    ),
+                    tint = if (webhook.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                )
+            }
             GithubOpenOnGithubButton(onClick = onOpen)
         }
         Text(
-            text = "#${webhook.id}",
+            text = webhook.url?.takeIf(String::isNotBlank) ?: "#${webhook.id}",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 34.dp, top = 4.dp)
