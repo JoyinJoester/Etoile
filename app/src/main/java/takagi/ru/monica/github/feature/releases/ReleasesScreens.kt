@@ -560,11 +560,11 @@ fun ReleaseDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val release = state.release
-    var removeTargetId by rememberSaveable { mutableStateOf(0L) }
+    var removeTargetId by rememberSaveable { mutableStateOf<Long?>(null) }
     val removeTarget = release?.assets?.firstOrNull { it.id == removeTargetId }
     if (removeTarget != null) {
         AlertDialog(
-            onDismissRequest = { removeTargetId = 0L },
+            onDismissRequest = { removeTargetId = null },
             title = { Text(stringResource(R.string.github_release_remove_asset)) },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(removeTarget.name, style = MaterialTheme.typography.titleMedium)
@@ -574,10 +574,10 @@ fun ReleaseDetailScreen(
                 )
             } },
             confirmButton = { TextButton(onClick = {
-                removeTargetId = 0L
+                removeTargetId = null
                 onAction(ReleaseDetailAction.RemoveAsset(removeTarget.id))
             }) { Text(stringResource(R.string.github_release_remove_asset)) } },
-            dismissButton = { TextButton(onClick = { removeTargetId = 0L }) {
+            dismissButton = { TextButton(onClick = { removeTargetId = null }) {
                 Text(stringResource(R.string.discussion_cancel))
             } }
         )
