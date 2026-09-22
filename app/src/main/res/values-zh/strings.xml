@@ -816,6 +816,8 @@
     <string name="github_store_tab_recommended">推荐</string>
     <string name="github_store_tab_fdroid">F-Droid</string>
     <string name="github_store_install">安装</string>
+    <string name="github_store_install_unavailable">系统没有可用的 APK 安装器。</string>
+    <string name="github_store_share_project">分享项目</string>
     <string name="github_store_download_error">下载失败，点击重试。</string>
     <string name="github_store_installed">已安装 %1$s</string>
     <string name="github_store_update_available">可更新至 %1$s</string>
@@ -952,7 +954,7 @@
     <string name="store_sources_count">软件源 · 已启用 %1$d / %2$d</string>
     <string name="store_sources_failed">暂时无法同步：%1$s</string>
     <string name="store_release_notes">更新内容</string>
-    <string name="store_swipe_project">右滑或点击查看项目详情</string>
+    <string name="store_swipe_project">左滑或点击查看项目详情</string>
     <string name="store_pull_next">继续上滑，浏览下一个应用</string>
     <string name="store_release_next">松开进入下一个应用</string>
     <string name="store_next">下一个应用</string>

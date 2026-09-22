@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.feature.store
 
 import androidx.activity.compose.BackHandler
+import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,6 +25,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.*
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +45,8 @@ fun StoreReadingScreen(
     onOpenRepository: (GithubRepository) -> Unit,
     onOpenExternal: (String) -> Unit,
     onInstallApk: (File) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenProject: ((String) -> Unit)? = null
 ) {
     BackHandler { onAction(StoreAction.CloseApp) }
     AnimatedContent(targetState = state, contentKey = { it.selected?.repository?.fullName ?: it.selectedFdroid?.packageName },
@@ -56,9 +60,10 @@ fun StoreReadingScreen(
         val identity = app?.repository?.fullName ?: fdroid!!.packageName
         val name = app?.repository?.name ?: fdroid!!.name
         val projectUrl = fdroid?.projectUrl
+        val context = LocalContext.current
         val openProject: (() -> Unit)? = when {
             app != null -> ({ onOpenRepository(app.repository) })
-            projectUrl?.startsWith("https://") == true -> ({ onOpenExternal(projectUrl) })
+            projectUrl?.startsWith("https://") == true -> ({ (onOpenProject ?: onOpenExternal)(projectUrl) })
             else -> null
         }
         val list = if (fdroid != null) snapshot.filteredFdroidApps.map { it.packageName }
@@ -106,9 +111,24 @@ fun StoreReadingScreen(
                     navigationIcon = { IconButton(onClick = { onAction(StoreAction.CloseApp) }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.github_cancel))
                     } },
-                    actions = { if (openProject != null) IconButton(onClick = openProject) {
-                        Icon(Icons.Default.Code, stringResource(R.string.github_store_open_details))
-                    } })
+                    actions = {
+                        if (openProject != null) IconButton(onClick = openProject) {
+                            Icon(Icons.Default.Code, stringResource(R.string.github_store_open_details))
+                        }
+                        IconButton(onClick = {
+                            val url = projectUrl ?: app?.repository?.let { "https://github.com/${it.fullName}" }
+                            if (url != null) {
+                                runCatching {
+                                    context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_TEXT, url)
+                                    }, null))
+                                }
+                            }
+                        }) {
+                            Icon(Icons.Default.Share, stringResource(R.string.github_store_share_project))
+                        }
+                    })
             }
         ) { padding ->
             LazyColumn(state = lazyState,
@@ -118,12 +138,16 @@ fun StoreReadingScreen(
                         detectHorizontalDragGestures(
                             onDragStart = { horizontal = 0f },
                             onHorizontalDrag = { change, amount ->
-                                if (currentProject != null) { horizontal = (horizontal + amount).coerceAtLeast(0f); change.consume() }
+                                if (currentProject != null) {
+                                    // Reveal the project from the right with a left swipe.
+                                    horizontal = (horizontal - amount).coerceAtLeast(0f)
+                                    change.consume()
+                                }
                             },
                             onDragEnd = { if (horizontal >= threshold) currentProject?.invoke(); horizontal = 0f },
                             onDragCancel = { horizontal = 0f }
                         )
-                    }.graphicsLayer { translationY = -pull / 4; translationX = horizontal / 4 },
+                }.graphicsLayer { translationY = -pull / 4; translationX = -horizontal / 4 },
                 contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item("summary") {

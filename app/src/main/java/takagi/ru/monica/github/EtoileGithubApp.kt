@@ -9,6 +9,7 @@ import takagi.ru.monica.github.navigation.GithubStoreDetailRoute
 import takagi.ru.monica.github.feature.store.StoreReadingScreen
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -307,6 +308,7 @@ fun EtoileGithubApp(
     val homeContributionsState by homeViewModel.contributionsState.collectAsStateWithLifecycle()
     val rateLimits by dependencies.rateLimitMonitor.state.collectAsStateWithLifecycle()
     val cacheFallback by dependencies.cacheFallbackMonitor.state.collectAsStateWithLifecycle()
+    val installUnavailableMessage = stringResource(R.string.github_store_install_unavailable)
     val openUrl: (String) -> Unit = remember(context) {
         { url ->
             runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
@@ -473,6 +475,13 @@ fun EtoileGithubApp(
                     },
                     onInstallApk = { file ->
                         runCatching { context.startActivity(apkManager.installIntent(file)) }
+                            .onFailure { error ->
+                                Toast.makeText(
+                                    context,
+                                    error.message ?: installUnavailableMessage,
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
                     },
                     onSignIn ={ navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
                     onSignOut = { sessionViewModel.onAction(GithubSessionAction.SignOut) },
@@ -567,7 +576,25 @@ fun EtoileGithubApp(
                 onOpenExternal = { url ->
                     if (GithubLinkRouter.parse(url)?.let(::openNativeDestination) != true) openUrl(url)
                 },
-                onInstallApk = { file -> runCatching { context.startActivity(apkManager.installIntent(file)) }; Unit }
+                onOpenProject = { url ->
+                    if (GithubLinkRouter.parse(url)?.let(::openNativeDestination) != true) {
+                        val parts = url.substringAfter("github.com/", "").trimEnd('/').split('/')
+                        if (parts.size >= 2 && parts[0].isNotBlank() && parts[1].isNotBlank()) {
+                            openNativeDestination(GithubLinkDestination.Repository("${parts[0]}/${parts[1]}"))
+                        } else openUrl(url)
+                    }
+                },
+                onInstallApk = { file ->
+                    runCatching { context.startActivity(apkManager.installIntent(file)) }
+                        .onFailure { error ->
+                            Toast.makeText(
+                                context,
+                                error.message ?: installUnavailableMessage,
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    Unit
+                }
             )
         }
         composable<GithubSignInRoute> {

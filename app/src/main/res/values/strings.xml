@@ -827,6 +827,7 @@
     <string name="github_store_tab_recommended">For you</string>
     <string name="github_store_tab_fdroid">F-Droid</string>
     <string name="github_store_install">Install</string>
+    <string name="github_store_install_unavailable">No system installer is available for this APK.</string>
     <string name="github_store_download_error">Download failed. Tap to retry.</string>
     <string name="github_store_installed">Installed %1$s</string>
     <string name="github_store_update_available">Update to %1$s available</string>
@@ -963,7 +964,8 @@
     <string name="store_sources_count">Sources · %1$d of %2$d enabled</string>
     <string name="store_sources_failed">Sources unavailable: %1$s</string>
     <string name="store_release_notes">Release notes</string>
-    <string name="store_swipe_project">Swipe right or tap to view project</string>
+    <string name="store_swipe_project">Swipe left or tap to view project</string>
+    <string name="github_store_share_project">Share project</string>
     <string name="store_pull_next">Keep swiping up to view the next app</string>
     <string name="store_release_next">Release to view the next app</string>
     <string name="store_next">Next application</string>

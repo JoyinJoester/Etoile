@@ -47,7 +47,7 @@
       "name": "Etoile",
       "x": 0,
       "y": 972,
-      "note": "仓库身份、发布版本与可安装文件分组。明确设备兼容性；下载完成后由系统安装器处理安装。"
+      "note": "仓库身份、发布版本与可安装文件分组。顶栏固定显示站内详情、分享和浏览器入口；下载完成后安装按钮明确反馈系统安装器是否可用。"
     },
     {
       "id": "sources",
@@ -499,11 +499,48 @@
     {
       "id": "app-group-3",
       "x": 16,
-      "y": 1252,
+      "y": 1244,
+      "axis": "x",
+      "items": [
+        {
+          "id": "app-item-3",
+          "kind": "button",
+          "label": "查看项目详情",
+          "icon": "code",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "repository",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "app-group-4",
+      "x": 220,
+      "y": 1244,
+      "axis": "x",
+      "items": [
+        {
+          "id": "app-item-4",
+          "kind": "button",
+          "label": "分享项目",
+          "icon": "share",
+          "variant": "tonal",
+          "size": 380,
+          "x": 220
+        }
+      ]
+    },
+    {
+      "id": "app-group-5",
+      "x": 16,
+      "y": 1324,
       "axis": "y",
       "items": [
         {
-          "id": "app-row-3-0",
+          "id": "app-row-5-0",
           "kind": "listItem",
           "label": "最新版本",
           "supporting": "0.1 · 查看发布说明",
@@ -512,7 +549,7 @@
           "size": 380
         },
         {
-          "id": "app-row-3-1",
+          "id": "app-row-5-1",
           "kind": "listItem",
           "label": "arm64-v8a.apk",
           "supporting": "适合当前设备 · 下载 APK",
@@ -523,13 +560,13 @@
       ]
     },
     {
-      "id": "app-group-4",
+      "id": "app-group-6",
       "x": 16,
-      "y": 1428,
+      "y": 1500,
       "axis": "x",
       "items": [
         {
-          "id": "app-item-4",
+          "id": "app-item-6",
           "kind": "button",
           "label": "下载 APK",
           "icon": "download",
@@ -539,13 +576,13 @@
       ]
     },
     {
-      "id": "app-group-5",
+      "id": "app-group-7",
       "x": 16,
-      "y": 1512,
+      "y": 1584,
       "axis": "x",
       "items": [
         {
-          "id": "app-item-5",
+          "id": "app-item-7",
           "kind": "linearProgress",
           "label": "",
           "icon": null,
@@ -556,15 +593,15 @@
       ]
     },
     {
-      "id": "app-group-6",
+      "id": "app-group-8",
       "x": 16,
-      "y": 1560,
+      "y": 1632,
       "axis": "x",
       "items": [
         {
-          "id": "app-item-6",
+          "id": "app-item-8",
           "kind": "text",
-          "label": "下载进度与取消操作就地显示",
+          "label": "下载进度、取消和安装反馈固定在文件行下方；详情内容上下滚动时顶栏不移动。",
           "icon": null,
           "variant": "filled",
           "size": 14

@@ -77,10 +77,11 @@ fun StoreScreen(
     onOpenRepository: (GithubRepository) -> Unit,
     onOpenExternal: (String) -> Unit,
     onInstallApk: (File) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenProject: ((String) -> Unit)? = null
 ) {
     if (state.selectedFdroid != null || state.selected != null) {
-        StoreReadingScreen(state, onAction, onOpenRepository, onOpenExternal, onInstallApk, modifier)
+        StoreReadingScreen(state, onAction, onOpenRepository, onOpenExternal, onInstallApk, modifier, onOpenProject)
         return
     }
     var showSources by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
