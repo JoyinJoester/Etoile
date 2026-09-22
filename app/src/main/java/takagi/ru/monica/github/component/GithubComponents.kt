@@ -209,6 +209,7 @@ fun GithubDetailScaffold(
     actions: @Composable RowScope.() -> Unit = {},
     contentMaxWidth: Dp = GithubAdaptiveLayout.contentMaxWidth,
     snackbarHostState: SnackbarHostState? = null,
+    floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     val separateSubtitle = subtitle != null && LocalDensity.current.fontScale > 1.2f
@@ -216,6 +217,7 @@ fun GithubDetailScaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets.safeDrawing,
         snackbarHost = { if (snackbarHostState != null) SnackbarHost(snackbarHostState) },
+        floatingActionButton = floatingActionButton,
         topBar = {
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 TopAppBar(

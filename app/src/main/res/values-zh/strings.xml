@@ -263,6 +263,8 @@
     <string name="github_display_scale_description">松开滑杆后，应用会自动重新加载当前界面。</string>
     <string name="github_display_scale_small">更小</string>
     <string name="github_display_scale_large">更大</string>
+    <string name="github_comment_editor_subtitle">在独立编辑页中回复</string>
+    <string name="github_comment_editor_hint">支持使用 Markdown 格式化回复。</string>
 
     <string name="github_theme">明暗模式</string>
     <string name="github_system">跟随系统</string>

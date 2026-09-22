@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.RadioButtonChecked
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -66,7 +67,7 @@ import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.githubRelativeTime
 import takagi.ru.monica.github.component.GithubAvatar
-import takagi.ru.monica.github.component.GithubCommentComposer
+import takagi.ru.monica.github.component.GithubCommentEditorScreen
 import takagi.ru.monica.github.component.GithubConversationContentEditor
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubFilterRow
@@ -224,6 +225,8 @@ fun IssueDetailScreen(
     var milestoneSaveRequested by remember { mutableStateOf(false) }
     var managementOpen by remember { mutableStateOf(false) }
     var contentEditorOpen by remember { mutableStateOf(false) }
+    var commentEditorOpen by remember { mutableStateOf(false) }
+    var commentSubmitRequested by remember { mutableStateOf(false) }
     var editTitle by remember { mutableStateOf("") }
     var editBody by remember { mutableStateOf("") }
     var contentSaveRequested by remember { mutableStateOf(false) }
@@ -251,6 +254,33 @@ fun IssueDetailScreen(
             contentSaveRequested = false
         }
     }
+    LaunchedEffect(state.isSubmittingComment, state.commentSubmitError, commentSubmitRequested) {
+        if (commentSubmitRequested && !state.isSubmittingComment) {
+            if (!state.commentSubmitError && !state.commentValidationError) commentEditorOpen = false
+            commentSubmitRequested = false
+        }
+    }
+    if (commentEditorOpen) {
+        GithubCommentEditorScreen(
+            value = state.commentDraft,
+            maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
+            canWrite = canWrite,
+            isValidationError = state.commentValidationError,
+            isSubmitError = state.commentSubmitError,
+            isSubmitting = state.isSubmittingComment,
+            onValueChange = { onAction(IssueDetailAction.CommentChanged(it)) },
+            onSubmit = {
+                commentSubmitRequested = true
+                onAction(IssueDetailAction.SubmitComment)
+            },
+            onSignIn = onSignIn,
+            onBack = { if (!state.isSubmittingComment) commentEditorOpen = false },
+            disabledMessage = state.issue?.takeIf { it.isLocked }?.let {
+                stringResource(R.string.github_locked_comment_disabled)
+            }
+        )
+        return
+    }
     GithubDetailScaffold(
         title = "#${state.number}",
         contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
@@ -258,6 +288,19 @@ fun IssueDetailScreen(
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
         modifier = modifier,
+        floatingActionButton = {
+            if (state.issue != null) {
+                FloatingActionButton(
+                    onClick = { commentEditorOpen = true },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = stringResource(R.string.github_write_comment)
+                    )
+                }
+            }
+        },
         actions = {
             IconButton(
                 onClick = { managementOpen = true },
@@ -374,24 +417,6 @@ fun IssueDetailScreen(
                             onRetry = { onAction(IssueDetailAction.RetryComments) },
                             onLoadMore = { onAction(IssueDetailAction.LoadMoreComments) },
                             compact = true
-                        )
-                    }
-                    item {
-                        GithubCommentComposer(
-                            value = state.commentDraft,
-                            maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
-                            canWrite = canWrite,
-                            isValidationError = state.commentValidationError,
-                            isSubmitError = state.commentSubmitError,
-                            isSubmitting = state.isSubmittingComment,
-                            onValueChange = { onAction(IssueDetailAction.CommentChanged(it)) },
-                            onSubmit = { onAction(IssueDetailAction.SubmitComment) },
-                            onSignIn = onSignIn,
-                            disabledMessage = if (issue.isLocked) {
-                                stringResource(R.string.github_locked_comment_disabled)
-                            } else {
-                                null
-                            }
                         )
                     }
                 }

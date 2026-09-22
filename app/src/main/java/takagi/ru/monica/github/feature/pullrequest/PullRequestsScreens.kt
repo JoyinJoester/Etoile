@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -42,6 +43,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.CallSplit
 import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Group
@@ -61,7 +63,7 @@ import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubAssigneesEditorSheet
 import takagi.ru.monica.github.component.GithubCommentCard
-import takagi.ru.monica.github.component.GithubCommentComposer
+import takagi.ru.monica.github.component.GithubCommentEditorScreen
 import takagi.ru.monica.github.component.GithubConversationContentEditor
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubFilterRow
@@ -225,6 +227,8 @@ fun PullRequestDetailScreen(
     val sections = PullRequestSection.entries
     val sectionStateHolder = rememberSaveableStateHolder()
     var contentEditorOpen by remember { mutableStateOf(false) }
+    var commentEditorOpen by remember { mutableStateOf(false) }
+    var commentSubmitRequested by remember { mutableStateOf(false) }
     var managementOpen by remember { mutableStateOf(false) }
     var labelsOpen by remember { mutableStateOf(false) }
     var selectedLabels by remember { mutableStateOf(emptySet<String>()) }
@@ -247,6 +251,12 @@ fun PullRequestDetailScreen(
         if (contentSaveRequested && !state.isUpdatingContent) {
             if (!state.contentUpdateError && !state.contentValidationError) contentEditorOpen = false
             contentSaveRequested = false
+        }
+    }
+    LaunchedEffect(state.isSubmittingComment, state.commentSubmitError, commentSubmitRequested) {
+        if (commentSubmitRequested && !state.isSubmittingComment) {
+            if (!state.commentSubmitError && !state.commentValidationError) commentEditorOpen = false
+            commentSubmitRequested = false
         }
     }
     LaunchedEffect(state.isUpdatingState, state.stateUpdateError, stateActionRequested) {
@@ -291,6 +301,27 @@ fun PullRequestDetailScreen(
         }
     }
     val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    if (commentEditorOpen) {
+        GithubCommentEditorScreen(
+            value = state.commentDraft,
+            maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
+            canWrite = isSignedIn,
+            isValidationError = state.commentValidationError,
+            isSubmitError = state.commentSubmitError,
+            isSubmitting = state.isSubmittingComment,
+            onValueChange = { onAction(PullRequestDetailAction.CommentChanged(it)) },
+            onSubmit = {
+                commentSubmitRequested = true
+                onAction(PullRequestDetailAction.SubmitComment)
+            },
+            onSignIn = onSignIn,
+            onBack = { if (!state.isSubmittingComment) commentEditorOpen = false },
+            disabledMessage = state.pullRequest?.takeIf { it.isLocked }?.let {
+                stringResource(R.string.github_locked_comment_disabled)
+            }
+        )
+        return
+    }
     GithubDetailScaffold(
         title = "#${state.number}",
         subtitle = state.fullName,
@@ -298,6 +329,19 @@ fun PullRequestDetailScreen(
         onBack = onBack,
         modifier = modifier,
         contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
+        floatingActionButton = {
+            if (state.pullRequest != null) {
+                FloatingActionButton(
+                    onClick = { commentEditorOpen = true },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ChatBubbleOutline,
+                        contentDescription = stringResource(R.string.github_write_comment)
+                    )
+                }
+            }
+        },
         actions = {
             if (state.pullRequest != null) {
                 IconButton(
@@ -858,24 +902,6 @@ private fun PullRequestActivityContent(
                 onRetry = { onAction(PullRequestDetailAction.RetryComments) },
                 onLoadMore = { onAction(PullRequestDetailAction.LoadMoreComments) },
                 compact = true
-            )
-        }
-        item(key = "comment-composer") {
-            GithubCommentComposer(
-                value = state.commentDraft,
-                maxLength = GithubIssueCommentDraft.MAX_BODY_LENGTH,
-                canWrite = isSignedIn,
-                isValidationError = state.commentValidationError,
-                isSubmitError = state.commentSubmitError,
-                isSubmitting = state.isSubmittingComment,
-                onValueChange = { onAction(PullRequestDetailAction.CommentChanged(it)) },
-                onSubmit = { onAction(PullRequestDetailAction.SubmitComment) },
-                onSignIn = onSignIn,
-                disabledMessage = if (pullRequest.isLocked) {
-                    stringResource(R.string.github_locked_comment_disabled)
-                } else {
-                    null
-                }
             )
         }
         item(key = "pull-request-actions") {

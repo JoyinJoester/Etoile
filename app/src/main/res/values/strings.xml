@@ -265,6 +265,8 @@
     <string name="github_display_scale_description">The app reloads the current screen after you release the slider.</string>
     <string name="github_display_scale_small">Smaller</string>
     <string name="github_display_scale_large">Larger</string>
+    <string name="github_comment_editor_subtitle">Write a reply in a focused editor</string>
+    <string name="github_comment_editor_hint">Use Markdown to format your reply.</string>
 
     <string name="github_theme">Color mode</string>
     <string name="github_system">System default</string>

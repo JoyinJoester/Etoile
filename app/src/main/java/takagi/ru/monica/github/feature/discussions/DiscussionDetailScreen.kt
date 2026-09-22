@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ChatBubbleOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -14,6 +15,7 @@ import takagi.ru.monica.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.github.domain.GithubDiscussion
+import takagi.ru.monica.github.component.GithubCommentEditorScreen
 
 @Composable
 fun DiscussionDetailScreen(
@@ -44,7 +46,7 @@ fun DiscussionDetailScreen(
     var error by remember { mutableStateOf(false) }
     var answerBusy by remember { mutableStateOf(false) }
     var answerError by remember { mutableStateOf(false) }
-    var sent by remember { mutableStateOf(false) }
+    var replyEditorOpen by rememberSaveable(discussion.id) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val commentsLoader = remember(discussion.id) { DiscussionCommentsLoader(scope, loadComments) }
     val commentsState by commentsLoader.state.collectAsState()
@@ -78,9 +80,50 @@ fun DiscussionDetailScreen(
         } }
     )
     LaunchedEffect(discussion.id) { fetchComments(true) }
+    if (replyEditorOpen) {
+        GithubCommentEditorScreen(
+            value = reply,
+            maxLength = 65536,
+            canWrite = signedIn,
+            isValidationError = reply.isBlank() && error,
+            isSubmitError = error && reply.isNotBlank(),
+            isSubmitting = sending,
+            onValueChange = { if (it.length <= 65536) { reply = it; error = false } },
+            onSubmit = {
+                if (reply.isNotBlank() && !sending) {
+                    sending = true
+                    error = false
+                    scope.launch {
+                        try {
+                            onReply(reply).fold(
+                                onSuccess = {
+                                    commentCount++
+                                    reply = ""
+                                    replyEditorOpen = false
+                                    fetchComments(true)
+                                },
+                                onFailure = { error = true }
+                            )
+                        } finally {
+                            sending = false
+                        }
+                    }
+                }
+            },
+            onSignIn = onBack,
+            onBack = { if (!sending) replyEditorOpen = false }
+        )
+        return
+    }
     Scaffold(modifier = modifier, topBar = { TopAppBar(title = { Text(stringResource(R.string.discussion_number, discussion.number)) }, navigationIcon = {
         IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.discussion_back)) }
-    }) }) { padding ->
+    }) }, floatingActionButton = {
+        if (signedIn) {
+            FloatingActionButton(onClick = { replyEditorOpen = true }) {
+                Icon(Icons.Default.ChatBubbleOutline, contentDescription = stringResource(R.string.discussion_reply))
+            }
+        }
+    }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             if (signedIn && currentDiscussion.canEdit) TextButton(onClick = {
                 editTitle = currentDiscussion.title; editBody = currentDiscussion.body; editError = false; editing = true
@@ -131,23 +174,7 @@ fun DiscussionDetailScreen(
             } else if (nextCursor != null) TextButton(enabled = !loading, onClick = { fetchComments(false) }) {
                 Text(stringResource(R.string.discussion_more))
             }
-            if (signedIn) {
-                HorizontalDivider()
-                Text(stringResource(R.string.discussion_reply), style = MaterialTheme.typography.titleMedium)
-                OutlinedTextField(reply, { if (it.length <= 65536) { reply = it; error = false } }, modifier = Modifier.fillMaxWidth(), minLines = 5, enabled = !sending)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(enabled = reply.isNotBlank() && !sending, onClick = {
-                        sending = true; error = false
-                        scope.launch {
-                            try {
-                                onReply(reply).fold(onSuccess = { sent = true; commentCount++; reply = ""; fetchComments(true) }, onFailure = { error = true })
-                            } finally { sending = false }
-                        }
-                    }) { if (sending) CircularProgressIndicator(Modifier.size(18.dp)) else Text(stringResource(R.string.discussion_reply)) }
-                    if (sent) Text(stringResource(R.string.discussion_sent), color = MaterialTheme.colorScheme.primary)
-                }
-                if (error) Text(stringResource(R.string.discussion_reply_error), color = MaterialTheme.colorScheme.error)
-            } else {
+            if (!signedIn) {
                 Text(stringResource(R.string.discussion_sign_in), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
