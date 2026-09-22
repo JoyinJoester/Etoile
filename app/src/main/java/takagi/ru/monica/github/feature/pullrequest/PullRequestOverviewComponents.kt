@@ -145,7 +145,7 @@ internal fun PullRequestOverviewCard(
             PullRequestStateBadge(pullRequest)
             Text(
                 text = pullRequest.title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 14.dp)
             )

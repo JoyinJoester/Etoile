@@ -777,7 +777,7 @@ private fun IssueBody(
             }
             Text(
                 text = issue.title,
-                style = MaterialTheme.typography.headlineSmall,
+                style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(top = 14.dp)
             )

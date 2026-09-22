@@ -42,13 +42,19 @@ fun MarkdownPreviewText(
             else defaultUriHandler.openUri(uri)
         }
     }
-    val body = MaterialTheme.typography.bodyLarge
+    // Keep repository content dense enough for long issue and PR descriptions.
+    // Nothing's display scale is intentionally reserved for page-level emphasis.
+    val body = if (LocalDesignStyle.current == DesignStyle.NOTHING) {
+        MaterialTheme.typography.bodyMedium
+    } else {
+        MaterialTheme.typography.bodyLarge
+    }
     val typography = if (LocalDesignStyle.current == DesignStyle.NOTHING) {
         // Reading headings should not inherit the dotted display typography.
         markdownTypography(
-            h1 = body.copy(fontSize = 28.sp, lineHeight = 36.sp, fontWeight = FontWeight.Medium),
-            h2 = body.copy(fontSize = 24.sp, lineHeight = 32.sp, fontWeight = FontWeight.Medium),
-            h3 = body.copy(fontSize = 20.sp, lineHeight = 28.sp, fontWeight = FontWeight.Medium),
+            h1 = body.copy(fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Medium),
+            h2 = body.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium),
+            h3 = body.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
             h4 = body.copy(fontWeight = FontWeight.Medium),
             h5 = body.copy(fontWeight = FontWeight.Medium),
             h6 = body.copy(fontWeight = FontWeight.Medium)
