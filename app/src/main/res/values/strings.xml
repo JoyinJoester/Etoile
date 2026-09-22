@@ -259,6 +259,12 @@
     <string name="github_settings">Settings</string>
 
     <string name="github_settings_subtitle">Appearance and language</string>
+    <string name="github_display_scale">Display scale (DPI)</string>
+    <string name="github_display_scale_subtitle">Adjust the size of the app interface</string>
+    <string name="github_display_scale_value">%1$d%%</string>
+    <string name="github_display_scale_description">The app reloads the current screen after you release the slider.</string>
+    <string name="github_display_scale_small">Smaller</string>
+    <string name="github_display_scale_large">Larger</string>
 
     <string name="github_theme">Color mode</string>
     <string name="github_system">System default</string>

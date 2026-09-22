@@ -25,12 +25,18 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.RadioButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,6 +55,7 @@ import takagi.ru.monica.data.ColorScheme
 import takagi.ru.monica.data.DesignStyle
 import takagi.ru.monica.data.Language
 import takagi.ru.monica.data.ThemeMode
+import takagi.ru.monica.utils.DisplayDensity
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubSectionHeader
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
@@ -64,6 +71,7 @@ fun GithubSettingsScreen(
     onBack: () -> Unit,
     onOpenAppearance: () -> Unit,
     onOpenLanguage: () -> Unit,
+    onOpenDisplayScale: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     SettingsPage(
@@ -90,6 +98,64 @@ fun GithubSettingsScreen(
             icon = Icons.Default.Language,
             onClick = onOpenLanguage
         )
+        Spacer(Modifier.height(12.dp))
+        SettingsDestinationRow(
+            title = stringResource(R.string.github_display_scale),
+            summary = stringResource(R.string.github_display_scale_value, settings.displayScale),
+            icon = Icons.Default.Tune,
+            onClick = onOpenDisplayScale
+        )
+    }
+}
+
+@Composable
+fun GithubDisplayScaleScreen(
+    settings: AppSettings,
+    onBack: () -> Unit,
+    onScaleSelected: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var scale by remember(settings.displayScale) { mutableFloatStateOf(settings.displayScale.toFloat()) }
+    SettingsPage(
+        title = stringResource(R.string.github_display_scale),
+        subtitle = stringResource(R.string.github_display_scale_subtitle),
+        onBack = onBack,
+        modifier = modifier
+    ) {
+        Surface(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            shape = GithubExpressiveShapes.prominent,
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ) {
+            Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = stringResource(R.string.github_display_scale_value, scale.toInt()),
+                    style = MaterialTheme.typography.headlineSmall
+                )
+                Text(
+                    text = stringResource(R.string.github_display_scale_description),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+        Slider(
+            value = scale,
+            onValueChange = { scale = it },
+            onValueChangeFinished = {
+                onScaleSelected(scale.toInt().coerceIn(DisplayDensity.MIN_SCALE, DisplayDensity.MAX_SCALE))
+            },
+            valueRange = DisplayDensity.MIN_SCALE.toFloat()..DisplayDensity.MAX_SCALE.toFloat(),
+            steps = ((DisplayDensity.MAX_SCALE - DisplayDensity.MIN_SCALE) / DisplayDensity.STEP) - 1,
+            modifier = Modifier.padding(top = 20.dp)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(stringResource(R.string.github_display_scale_small), style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.github_display_scale_large), style = MaterialTheme.typography.labelMedium)
+        }
     }
 }
 

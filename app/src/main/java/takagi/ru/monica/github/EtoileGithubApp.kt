@@ -182,6 +182,7 @@ import takagi.ru.monica.github.navigation.GithubSignInRoute
 import takagi.ru.monica.github.navigation.GithubSettingsRoute
 import takagi.ru.monica.github.navigation.GithubAppearanceRoute
 import takagi.ru.monica.github.navigation.GithubLanguageRoute
+import takagi.ru.monica.github.navigation.GithubDisplayScaleRoute
 import takagi.ru.monica.github.navigation.GithubAccountsRoute
 import takagi.ru.monica.github.navigation.GithubStarredRoute
 import takagi.ru.monica.github.navigation.GithubMyConversationsRoute
@@ -215,6 +216,7 @@ import takagi.ru.monica.github.navigation.GithubNavigationTransitions
 import takagi.ru.monica.github.settings.GithubSettingsScreen
 import takagi.ru.monica.github.settings.GithubAppearanceScreen
 import takagi.ru.monica.github.settings.GithubLanguageScreen
+import takagi.ru.monica.github.settings.GithubDisplayScaleScreen
 import takagi.ru.monica.utils.SettingsManager
 
 @Composable
@@ -623,6 +625,7 @@ fun EtoileGithubApp(
                 onBack = { navController.popBackStack() },
                 onOpenAppearance = { navController.navigate(GithubAppearanceRoute) { launchSingleTop = true } },
                 onOpenLanguage = { navController.navigate(GithubLanguageRoute) { launchSingleTop = true } },
+                onOpenDisplayScale = { navController.navigate(GithubDisplayScaleRoute) { launchSingleTop = true } },
                 modifier = Modifier.fillMaxSize()
             )
         }
@@ -663,6 +666,14 @@ fun EtoileGithubApp(
                         scope.launch { settingsManager.updateLanguage(language) }
                     }
                 },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        composable<GithubDisplayScaleRoute> {
+            GithubDisplayScaleScreen(
+                settings = settings,
+                onBack = { navController.popBackStack() },
+                onScaleSelected = { scale -> scope.launch { settingsManager.updateDisplayScale(scale) } },
                 modifier = Modifier.fillMaxSize()
             )
         }

@@ -57,5 +57,6 @@ data class AppSettings(
     val customNeutralColor: Long = 0xFF605D66,
     val customNeutralVariantColor: Long = 0xFF625B71,
     val language: Language = Language.SYSTEM,
+    val displayScale: Int = 100,
     val screenshotProtectionEnabled: Boolean = false
 )

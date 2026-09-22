@@ -257,6 +257,12 @@
     <string name="github_settings">设置</string>
 
     <string name="github_settings_subtitle">外观与语言</string>
+    <string name="github_display_scale">界面缩放（DPI）</string>
+    <string name="github_display_scale_subtitle">调整应用界面的显示大小</string>
+    <string name="github_display_scale_value">%1$d%%</string>
+    <string name="github_display_scale_description">松开滑杆后，应用会自动重新加载当前界面。</string>
+    <string name="github_display_scale_small">更小</string>
+    <string name="github_display_scale_large">更大</string>
 
     <string name="github_theme">明暗模式</string>
     <string name="github_system">跟随系统</string>

@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -43,6 +44,7 @@ class SettingsManager(private val context: Context) {
         private val CUSTOM_NEUTRAL_COLOR_KEY = longPreferencesKey("custom_neutral_color")
         private val CUSTOM_NEUTRAL_VARIANT_COLOR_KEY = longPreferencesKey("custom_neutral_variant_color")
         private val LANGUAGE_KEY = stringPreferencesKey("language")
+        private val DISPLAY_SCALE_KEY = intPreferencesKey("display_scale")
         private val SCREENSHOT_PROTECTION_KEY = booleanPreferencesKey("screenshot_protection_enabled")
 
         private val sharedSettingsScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -88,6 +90,7 @@ class SettingsManager(private val context: Context) {
             language = runCatching {
                 Language.valueOf(preferences[LANGUAGE_KEY] ?: Language.SYSTEM.name)
             }.getOrDefault(Language.SYSTEM),
+            displayScale = DisplayDensity.clampScale(preferences[DISPLAY_SCALE_KEY] ?: DisplayDensity.DEFAULT_SCALE),
             screenshotProtectionEnabled = preferences[SCREENSHOT_PROTECTION_KEY] ?: false
         )
     }
@@ -113,6 +116,12 @@ class SettingsManager(private val context: Context) {
     suspend fun updateLanguage(language: Language) {
         dataStore.edit { preferences ->
             preferences[LANGUAGE_KEY] = language.name
+        }
+    }
+
+    suspend fun updateDisplayScale(scale: Int) {
+        dataStore.edit { preferences ->
+            preferences[DISPLAY_SCALE_KEY] = DisplayDensity.clampScale(scale)
         }
     }
 }

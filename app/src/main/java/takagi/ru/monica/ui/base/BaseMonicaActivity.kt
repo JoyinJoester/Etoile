@@ -18,8 +18,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import takagi.ru.monica.data.AppSettings
-import takagi.ru.monica.data.Language
 import takagi.ru.monica.utils.LocaleHelper
+import takagi.ru.monica.utils.DisplayDensity
 import takagi.ru.monica.utils.ScreenshotProtectionUtil
 import takagi.ru.monica.utils.SettingsManager
 
@@ -41,21 +41,22 @@ abstract class BaseMonicaActivity : FragmentActivity() {
         if (newBase != null) {
             val tempSettingsManager = SettingsManager(newBase)
             // 使用超时保护，防止 ANR
-            val language = try {
+            val appSettings = try {
                 runBlocking {
                     withTimeout(200) {
                         try {
-                            tempSettingsManager.settingsFlow.first().language
+                            tempSettingsManager.settingsFlow.first()
                         } catch (e: Exception) {
-                            Language.SYSTEM
+                            AppSettings()
                         }
                     }
                 }
             } catch (e: Exception) {
                 // 超时或出错，回退到默认
-                Language.SYSTEM
+                AppSettings()
             }
-            super.attachBaseContext(LocaleHelper.setLocale(newBase, language))
+            val localizedContext = LocaleHelper.setLocale(newBase, appSettings.language)
+            super.attachBaseContext(DisplayDensity.apply(localizedContext, appSettings.displayScale))
         } else {
             super.attachBaseContext(newBase)
         }
@@ -74,6 +75,7 @@ abstract class BaseMonicaActivity : FragmentActivity() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 settingsManager.settingsFlow.collect { settings ->
                     val languageChanged = cachedSettings?.let { it.language != settings.language } == true
+                    val displayScaleChanged = cachedSettings?.let { it.displayScale != settings.displayScale } == true
                     cachedSettings = settings
                     
                     // 更新截图保护
@@ -81,7 +83,7 @@ abstract class BaseMonicaActivity : FragmentActivity() {
 
                     // Recreate after persistence so every window receives the new locale.
                     // Android restores the current page and its navigation back stack.
-                    if (languageChanged) recreate()
+                    if (languageChanged || displayScaleChanged) recreate()
                 }
             }
         }

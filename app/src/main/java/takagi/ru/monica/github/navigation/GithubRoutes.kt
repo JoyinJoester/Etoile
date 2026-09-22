@@ -19,6 +19,9 @@ data object GithubAppearanceRoute
 data object GithubLanguageRoute
 
 @Serializable
+data object GithubDisplayScaleRoute
+
+@Serializable
 data object GithubAccountsRoute
 
 @Serializable
