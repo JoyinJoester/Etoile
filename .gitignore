@@ -45,3 +45,4 @@ quick-fix.ps1
 test_crypto.kt
 
 /native/code-reader/target/
+__pycache__/

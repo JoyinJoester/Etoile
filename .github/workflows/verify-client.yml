@@ -40,14 +40,14 @@ jobs:
           rustup target add aarch64-linux-android armv7-linux-androideabi
           cargo install cargo-ndk --version 4.1.2 --locked
       - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
       - name: Verify without packaging
         shell: pwsh
         run: |
           chmod +x gradlew
           ./scripts/verify-client.ps1
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
       - name: Check indexed dependency advisories
         run: python scripts/check-dependency-advisories.py
       - name: Preserve test and lint reports

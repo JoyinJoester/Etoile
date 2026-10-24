@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application>
+        <!-- Allow shell sampling of the optimized emulator build without making it debuggable. -->
+        <profileable android:shell="true" />
         <!-- Local UI fixtures only; excluded from release builds. -->
         <activity
             android:name="takagi.ru.monica.debug.DesignAuditActivity"
