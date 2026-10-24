@@ -1,6 +1,7 @@
 package takagi.ru.monica.gitlab.data
 
 import java.util.concurrent.TimeUnit
+import java.net.InetAddress
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -212,13 +213,39 @@ class GitLabWorkRepositoryImplTest {
         }
     }
 
-    @Test fun writesNeverRetryAfterDisconnectAndMalformedSuccessRemainsAFailure() = runTest {
+    @Test fun writesNeverRetryAfterDisconnect() = runTest {
         withServer { server, repo, key ->
             server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
-            assertTrue(repo.runPipeline(key, 5, "main").isFailure)
-            assertNotNull(server.takeRequest(5, TimeUnit.SECONDS)); assertEquals(1, server.requestCount)
+            val failure = repo.runPipeline(key, 5, "main").exceptionOrNull() as GitLabReadException
+            assertEquals(GitLabReadError.NETWORK, failure.reason)
+            assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+            assertEquals(1, server.requestCount)
+        }
+    }
+
+    @Test fun malformedWriteSuccessIsReportedAsInvalidResponse() = runTest {
+        withServer { server, repo, key ->
             server.enqueue(ok("{broken"))
-            assertTrue(repo.runPipeline(key, 5, "main").isFailure)
+            val failure = repo.runPipeline(key, 5, "main").exceptionOrNull() as GitLabReadException
+            assertEquals(GitLabReadError.INVALID_RESPONSE, failure.reason)
+            assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+            assertEquals(1, server.requestCount)
+        }
+    }
+
+    @Test fun explicitSubmissionAfterDisconnectGetsItsOwnResponseWithoutAutomaticReplay() = runTest {
+        withServer { server, repo, key ->
+            server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+            assertEquals(GitLabReadError.NETWORK,
+                (repo.runPipeline(key, 5, "main").exceptionOrNull() as GitLabReadException).reason)
+            assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+            assertEquals(1, server.requestCount)
+
+            server.enqueue(ok("{broken"))
+            val failure = repo.runPipeline(key, 5, "main").exceptionOrNull() as GitLabReadException
+            assertEquals("A new explicit submission must receive the queued invalid JSON response",
+                GitLabReadError.INVALID_RESPONSE, failure.reason)
+            assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
             assertEquals(2, server.requestCount)
         }
     }
@@ -268,7 +295,11 @@ class GitLabWorkRepositoryImplTest {
 
     private suspend fun withServer(block: suspend (MockWebServer, GitLabWorkRepositoryImpl, String) -> Unit) {
         MockWebServer().use { server ->
-            val credential = GitLabCredential(42, server.url("/team/gitlab/").toString(), "me", "Me", "", "glpat-work-token")
+            // A disconnected route must not make a later assertion select an unbound IPv6
+            // localhost address on another OS. These tests exercise responses, not DNS failover.
+            server.start(InetAddress.getByName("127.0.0.1"), 0)
+            val baseUrl = server.url("/team/gitlab/").newBuilder().host("127.0.0.1").build()
+            val credential = GitLabCredential(42, baseUrl.toString(), "me", "Me", "", "glpat-work-token")
             val repo = GitLabWorkRepositoryImpl(OkHttpClient(), GitLabCredentialProvider { credential }, { it.toHttpUrl() })
             block(server, repo, credential.account().key)
         }
