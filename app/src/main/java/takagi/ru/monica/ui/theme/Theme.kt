@@ -7,10 +7,7 @@ package takagi.ru.monica.ui.theme
 
 import android.app.Activity
 import android.os.Build
-import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.LocalOverscrollFactory
-import androidx.compose.foundation.OverscrollEffect
-import androidx.compose.foundation.OverscrollFactory
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -28,11 +25,10 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.ColorScheme as MaterialColorScheme
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import takagi.ru.monica.data.ColorScheme
 import takagi.ru.monica.data.DesignStyle
@@ -1309,14 +1305,17 @@ fun EtoileTheme(
     val currentContent = rememberUpdatedState(content)
     val retainedContent = remember { movableContentOf { currentContent.value() } }
 
-    // 全局关闭"拉伸过滚动"：滚到顶/底后不再被拽出空白回弹区。
-    // 新版 foundation 改读 LocalOverscrollFactory，旧 Local 没用了，两个都关。
-    CompositionLocalProvider(
-        LocalOverscrollConfiguration provides null,
-        LocalOverscrollFactory provides NoOverscrollFactory,
-        LocalDesignStyle provides designStyle
-    ) {
-        MiuixTheme(colors = finalColorScheme.toMiuixColors(darkTheme)) {
+    val density = LocalDensity.current
+    val overscrollFactory = remember(density) {
+        with(density) { EtoileOverscrollFactory(16.dp.toPx(), 24.dp.toPx()) }
+    }
+    // MiuixTheme installs its own window-sized overscroll. Override it INSIDE the theme
+    // so all design styles, lists and horizontal components share the same short rebound.
+    MiuixTheme(colors = finalColorScheme.toMiuixColors(darkTheme)) {
+        CompositionLocalProvider(
+            LocalOverscrollFactory provides overscrollFactory,
+            LocalDesignStyle provides designStyle
+        ) {
             if (designStyle == DesignStyle.MATERIAL) {
                 MaterialExpressiveTheme(
                     colorScheme = finalColorScheme,
@@ -1365,28 +1364,4 @@ private fun MaterialColorScheme.withPureBlackSurfaces(): MaterialColorScheme {
         outlineVariant = Color(0xFF1F1F1F),
         scrim = pureBlack
     )
-}
-
-// 无视觉效果的过滚动实现：滚动仍正常，但到边缘不再拉伸内容
-private val NoOverscrollEffect = object : OverscrollEffect {
-    override fun applyToScroll(
-        delta: Offset,
-        source: NestedScrollSource,
-        performScroll: (Offset) -> Offset
-    ): Offset = delta
-
-    override suspend fun applyToFling(
-        velocity: Velocity,
-        performFling: suspend (Velocity) -> Velocity
-    ) = Unit
-
-    override val isInProgress: Boolean get() = false
-}
-
-private val NoOverscrollFactory = object : OverscrollFactory {
-    override fun createOverscrollEffect(): OverscrollEffect = NoOverscrollEffect
-
-    override fun hashCode(): Int = super.hashCode()
-
-    override fun equals(other: Any?): Boolean = this === other
 }

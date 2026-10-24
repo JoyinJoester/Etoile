@@ -23,8 +23,11 @@ class GithubDomainArchitectureTest {
             "import javax."
         )
         val forbiddenAnnotations = setOf("@Composable", "@Immutable", "@Stable")
-        val violations = domainDirectory!!
-            .walkTopDown()
+        val githubDomain = requireNotNull(domainDirectory)
+        val gitLabDomain = File(githubDomain, "../../gitlab/domain").canonicalFile
+        assertTrue("Unable to locate the GitLab domain source directory", gitLabDomain.isDirectory)
+        val violations = sequenceOf(githubDomain, gitLabDomain)
+            .flatMap { it.walkTopDown() }
             .filter { it.isFile && it.extension == "kt" }
             .flatMap { source ->
                 source.readLines().asSequence().mapIndexedNotNull { index, line ->
@@ -41,7 +44,7 @@ class GithubDomainArchitectureTest {
             .toList()
 
         assertTrue(
-            "GitHub domain must stay KMP-compatible and framework-independent:\n${violations.joinToString("\n")}",
+            "GitHub and GitLab domain must stay KMP-compatible and framework-independent:\n${violations.joinToString("\n")}",
             violations.isEmpty()
         )
     }

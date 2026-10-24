@@ -86,6 +86,7 @@ fun StoreScreen(
     }
     var showSources by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     if (showSources) StoreSourcesSheet(state, onAction) { showSources = false }
+    val filteredFdroidApps = rememberFilteredFdroidApps(state)
     val catalogHeader: @Composable () -> Unit = {
         Column {
             androidx.compose.material3.TextButton(onClick = { showSources = true }) {
@@ -135,7 +136,10 @@ fun StoreScreen(
                 GithubFilterRow(labels = listOf(stringResource(R.string.store_all), stringResource(R.string.store_installed), stringResource(R.string.github_store_updates)),
                     selectedIndex = state.fdroidFilter.ordinal,
                     onSelected = { onAction(StoreAction.FilterFdroid(FdroidCatalogFilter.entries[it])) })
-                Text(stringResource(R.string.store_app_count, state.filteredFdroidApps.size),
+                if (state.isFilteringFdroid) {
+                    androidx.compose.material3.LinearProgressIndicator(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp))
+                } else Text(stringResource(R.string.store_app_count, filteredFdroidApps.size),
                     style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 8.dp))
             }
         }

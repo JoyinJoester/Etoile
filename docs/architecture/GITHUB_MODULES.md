@@ -17,6 +17,12 @@ github/feature/*  ->  github/domain  <-  github/data
 - `component` 是跨页面复用的 Material 3 Expressive 组件；新增列表先检查这里是否已有行、空态、错误态或分页组件。
 - `navigation` 只定义类型安全路由和链接解析，不把 `NavController` 传入叶子组件。
 
+GitLab 按同样的 `gitlab/feature -> gitlab/domain <- gitlab/data` 分层，独立领域对象、账号和 API。项目列表/详情路由携带实例账号键和数字项目 ID；data 层凭据提供器绑定当前活动账号并负责刷新，不把 token 暴露给 feature。目录/文件读取绑定解析后的不可变提交 SHA。GitLab 不共用 GitHub 的凭据拦截器、缓存、速率状态和外部链接策略；共享 `GithubDetailScaffold` 时关闭 GitHub 服务提示。具体范围见 [GITLAB_PROJECTS.md](../configuration/GITLAB_PROJECTS.md)。
+
+GitLab 项目和协作仓库共享 `GitLabApiClient`，统一账号绑定、受限响应读取、安全分页、错误分类和取消；POST/PUT 与 OAuth 表单使用 `GitLabSingleUseBody` 阻止写入重放。Issue / 合并请求使用项目内 `iid`，不使用全局 ID 拼详情路径；MR 差异读取前后复核页面 SHA，合并将该 SHA 发给服务端校验。作业操作和日志先验证流水线归属。
+
+`GitLabWorkNavGraph` 持有导航与 ViewModel，叶子 Screen 仅接收不可变状态和单一 Action 回调。三个协作 ViewModel 按活动账号清空状态、取消旧请求并通过版本号拒绝迟到结果；写前取消读取，写入单飞。创建、编辑和评论草稿按账号/项目/类型/目标保存到导航 `SavedStateHandle`，日志与危险操作确认不持久化。GitLab domain 和 feature 纳入既有领域/UI 架构测试。协作范围见 [GITLAB_WORKFLOWS.md](../configuration/GITLAB_WORKFLOWS.md)。
+
 ## 列表和分页规范
 
 分页 ViewModel 的状态至少区分：
@@ -60,13 +66,16 @@ Issue / Pull Request 列表查询统一使用纯 Kotlin `GithubIssueListQuery` /
 - 仓库文件浏览的 Branch/Tag 引用选择统一使用可搜索的 `GithubModalBottomSheet`；引用列表按 API `Link` 分页，Tags 延迟到用户切换标签页时加载，不在普通文件页初始化时额外请求。
 - 仓库详情提供独立的原生 Branches 页面，复用 `GithubRepositoryContentsRepository.branches` 的 ETag/分页数据；页面支持本地搜索、默认分支和保护状态标识，并可直接进入所选 ref 的代码浏览。保护规则编辑仍打开 GitHub 官方设置页。
 - 仓库 Collaborators 页面只在登录态提供入口，通过认证 GET `/repos/{owner}/{repo}/collaborators` 分页读取并映射 Read/Triage/Write/Maintain/Admin 角色；列表复用 `GithubUserRow` 并进入原生用户资料。无仓库权限时显示错误，成员增删和权限修改继续使用 GitHub Access 设置页。
-- 仓库 Webhooks 页面只读展示 Hook 名称、启用状态、订阅事件和最近响应；API 响应中的 config URL、secret 等敏感配置不进入 domain/UI。Ping、删除、编辑等具有外部副作用的操作继续通过 GitHub Webhooks 设置页完成。
+- 仓库 Webhooks 页面展示 Hook 名称、启用状态、订阅事件和最近响应，支持经过确认的启停和删除；配置编辑仍打开 GitHub 设置页。每个 Hook 可进入原生投递记录页，列表只保存投递元数据，不读取请求/响应正文或 secret。该端点使用 `Link` 中的不透明 `cursor`，不可复用整数页码；API 的小数秒耗时在 data 层换算为毫秒。
+- Webhook 重投须先显示包含仓库、Hook 和投递 ID 的确认弹窗，并说明可能重复触发外部构建/部署。ViewModel 按当前账号重新读取管理权限、校验投递属于已加载列表、拦截重复写入。202 仅表示请求已接受，成功后刷新记录，不得把原投递状态改为成功；读失败重试只重试 GET，不能重复 POST。退出或切换账号时清空记录和反馈，取消旧请求并忽略迟到结果。
 - Explore 搜索通过 `ExploreSearchKind` 区分 Repositories、Users、Code、Issues、Pull Requests；五类结果共享查询防抖、分页和错误状态。Issue/PR 使用独立轻量 `GithubIssueSearchResult`，只保存搜索列表字段，点击后进入现有原生详情并重新加载完整领域对象；不得把 Search API 的不完整 DTO 强塞进 `GithubIssue` / `GithubPullRequest`。Users 行进入原生公开资料页，Code 行继续跳转 GitHub 外链，因为搜索结果不保证提供可安全恢复的 ref 上下文。
 - 公开用户资料统一使用 `GithubPublicUserRepository` 与 `GithubUserProfileRoute`；用户详情、公开仓库及 Followers / Following 分页共享 ETag 缓存，资料页不复用已登录账号模型，避免把权限字段误显示给其他用户。登录用户查看他人资料时通过 `/user/following/{login}` 查询和切换关注状态，写操作成功后清理 GitHub 响应缓存。
 - 作者用户名统一使用 `GithubUserLink` 或 `GithubUserMetadataLine`，由应用根部的 `LocalGithubUserNavigator` 进入 `GithubUserProfileRoute`；feature 和共享组件不得持有或接收 `NavController`。
 - Issue / PR 的 assignees、requested reviewers 等用户集合统一使用可换行的 `GithubUserGroup`，不得把登录名拼成不可点击的整段文本。
 - 头像展示统一使用 `GithubAvatar`；图片加载只依赖 `GithubAvatarRepository` 接口，data 层负责 HTTPS 校验、协程错误边界、内存/磁盘上限和旧缓存回退，UI 始终保留固定尺寸的首字母占位，避免列表布局跳动。
 - 支持手势刷新的列表统一使用 `GithubPullToRefreshBox`；刷新已有数据时保留当前内容并使用独立 `isRefreshing` 状态，首次加载继续使用 `isLoading`，避免列表闪空和重复进度指示。
+- 越界反馈统一由 `EtoileTheme` 在 `MiuixTheme` 内层提供 `EtoileOverscrollFactory`，避免主题库重新覆盖设置。横向上限 16dp、纵向 24dp，且不超过组件对应尺寸的 8%；只对用户拖动的未消费距离提供递增阻力，松手无振荡归位。不得为单个页面额外叠加全屏位移或按窗口尺寸计算回弹；正常滚动、嵌套下拉刷新和反向拖动应继续消费手势。
+- 贡献图保持从旧到新的时间顺序，滚动初始位置锚定最右侧最新日期；月份标签与周格共享滚动容器，最后一个月份不得额外撑出空白周列。
 - 动效使用 `GithubExpressiveMotion` 的短/标准规格，避免在大列表里创建无限动画或重复对象。
 - Inbox 单条分拣使用独立 `triageBusyIds` / `triageErrorIds`，不得用一个全局写入状态锁住整页；Done 调用 DELETE `/notifications/threads/{id}`，取消订阅先 DELETE `/subscription` 再将线程标记 Done。取消订阅必须经过确认弹层，成功后再从本地列表和未读集合移除，失败保留原行并就地提示。
 - 外部 GitHub 链接按钮统一使用 `GithubOpenOnGithubButton`，由组件保证 48dp 触控区、统一图标和 TalkBack 标签；页面不得自行复制 `OpenInNew` 的 `IconButton`。
@@ -86,12 +95,18 @@ Issue / Pull Request 列表查询统一使用纯 Kotlin `GithubIssueListQuery` /
 - Pull Request 合并属于不可逆高风险写操作；UI 必须先显示包含源分支、目标分支和合并方式的确认弹层，确认后才触发 ViewModel 的单次 merge 请求。
 - 合并请求必须通过纯 Kotlin `GithubMergeDraft` 绑定当前 Head SHA，并允许 MERGE/SQUASH 提供可选提交标题与说明；Repository 将 `sha`、`merge_method`、`commit_title`、`commit_message` 一次性序列化，GitHub 在 Head 已变化时拒绝请求，避免确认期间误合并新提交。REBASE 不发送自定义提交文本。
 - Pull Request 行级 Review 评论使用 `/pulls/{number}/comments` 独立分页模型，列表 key 必须带资源类型前缀，避免 Review、Review Comment 和 Conversation Comment 的数字 ID 冲突。
+- 评审评论以 `in_reply_to_id ?: id` 分组；回复必须 POST 到根评论的 `/pulls/{number}/comments/{comment_id}/replies`，不能用某条回复的 ID。根评论尚未加载时保留已加载回复，避免跨分页丢失讨论。成功只追加服务端返回对象并去重；取消在途旧分页并拒绝迟到响应，避免覆盖新回复。
+- PR 评审回复草稿以仓库、PR 和账号 ID 隔离，使用导航 `SavedStateHandle` 保存目标、正文及编辑器打开状态。恢复不自动 POST，不恢复待确认操作或发送状态。关闭编辑器保留草稿，切换另一讨论并丢弃已有非空草稿必须确认；发送前重新检查登录、锁定与目标。切换账号取消旧写入，并以会话修订号拒绝迟到结果。
+- 新建 Diff 行评论使用 `GithubDiffSide` 与真实 hunk 旧/新行号；metadata、无 patch 或无法解析定位的行不能评论，不能用显示列表下标代替 API 行号。单条评论和批量 Review 都显式发送 `commit_id`，写入前通过不经过缓存回退的 `reviewSnapshot` 复核当前 Head、锁定及开放状态。Head 变化保留草稿并要求重新选择，不能自动把旧行号平移到新提交。
+- 批量评审采用本地草稿，最多 50 条行评论、正文总计 65,536 字符；使用一次 POST `/pulls/{number}/reviews` 发布 comments、summary 和 event，不逐条发布模拟批量。按账号/仓库/PR 保存草稿，待确认、网络忙碌和错误状态不恢复；成功后清草稿，失败保留且不自动重发。禁止作者批准自己的 PR 或请求修改。
+- Review Thread 的 GraphQL node ID 与 REST 根评论数据库 ID 分开建模，通过 `comments(first:1).fullDatabaseId` 以 64 位 ID 关联，不使用已废弃的 32 位 `databaseId`；使用游标读取状态和 `viewerCanResolve` / `viewerCanUnresolve`，确认后执行 resolve/unresolve。GraphQL HTTP 200 中若含 errors 或缺少有效返回对象，也算失败，不改 UI 成功状态、不清缓存。写入取消旧读取并拒绝其迟到结果，避免回滚解决状态；切换账号清空权限、状态和待确认操作。
 - Actions 只读列表与详情继续使用 ETag 缓存；重新运行/取消 Run、Workflow 启停和手动 Dispatch 属于写操作，必须经过认证、成功后清理缓存，并在 UI 中显示独立忙碌/失败状态。Dispatch 至少要求非空 ref，可选 inputs 使用逐行 `key=value` 输入并在 API 层限制最多 20 项。
 - 仓库详情的“仓库设置”使用分组下拉菜单提供 General、Branches、Actions、Collaborators 和 Webhooks 网页入口；这些入口只负责打开 GitHub 官方设置页，不在客户端复制网页权限模型或伪造写操作。
 - 仓库 Topics 的编辑通过 `GithubRepositoryDetailsRepository.updateTopics` 使用认证 PUT `/repos/{owner}/{repo}/topics`；UI 只在登录态显示编辑入口，提交前规范化空白/大小写/重复项并限制最多 20 个，成功后更新当前详情，失败显示独立错误。
 - 仓库详情的分支保护概览只读取默认分支规则；404 表示该分支未配置保护，不应当当作网络错误。规则写入继续通过 GitHub 设置网页入口，避免客户端在权限不明确时修改安全策略。
 - Reaction 的忙碌和失败状态按评论 ID 隔离，不能用一个全局写入进度阻塞整页评论；登录状态变化时取消旧请求并清空当前账号的 Reaction 选中状态。
 - 星标分类是本地 `GithubStarCategoryStore` 元数据，不修改 GitHub Star API；分类筛选和仓库搜索在 ViewModel 中完成，分类名称必须通过 `values` / `values-zh` 资源提供。
+- 星标列表每页最多 100 条只是 GitHub 的分页大小；页面在距底部约 6 项时按 `nextPage` 自动续载，不设总数上限，保留手动加载/重试入口。筛选后为空也继续加载；自动加载在读取失败、刷新、退出登录或到达末页时停止。未加载完的概览标为「已加载星标」，搜索与分类计数仅针对已加载结果，不能把首页数量冒充账号星标总数。回归覆盖 205/257 条跨页数据、去重、304 保留分页、失败暂停与迟到结果隔离。
 
 ## 测试策略
 

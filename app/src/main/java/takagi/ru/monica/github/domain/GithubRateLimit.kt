@@ -10,7 +10,9 @@ data class GithubRateLimitSnapshot(
     val resetAtEpochSeconds: Long
 ) {
     val isExhausted: Boolean get() = remaining <= 0
-    val isLow: Boolean get() = remaining <= maxOf(10, limit / 20)
+    // The unauthenticated search bucket holds only ten requests. An absolute
+    // floor of ten would warn even when it is full; cap it at half the bucket.
+    val isLow: Boolean get() = remaining <= minOf(maxOf(10, limit / 20), limit.coerceAtLeast(0) / 2)
 }
 
 interface GithubRateLimitMonitor {

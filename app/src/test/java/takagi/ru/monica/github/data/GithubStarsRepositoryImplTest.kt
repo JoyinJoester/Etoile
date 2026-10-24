@@ -63,6 +63,42 @@ class GithubStarsRepositoryImplTest {
         assertEquals("\"stars-v1\"", server.takeRequest().getHeader("If-None-Match"))
     }
 
+    @Test fun pagesBeyondOneHundredKeepTheirOwnCacheAndPaginationAfterNotModified() = runTest {
+        val repository = GithubStarsRepositoryImpl(
+            requests = GithubAuthenticatedRequests(FakeTokenStore()),
+            client = OkHttpClient(), baseUrl = server.url("/").toString(),
+            cacheStore = TestGithubCacheStore()
+        )
+        fun pageJson(ids: IntRange) = ids.joinToString(prefix = "[", postfix = "]") { id ->
+            REPOSITORIES_JSON.trim().removePrefix("[").removeSuffix("]")
+                .replace("\"id\": 1,", "\"id\": $id,")
+                .replace("joyins/etoile", "joyins/etoile-$id")
+        }
+        server.enqueue(MockResponse().setHeader("ETag", "\"page-one\"")
+            .setHeader("Link", "<${server.url("/user/starred?page=2&per_page=100")}>; rel=\"next\", <${server.url("/user/starred?page=3&per_page=100")}>; rel=\"last\"")
+            .setBody(pageJson(1..100)))
+        server.enqueue(MockResponse().setResponseCode(304))
+        server.enqueue(MockResponse().setHeader("Link", "<${server.url("/user/starred?page=1&per_page=100")}>; rel=\"prev\", <${server.url("/user/starred?page=3&per_page=100")}>; rel=\"next\"")
+            .setBody(pageJson(101..200)))
+        server.enqueue(MockResponse().setBody(pageJson(201..205)))
+        val first = repository.starredRepositories().getOrThrow()
+        val restored = repository.starredRepositories().getOrThrow()
+        assertEquals(first, restored)
+        val second = repository.starredRepositories(restored.nextPage!!).getOrThrow()
+        val third = repository.starredRepositories(second.nextPage!!).getOrThrow()
+        assertEquals((1L..205L).toList(), (first.items + second.items + third.items).map { it.id })
+        assertEquals(null, third.nextPage)
+        assertEquals("1", server.takeRequest().requestUrl!!.queryParameter("page"))
+        val cached = server.takeRequest()
+        assertEquals("\"page-one\"", cached.getHeader("If-None-Match"))
+        for (page in listOf(2, 3)) {
+            val request = server.takeRequest()
+            assertEquals("$page", request.requestUrl!!.queryParameter("page"))
+            assertEquals("100", request.requestUrl!!.queryParameter("per_page"))
+            assertEquals(null, request.getHeader("If-None-Match"))
+        }
+    }
+
     private class FakeTokenStore : GithubTokenStore {
         override fun read() = "token_12345678901234567890"
         override fun write(token: String) = Unit

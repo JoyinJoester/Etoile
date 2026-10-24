@@ -1,5 +1,20 @@
 package takagi.ru.monica.github
 
+import takagi.ru.monica.BuildConfig
+import takagi.ru.monica.gitlab.feature.GitLabAccountsScreen
+import takagi.ru.monica.gitlab.feature.GitLabAccountsViewModel
+import takagi.ru.monica.github.navigation.GitLabAccountsRoute
+import takagi.ru.monica.gitlab.feature.GitLabSignInBrowser
+import takagi.ru.monica.gitlab.feature.GitLabProjectsScreen
+import takagi.ru.monica.gitlab.feature.GitLabProjectScreen
+import takagi.ru.monica.gitlab.feature.GitLabProjectsViewModel
+import takagi.ru.monica.gitlab.feature.GitLabProjectViewModel
+import takagi.ru.monica.gitlab.feature.GitLabViewModelFactory
+import takagi.ru.monica.github.navigation.GitLabProjectsRoute
+import takagi.ru.monica.github.navigation.GitLabProjectRoute
+import takagi.ru.monica.github.navigation.GitLabWorkRoute
+import takagi.ru.monica.gitlab.navigation.gitLabWorkRoutes
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
@@ -11,6 +26,8 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.background
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -231,6 +248,7 @@ fun EtoileGithubApp(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val navController = rememberNavController()
+    val layoutDirection = LocalLayoutDirection.current
     val currentEntry by navController.currentBackStackEntryAsState()
     var showExitConfirmation by rememberSaveable { mutableStateOf(false) }
     val atRoot = currentEntry?.destination?.hasRoute<GithubHomeRoute>() == true
@@ -284,7 +302,8 @@ fun EtoileGithubApp(
             sourceStore = GithubStoreSourceStore(context.applicationContext),
             apkManager = apkManager,
             fdroidIndexRepository = GithubFdroidIndexRepository(context.applicationContext),
-            insightsStore = GithubApkInsightsStore(context.applicationContext)
+            insightsStore = GithubApkInsightsStore(context.applicationContext),
+            sessions = dependencies.authRepository.session
         )
     }
     val sessionFactory = remember(dependencies) {
@@ -301,6 +320,11 @@ fun EtoileGithubApp(
     val homeViewModel: HomeViewModel = viewModel(factory = homeFactory)
     val storeViewModel: StoreViewModel = viewModel(factory = storeFactory)
     val sessionViewModel: GithubSessionViewModel = viewModel(factory = sessionFactory)
+    val gitLabFactory = remember(dependencies) {
+        GitLabAccountsViewModel.Factory(dependencies.gitLabAuthRepository, BuildConfig.GITLAB_OAUTH_CLIENT_ID)
+    }
+    val gitLabViewModel: GitLabAccountsViewModel = viewModel(factory = gitLabFactory)
+    val gitLabState by gitLabViewModel.state.collectAsStateWithLifecycle()
     val inboxState by inboxViewModel.state.collectAsStateWithLifecycle()
     val exploreState by exploreViewModel.state.collectAsStateWithLifecycle()
     val profileState by profileViewModel.state.collectAsStateWithLifecycle()
@@ -313,7 +337,16 @@ fun EtoileGithubApp(
     val installUnavailableMessage = stringResource(R.string.github_store_install_unavailable)
     val openUrl: (String) -> Unit = remember(context) {
         { url ->
-            runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            runCatching {
+                val target = java.net.URI(url)
+                require(target.scheme?.lowercase() in setOf("http", "https", "mailto"))
+                if (target.scheme.equals("http", true) || target.scheme.equals("https", true)) {
+                    require(target.host != null && target.userInfo == null)
+                }
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            }.onFailure {
+                android.widget.Toast.makeText(context, R.string.github_external_link_unavailable, android.widget.Toast.LENGTH_SHORT).show()
+            }
             Unit
         }
     }
@@ -401,7 +434,10 @@ fun EtoileGithubApp(
 
     LaunchedEffect(initialGithubUrl) {
         initialGithubUrl?.let { url ->
-            if (dependencies.webAuthRepository.isCallbackUrl(url)) {
+            if (Uri.parse(url).let { it.scheme == "etoile" && it.host == "gitlab-oauth" }) {
+                navController.navigate(GitLabAccountsRoute) { launchSingleTop = true }
+                gitLabViewModel.completeBrowserSignIn(url)
+            } else if (dependencies.webAuthRepository.isCallbackUrl(url)) {
                 sessionViewModel.onAction(GithubSessionAction.BrowserSignInCallback(url))
             } else {
                 val opened = GithubLinkRouter.parse(url)?.let(::openNativeDestination) == true
@@ -422,9 +458,7 @@ fun EtoileGithubApp(
         inboxViewModel.onSessionChanged(sessionState.session)
         starredViewModel.onSessionChanged(sessionState.session)
         profileViewModel.onSessionChanged(sessionState.session)
-        (sessionState.session as? GithubSession.SignedIn)?.account?.login?.let { login ->
-            homeViewModel.loadContributions(login)
-        }
+        homeViewModel.onSessionChanged(sessionState.session)
     }
 
     GithubServiceStatusProvider(
@@ -441,11 +475,12 @@ fun EtoileGithubApp(
             NavHost(
             navController = navController,
             startDestination = GithubHomeRoute,
-            modifier = Modifier.fillMaxSize(),
-            enterTransition = { GithubNavigationTransitions.enter() },
-            exitTransition = { GithubNavigationTransitions.exit() },
-            popEnterTransition = { GithubNavigationTransitions.popEnter() },
-            popExitTransition = { GithubNavigationTransitions.popExit() }
+            modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
+            enterTransition = { GithubNavigationTransitions.enter(layoutDirection) },
+            exitTransition = { GithubNavigationTransitions.exit(layoutDirection) },
+            popEnterTransition = { GithubNavigationTransitions.popEnter(layoutDirection) },
+            popExitTransition = { GithubNavigationTransitions.popExit(layoutDirection) },
+            sizeTransform = null,
             ) {
         composable<GithubHomeRoute> {
             GithubAdaptiveScaffold(
@@ -605,7 +640,11 @@ fun EtoileGithubApp(
                 onAction = sessionViewModel::onAction,
                 onOpenUrl = openUrl,
                 onBack = { navController.popBackStack() },
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier.fillMaxSize(),
+                onSignInWithGitLab = {
+                    sessionViewModel.onAction(GithubSessionAction.ClearForm)
+                    navController.navigate(GitLabAccountsRoute) { launchSingleTop = true }
+                }
             )
             // Mirror of the old sheet auto-dismiss: pop only when the session
             // changes to signed-in while this page is open, so opening it while
@@ -626,7 +665,21 @@ fun EtoileGithubApp(
                 onOpenAppearance = { navController.navigate(GithubAppearanceRoute) { launchSingleTop = true } },
                 onOpenLanguage = { navController.navigate(GithubLanguageRoute) { launchSingleTop = true } },
                 onOpenDisplayScale = { navController.navigate(GithubDisplayScaleRoute) { launchSingleTop = true } },
+                onOpenAbout = { navController.navigate(takagi.ru.monica.github.navigation.GithubAboutRoute) { launchSingleTop = true } },
                 modifier = Modifier.fillMaxSize()
+            )
+        }
+        composable<takagi.ru.monica.github.navigation.GithubAboutRoute> {
+            takagi.ru.monica.github.settings.GithubAboutScreen(
+                onBack = { navController.popBackStack() },
+                onOpenDocument = { navController.navigate(takagi.ru.monica.github.navigation.GithubLegalRoute(it)) { launchSingleTop = true } },
+                onOpenExternal = { openUrl(it) }
+            )
+        }
+        composable<takagi.ru.monica.github.navigation.GithubLegalRoute> { entry ->
+            takagi.ru.monica.github.settings.GithubLegalScreen(
+                document = entry.toRoute<takagi.ru.monica.github.navigation.GithubLegalRoute>().document,
+                onBack = { navController.popBackStack() }
             )
         }
         composable<GithubAppearanceRoute> {
@@ -690,9 +743,71 @@ fun EtoileGithubApp(
                     sessionViewModel.onAction(GithubSessionAction.ClearAccountError)
                     navController.popBackStack()
                 },
+                modifier = Modifier.fillMaxSize(),
+                additionalAccountsContent = {
+                    TextButton(
+                        onClick = { navController.navigate(GitLabAccountsRoute) { launchSingleTop = true } },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.gitlab_manage_accounts, gitLabState.accounts.accounts.size))
+                    }
+                }
+            )
+        }
+        composable<GitLabAccountsRoute> {
+            GitLabAccountsScreen(
+                state = gitLabState,
+                onInstanceChanged = gitLabViewModel::instanceChanged,
+                onTokenChanged = gitLabViewModel::tokenChanged,
+                onClientIdChanged = gitLabViewModel::clientIdChanged,
+                onTokenSignIn = gitLabViewModel::signInWithToken,
+                onBrowserSignIn = gitLabViewModel::startBrowserSignIn,
+                onCancelSignIn = gitLabViewModel::cancelSignIn,
+                onActivate = gitLabViewModel::activate,
+                onRemove = gitLabViewModel::remove,
+                onOpenBrowser = { url ->
+                    GitLabSignInBrowser.open(context, url,
+                        listOf(gitLabState.instanceInput) + gitLabState.accounts.accounts.map { it.instanceUrl })
+                },
+                onBrowserUnavailable = gitLabViewModel::browserUnavailable,
+                onBrowseProjects = { key -> navController.navigate(GitLabProjectsRoute(key)) },
+                onAllowWritesChanged = gitLabViewModel::allowWritesChanged,
+                onBack = { navController.popBackStack() },
                 modifier = Modifier.fillMaxSize()
             )
         }
+        composable<GitLabProjectsRoute> { entry ->
+            val route = entry.toRoute<GitLabProjectsRoute>()
+            val factory = remember(route.accountKey, dependencies) {
+                GitLabViewModelFactory(GitLabProjectsViewModel::class.java) {
+                    GitLabProjectsViewModel(route.accountKey, dependencies.gitLabAuthRepository, dependencies.gitLabProjectsRepository)
+                }
+            }
+            val projectsViewModel: GitLabProjectsViewModel = viewModel(factory = factory)
+            val projectsState by projectsViewModel.state.collectAsStateWithLifecycle()
+            androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                projectsViewModel.onAction(takagi.ru.monica.gitlab.feature.GitLabProjectsAction.Refresh)
+            }
+            GitLabProjectsScreen(projectsState, projectsViewModel::onAction,
+                onProject = { id -> navController.navigate(GitLabProjectRoute(route.accountKey, id)) },
+                onAccounts = { navController.navigate(GitLabAccountsRoute) },
+                onBack = { navController.popBackStack() })
+        }
+        composable<GitLabProjectRoute> { entry ->
+            val route = entry.toRoute<GitLabProjectRoute>()
+            val factory = remember(route, dependencies) {
+                GitLabViewModelFactory(GitLabProjectViewModel::class.java) {
+                    GitLabProjectViewModel(route.accountKey, route.projectId, dependencies.gitLabAuthRepository, dependencies.gitLabProjectsRepository)
+                }
+            }
+            val projectViewModel: GitLabProjectViewModel = viewModel(factory = factory)
+            val projectState by projectViewModel.state.collectAsStateWithLifecycle()
+            GitLabProjectScreen(projectState, projectViewModel::onAction,
+                onSection = { section -> navController.navigate(GitLabWorkRoute(route.accountKey, route.projectId, section.name)) },
+                onAccounts = { navController.navigate(GitLabAccountsRoute) },
+                onBack = { navController.popBackStack() })
+        }
+        gitLabWorkRoutes(navController, dependencies)
         composable<GithubStarredRoute> {
             val starredRouteViewModel: StarredViewModel = viewModel(
                 key = "starred-page",

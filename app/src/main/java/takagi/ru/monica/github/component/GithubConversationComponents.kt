@@ -40,6 +40,7 @@ import takagi.ru.monica.github.domain.GithubIssueComment
 import takagi.ru.monica.github.domain.GithubReactionContent
 import takagi.ru.monica.github.domain.GithubReactionCounts
 import takagi.ru.monica.github.navigation.GithubWebUrls
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 
 @Composable
@@ -55,6 +56,7 @@ fun GithubCommentComposer(
     onSignIn: () -> Unit,
     modifier: Modifier = Modifier,
     disabledMessage: String? = null,
+    submitLabel: String? = null,
 ) {
     Column(modifier = modifier) {
         GithubSectionHeader(title = stringResource(R.string.github_write_comment))
@@ -78,6 +80,7 @@ fun GithubCommentComposer(
             Column(modifier = Modifier.padding(16.dp)) {
                 OutlinedTextField(
                     value = value,
+                    readOnly = isSubmitting,
                     onValueChange = onValueChange,
                     modifier = Modifier.fillMaxWidth(),
                     label = { Text(stringResource(R.string.github_comment_hint)) },
@@ -120,7 +123,7 @@ fun GithubCommentComposer(
                         Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
                         Spacer(Modifier.width(8.dp))
                     }
-                    Text(stringResource(R.string.github_submit_comment))
+                    Text(submitLabel ?: stringResource(R.string.github_submit_comment))
                 }
             }
         }
@@ -164,7 +167,7 @@ fun GithubCommentCard(
                 onOpenExternalLink = { target ->
                     onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, ref, "", target))
                 },
-                renderImages = false,
+                imageContext = MarkdownImageContext(fullName, ref),
                 maxElements = 220,
                 modifier = Modifier.padding(top = 10.dp)
             )

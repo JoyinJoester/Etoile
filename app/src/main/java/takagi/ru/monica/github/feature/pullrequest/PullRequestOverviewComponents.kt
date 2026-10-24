@@ -23,6 +23,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +46,7 @@ import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubPullRequest
 import takagi.ru.monica.github.domain.GithubPullRequestState
 import takagi.ru.monica.github.navigation.GithubWebUrls
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 
 @Composable
@@ -52,7 +56,7 @@ internal fun PullRequestListRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).heightIn(min = 56.dp).padding(vertical = 10.dp)
+        modifier = modifier.fillMaxWidth().githubCollectionSurface().clickable(role = Role.Button, onClick = onClick).heightIn(min = 56.dp).githubCollectionPadding()
     ) {
         Row(verticalAlignment = Alignment.Top) {
             PullRequestStateIcon(pullRequest)
@@ -121,9 +125,8 @@ internal fun PullRequestListRow(
         if (pullRequest.labels.isNotEmpty()) {
             GithubLabelRow(pullRequest.labels, modifier = Modifier.padding(start = 32.dp, top = 10.dp))
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 14.dp, start = 32.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+        GithubCollectionDivider(
+            modifier = Modifier.padding(top = 14.dp, start = 32.dp)
         )
     }
 }
@@ -262,7 +265,7 @@ internal fun PullRequestDescription(pullRequest: GithubPullRequest, fullName: St
             onOpenExternalLink = { target ->
                 onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, pullRequest.head.sha, "", target))
             },
-            renderImages = false,
+            imageContext = MarkdownImageContext(pullRequest.head.repositoryFullName ?: fullName, pullRequest.head.sha),
             maxElements = 300
         )
     }

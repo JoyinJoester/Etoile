@@ -47,7 +47,7 @@ class GithubRepositoryActionsRepositoryImpl(
             } else {
                 requestBuilder.delete().build()
             }
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { starred }
             }
@@ -69,7 +69,7 @@ class GithubRepositoryActionsRepositoryImpl(
             } else {
                 requestBuilder.delete().build()
             }
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { watching }
             }
@@ -82,7 +82,7 @@ class GithubRepositoryActionsRepositoryImpl(
                 val request = requests.builder(repositoryEndpoint(owner, name, "forks").toString())
                     .post(EMPTY_BODY)
                     .build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         json.decodeFromString(
@@ -94,9 +94,9 @@ class GithubRepositoryActionsRepositoryImpl(
             }
         }
 
-    private fun isStarred(owner: String, name: String): Boolean {
+    private suspend fun isStarred(owner: String, name: String): Boolean {
         val request = requests.builder(starEndpoint(owner, name).toString()).get().build()
-        return client.newCall(request).execute().use { response ->
+        return client.readGithubResponse(request) { response ->
             when (response.code) {
                 204 -> true
                 404 -> false
@@ -105,9 +105,9 @@ class GithubRepositoryActionsRepositoryImpl(
         }
     }
 
-    private fun isWatching(owner: String, name: String): Boolean {
+    private suspend fun isWatching(owner: String, name: String): Boolean {
         val request = requests.builder(subscriptionEndpoint(owner, name).toString()).get().build()
-        return client.newCall(request).execute().use { response ->
+        return client.readGithubResponse(request) { response ->
             when {
                 response.code == 404 -> false
                 !response.isSuccessful -> throw GithubApiException.of(response)

@@ -1,5 +1,9 @@
 package takagi.ru.monica.github.feature.repository
 
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.horizontalScroll
@@ -90,6 +94,7 @@ import takagi.ru.monica.github.domain.GithubBranch
 import takagi.ru.monica.github.domain.GithubFileContent
 import takagi.ru.monica.github.domain.GithubTag
 import takagi.ru.monica.github.navigation.GithubWebUrls
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 import kotlinx.coroutines.launch
 
@@ -106,11 +111,11 @@ fun RepositoryFilesScreen(
     modifier: Modifier = Modifier
 ) {
     val canMutate = state.isOnBranch && state.canWrite
-    var mutation by rememberSaveable { mutableStateOf<String?>(null) }
-    var mutationPath by rememberSaveable { mutableStateOf("") }
-    var mutationSha by rememberSaveable { mutableStateOf("") }
-    var mutationMessage by rememberSaveable { mutableStateOf("") }
-    var mutationBody by rememberSaveable { mutableStateOf("") }
+    var mutation by remember(state.fullName, state.viewerAccountId) { mutableStateOf<String?>(null) }
+    var mutationPath by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
+    var mutationSha by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
+    var mutationMessage by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
+    var mutationBody by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
     val pendingMutation = state.pendingMutation
     val outcome = state.mutationOutcome
     LaunchedEffect(outcome) {
@@ -608,12 +613,13 @@ private fun RepositoryContentRow(item: GithubContentItem, onClick: () -> Unit, o
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .githubCollectionSurface()
             .heightIn(min = 56.dp)
             .clickable(role = Role.Button, onClick = onClick)
             .semantics {
             contentDescription = accessibilityLabel
             }
-            .padding(vertical = 13.dp),
+            .githubCollectionPadding(vertical = 13.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Surface(
@@ -676,7 +682,7 @@ private fun RepositoryContentRow(item: GithubContentItem, onClick: () -> Unit, o
             modifier = Modifier.size(18.dp)
         )
     }
-    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f))
+    GithubCollectionDivider()
 }
 
 @Composable
@@ -704,7 +710,7 @@ private fun RepositoryTextFile(
                             )
                         )
                     },
-                    renderImages = false,
+                    imageContext = MarkdownImageContext(state.fullName, state.ref, state.path),
                     maxElements = 500
                 )
             }

@@ -145,16 +145,21 @@ inline fun <T> GithubCacheStore.invalidateAfter(block: () -> T): T {
 }
 
 /** Encrypted on-device cache for non-token GitHub response bodies. */
-class GithubEncryptedCacheStore(context: Context) : GithubCacheStore {
-    private val preferences = EncryptedSharedPreferences.create(
-        context.applicationContext,
-        PREFERENCES_NAME,
-        MasterKey.Builder(context.applicationContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+class GithubEncryptedCacheStore(
+    context: Context,
+    private val preferencesFactory: (() -> android.content.SharedPreferences)? = null
+) : GithubCacheStore {
+    private val preferences by lazy {
+        preferencesFactory?.invoke() ?: EncryptedSharedPreferences.create(
+            context.applicationContext,
+            PREFERENCES_NAME,
+            MasterKey.Builder(context.applicationContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+    }
 
     override fun read(key: String): GithubCachedResponse? {
         val prefix = keyPrefix(key)

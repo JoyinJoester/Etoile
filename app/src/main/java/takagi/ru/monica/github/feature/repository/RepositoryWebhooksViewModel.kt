@@ -10,10 +10,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
 import takagi.ru.monica.github.domain.mergeItems
+import takagi.ru.monica.github.domain.GithubSession
 
 @Immutable
 data class RepositoryWebhooksUiState(
@@ -28,7 +32,9 @@ data class RepositoryWebhooksUiState(
     val isUpdatingWebhook: Boolean = false,
     val webhookFailure: RepositoryWriteFailure? = null,
     val error: Boolean = false,
-    val failedPage: Int? = null
+    val failedPage: Int? = null,
+    val viewerLogin: String? = null,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
@@ -46,8 +52,10 @@ class RepositoryWebhooksViewModel(
     private val owner: String,
     private val name: String,
     private val repository: GithubRepositoryDetailsRepository,
-    private val viewerCanAdmin: Boolean
+    private val viewerCanAdmin: Boolean,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
     private val _state = MutableStateFlow(
         RepositoryWebhooksUiState(owner, name, canManage = viewerCanAdmin)
     )
@@ -55,6 +63,27 @@ class RepositoryWebhooksViewModel(
     private var loadJob: Job? = null
     // Writes run independently of paging so a toggle never cancels an in-flight page and vice versa.
     private var webhookJob: Job? = null
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+
+    init {
+        sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } }
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && account?.id == accountId) return
+        sessionInitialized = true
+        accountId = account?.id
+        requests.coroutineContext.cancelChildren()
+        _state.value = RepositoryWebhooksUiState(owner, name, isLoading = account != null, viewerLogin = account?.login, viewerAccountId = account?.id)
+        if (account == null) return
+        requests.launch {
+            val role = repository.details(owner, name).currentRepositoryResult().getOrNull()?.viewerRole
+            _state.update { it.copy(canManage = role?.canAdmin == true) }
+            load(reset = true)
+        }
+    }
 
     init {
         load(reset = true)
@@ -71,14 +100,16 @@ class RepositoryWebhooksViewModel(
     }
 
     private fun setEnabled(id: Long, enabled: Boolean) {
-        if (!viewerCanAdmin || _state.value.isUpdatingWebhook) return
+        if (!_state.value.canManage || _state.value.isUpdatingWebhook) return
         // A switch that already matches the server has nothing to send; GitHub would accept it anyway.
         val current = _state.value.items.firstOrNull { it.id == id } ?: return
         if (current.isActive == enabled) return
-        _state.update { it.copy(isUpdatingWebhook = true, webhookFailure = null) }
+        loadJob?.cancel()
+        _state.update { it.copy(isUpdatingWebhook = true, webhookFailure = null,
+            isLoading = false, isLoadingMore = false, isRefreshing = false) }
         webhookJob?.cancel()
-        webhookJob = viewModelScope.launch {
-            repository.updateWebhook(owner, name, id, GithubWebhookEdit(active = enabled)).fold(
+        webhookJob = requests.launch {
+            repository.updateWebhook(owner, name, id, GithubWebhookEdit(active = enabled)).currentRepositoryResult().fold(
                 onSuccess = { confirmed ->
                     _state.update { state ->
                         state.copy(
@@ -100,11 +131,13 @@ class RepositoryWebhooksViewModel(
     }
 
     private fun delete(id: Long) {
-        if (!viewerCanAdmin || _state.value.isUpdatingWebhook) return
-        _state.update { it.copy(isUpdatingWebhook = true, webhookFailure = null) }
+        if (!_state.value.canManage || _state.value.isUpdatingWebhook || _state.value.items.none { it.id == id }) return
+        loadJob?.cancel()
+        _state.update { it.copy(isUpdatingWebhook = true, webhookFailure = null,
+            isLoading = false, isLoadingMore = false, isRefreshing = false) }
         webhookJob?.cancel()
-        webhookJob = viewModelScope.launch {
-            repository.deleteWebhook(owner, name, id).fold(
+        webhookJob = requests.launch {
+            repository.deleteWebhook(owner, name, id).currentRepositoryResult().fold(
                 onSuccess = {
                     _state.update { state ->
                         state.copy(
@@ -125,6 +158,7 @@ class RepositoryWebhooksViewModel(
 
     private fun load(reset: Boolean, refreshing: Boolean = false) {
         val current = _state.value
+        if ((sessionInitialized && accountId == null) || current.isUpdatingWebhook) return
         if (!reset && !current.canLoadMore) return
         val page = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
@@ -138,8 +172,8 @@ class RepositoryWebhooksViewModel(
                 failedPage = null
             )
         }
-        loadJob = viewModelScope.launch {
-            repository.webhooks(owner, name, page = page).fold(
+        loadJob = requests.launch {
+            repository.webhooks(owner, name, page = page).currentRepositoryResult().fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         state.copy(
@@ -164,12 +198,13 @@ class RepositoryWebhooksViewModel(
         private val owner: String,
         private val name: String,
         private val repository: GithubRepositoryDetailsRepository,
-        private val viewerCanAdmin: Boolean
+        private val viewerCanAdmin: Boolean,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryWebhooksViewModel::class.java))
-            return RepositoryWebhooksViewModel(owner, name, repository, viewerCanAdmin) as T
+            return RepositoryWebhooksViewModel(owner, name, repository, viewerCanAdmin, sessions) as T
         }
     }
 }

@@ -6,7 +6,7 @@
 
 <img src="image/etoile_launcher.png" alt="Etoile App Icon" width="220" />
 
-<p><strong>A GitHub-focused standalone Android client</strong></p>
+<p><strong>An independent Android client for GitHub and GitLab</strong></p>
 <p>Inbox · Repositories &amp; code · Issues · Pull requests · Actions · Releases · Explore</p>
 
 <p>
@@ -34,7 +34,7 @@
 
 <br>
 
-Etoile is an independently maintained third-party GitHub client for Android, built with Jetpack Compose
+Etoile is an independently maintained third-party GitHub / GitLab client for Android, built with Jetpack Compose
 and Material 3 Expressive. It brings the day-to-day GitHub loop onto your phone: triage notifications,
 read code, handle issues and pull requests, and watch Actions runs.
 
@@ -56,7 +56,7 @@ read code, handle issues and pull requests, and watch Actions runs.
 ### What you get
 - **Inbox**: paginated notification threads, per-item Done / Unsubscribe, unread state, and in-place failure hints.
 - **Repositories & code**: directory browsing, branch/tag switching, README rendering, raw files, commits, releases;
-  plus separate read-only pages for branch lists, collaborator permissions, and webhooks.
+  with file, branch, collaborator and selected repository management; webhooks support enable/disable, deletion, delivery history and confirmed redelivery.
 - **Issues**: create from repository Markdown templates or YAML Issue Forms, or use built-in Bug report,
   Feature request, and Question forms in Chinese or English. Supports required fields, preview, draft restoration,
   and a unified management sheet for title/body editing, labels, assignees, milestone,
@@ -67,6 +67,7 @@ read code, handle issues and pull requests, and watch Actions runs.
 - **Explore**: five search tabs — Repositories / Users / Code / Issues / Pull Requests — sharing debouncing,
   pagination, and error states.
 - **Profiles**: public profile, followers/following, repositories and stars (categorized locally).
+- **GitLab**: gitlab.com and HTTPS self-hosted instances, OAuth / personal access tokens, multiple accounts, projects and code browsing; native issues, merge requests, pipelines and jobs. Advanced review, notifications and administration do not yet match GitHub; see the [scope](docs/configuration/GITLAB_WORKFLOWS.md).
 - **Deep links**: recognized `github.com` issue, PR, and Actions run/job links open native screens;
   unknown paths still go to the browser.
 
@@ -74,28 +75,27 @@ read code, handle issues and pull requests, and watch Actions runs.
 
 1. Download the APK matching your device ABI from [Releases](https://github.com/JoyinJoester/Etoile/releases).
 2. Install on Android 8.0+.
-3. Sign in with GitHub OAuth. Personal builds can configure the `etoile://oauth` browser callback; other builds fall back to Device Flow.
+3. Sign in with GitHub OAuth. Release browser sign-in requires a deployed authentication service; Device Flow and token sign-in are also available. Debug builds support personal OAuth Apps with the `etoile://oauth` callback.
 
 ### Known limitations
 - Still a public test build; APIs and UI may change at any time.
 - Relies on the GitHub REST API and is subject to rate limits. Throttling and cache fallback are shown
   explicitly in the UI — stale data is never presented silently.
-- High-risk or externally visible operations (editing branch protection, adding or removing collaborators,
-  delivering or deleting webhooks) intentionally redirect to GitHub's official settings pages;
-  the client does not reproduce the web permission model.
+- Some advanced settings remain on the service website. Supported dangerous writes retain target confirmation, permission checks and duplicate-submit protection; see [dangerous actions](docs/configuration/DANGEROUS_ACTIONS.md).
+- Stable release acceptance is incomplete. See the [acceptance matrix](docs/acceptance/CLIENT_ACCEPTANCE.md) for evidence and outstanding gates.
 - For merges, permission changes, and any final outcome, **the GitHub server response is authoritative**.
 
 ---
 
 ## Data and security boundaries
 
-- Application ID: `app.etoile`; data is isolated by the Android application sandbox.
-- Access tokens come from GitHub OAuth and are kept in encrypted on-device storage. Browser OAuth in personal builds embeds the client secret in the APK; see the configuration guide. Nothing is
-  uploaded to third-party servers.
+- Application ID: `takagi.joyin.github.etoile`; data is isolated by the Android application sandbox.
+- Access tokens are kept in encrypted on-device storage. Release builds embed no OAuth client secret; the personal OAuth App compatibility mode embeds it only in Debug. See the configuration guide. Configured authentication services, APIs, images and application sources receive the requests needed for their features.
 - Cache follows ETag / 304 validation and is cleared on sign-out or account switch; 401/403/4xx responses
   never surface another account's stale data.
 - Webhook URLs, secrets, and similar sensitive configuration are kept out of client models and screens.
 - This repository contains no telemetry or advertising SDKs.
+- See [Privacy](PRIVACY.md) for local data and network processing. Settings → About Etoile includes offline privacy and licence documents.
 
 ### Implementation
 - UI: Jetpack Compose + Material 3 / Material 3 Expressive, adaptive phone and tablet layouts.
@@ -136,9 +136,10 @@ You can also support via [Afdian](https://afdian.com/a/JoyinJoester) or [Ko-fi](
 
 ### Prerequisites
 - Latest stable Android Studio.
-- JDK 17+.
-- `compileSdk 35`, `targetSdk 34`, `minSdk 26` (Android 8.0+).
-- Build baseline: AGP `8.7.3`, Kotlin `2.0.21`, Compose BOM `2026.03.00` (see `gradle/libs.versions.toml`).
+- JDK 21 (required for host native-component tests).
+- `compileSdk 37`, `targetSdk 34`, `minSdk 26` (Android 8.0+). Future store target-SDK compliance is not yet verified.
+- Build baseline: Gradle `8.14.3`, AGP `8.13.2`, Kotlin `2.4.10`, Compose BOM `2026.03.00` (see the version catalogue).
+- Rust stable, `cargo-ndk`, `aarch64-linux-android` / `armv7-linux-androideabi` targets and Android NDK `28.2.13676358` for the JNI code reader.
 
 ### Useful commands
 
@@ -165,7 +166,7 @@ produces an explicitly unsigned release package instead of falling back to the d
 ### Code layout (current)
 - `takagi/ru/monica/github` — all GitHub client business, layered as `feature` / `domain` / `data` / `component` / `design` / `navigation`.
 - `takagi/ru/monica/data` / `utils` / `ui` — app-level settings, preference storage, theming, and base activity.
-- The Java/Kotlin package remains `takagi.ru.monica` (inherited from Monica) while `applicationId` is `app.etoile`.
+- The Java/Kotlin package remains `takagi.ru.monica` (inherited from Monica) while `applicationId` is `takagi.joyin.github.etoile`.
 
 ### Repository guide
 - [`README.md`](./README.md) — Chinese overview (main)

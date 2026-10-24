@@ -1,0 +1,620 @@
+{
+  "title": "Etoile · 构建与管理",
+  "brief": "保持Actions、工作流操作、日志、Webhook投递和复投功能，管理操作逐步展开。 基于2026-10-21当前功能优化。示例内容不是实时账户数据。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": true,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "workflows",
+      "name": "Actions",
+      "x": 0,
+      "y": 0,
+      "bg": "surface",
+      "note": "工作流标题与路径先显示，启停与触发收进行菜单，危险操作确认。"
+    },
+    {
+      "id": "runs",
+      "name": "Android CI",
+      "x": 1420,
+      "y": 0,
+      "bg": "surface",
+      "note": "运行状态、分支、触发者和时间固定层级。"
+    },
+    {
+      "id": "run",
+      "name": "Build #108",
+      "x": 2840,
+      "y": 0,
+      "bg": "surface",
+      "note": "运行概要、作业、附件分组；取消、重跑在更多中确认。"
+    },
+    {
+      "id": "job",
+      "name": "作业日志",
+      "x": 4260,
+      "y": 0,
+      "bg": "surface",
+      "note": "元信息收在摘要，步骤可展开，日志独立换行或横向滚动。"
+    },
+    {
+      "id": "run-actions",
+      "name": "运行操作",
+      "x": 0,
+      "y": 1000,
+      "bg": "surface",
+      "note": "只显示有权限操作，重跑/取消确认具体运行。"
+    },
+    {
+      "id": "artifacts",
+      "name": "构建产物",
+      "x": 1420,
+      "y": 1000,
+      "bg": "surface",
+      "note": "主信息与状态优先，低频写操作在行菜单，失败保留原状态并可重试。"
+    },
+    {
+      "id": "webhooks",
+      "name": "Webhooks",
+      "x": 2840,
+      "y": 1000,
+      "bg": "surface",
+      "note": "主信息与状态优先，低频写操作在行菜单，失败保留原状态并可重试。"
+    },
+    {
+      "id": "deliveries",
+      "name": "投递记录",
+      "x": 4260,
+      "y": 1000,
+      "bg": "surface",
+      "note": "主信息与状态优先，低频写操作在行菜单，失败保留原状态并可重试。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "workflows-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "workflows-1-item",
+          "kind": "topAppBar",
+          "label": "Actions",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "workflows-2",
+      "x": 16,
+      "y": 112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "workflows-2-item-0",
+          "icon": "play_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Android CI",
+          "supporting": ".github/workflows/android.yml · 已启用",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "runs",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "workflows-2-item-1",
+          "icon": "play_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Release",
+          "supporting": ".github/workflows/release.yml · 已启用",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "runs",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "runs-1",
+      "x": 1420,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "runs-1-item",
+          "kind": "topAppBar",
+          "label": "Android CI",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "runs-2",
+      "x": 1436,
+      "y": 112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "runs-2-item-0",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "统一客户端页面信息层级",
+          "supporting": "#108 · 成功 · main · 3分钟前",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "run",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "runs-2-item-1",
+          "icon": "error",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "修复账号切换",
+          "supporting": "#107 · 失败 · feature/auth",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "run",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "run-1",
+      "x": 2840,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "run-1-item",
+          "kind": "topAppBar",
+          "label": "Build #108",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "more_vert",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            },
+            "icon2": {
+              "to": "run-actions",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "run-2",
+      "x": 2856,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "run-2-item",
+          "kind": "card",
+          "label": "构建成功",
+          "icon": "check_circle",
+          "variant": "filled",
+          "supporting": "main · etoile · 3分钟",
+          "noImage": true,
+          "size": 380,
+          "size2": 116,
+          "fill": "secondaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "run-3",
+      "x": 2856,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "run-3-item",
+          "kind": "text",
+          "label": "作业",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "run-4",
+      "x": 2856,
+      "y": 312,
+      "axis": "y",
+      "items": [
+        {
+          "id": "run-4-item-0",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Build Android preview",
+          "supporting": "成功 · 2分48秒",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "job",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "run-5",
+      "x": 2856,
+      "y": 444,
+      "axis": "x",
+      "items": [
+        {
+          "id": "run-5-item",
+          "kind": "text",
+          "label": "构建产物",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "run-6",
+      "x": 2856,
+      "y": 492,
+      "axis": "y",
+      "items": [
+        {
+          "id": "run-6-item-0",
+          "icon": "inventory_2",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Android debug packages",
+          "supporting": "64.2 MB · 保留30天",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "artifacts",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "job-1",
+      "x": 4260,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "job-1-item",
+          "kind": "topAppBar",
+          "label": "作业日志",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "job-2",
+      "x": 4276,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "job-2-item",
+          "kind": "text",
+          "label": "Build Android preview · 成功",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "job-3",
+      "x": 4276,
+      "y": 152,
+      "axis": "x",
+      "items": [
+        {
+          "id": "job-3-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "自动换行",
+          "checked": true
+        },
+        {
+          "id": "job-3-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "横向滚动",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "job-4",
+      "x": 4276,
+      "y": 216,
+      "axis": "y",
+      "items": [
+        {
+          "id": "job-4-item-0",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Checkout",
+          "supporting": "成功 · 4秒",
+          "size": 380
+        },
+        {
+          "id": "job-4-item-1",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Build",
+          "supporting": "成功 · 2分12秒",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "job-5",
+      "x": 4276,
+      "y": 396,
+      "axis": "x",
+      "items": [
+        {
+          "id": "job-5-item",
+          "kind": "card",
+          "label": "构建日志",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "> Task :app:compileDebugKotlin\n> Task :app:testDebugUnitTest\n> Task :app:lintDebug\n\nBUILD SUCCESSFUL",
+          "noImage": true,
+          "size": 380,
+          "size2": 320,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "run-actions-1",
+      "x": 0,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "run-actions-1-item",
+          "kind": "topAppBar",
+          "label": "运行操作",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "run-actions-2",
+      "x": 16,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "run-actions-2-item-0",
+          "icon": "refresh",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "重新运行全部作业",
+          "supporting": "需要确认 · Build #108",
+          "size": 380
+        },
+        {
+          "id": "run-actions-2-item-1",
+          "icon": "replay",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "重新运行失败作业",
+          "supporting": "需要确认",
+          "size": 380
+        },
+        {
+          "id": "run-actions-2-item-2",
+          "icon": "cancel",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "取消运行",
+          "supporting": "仅运行中可用 · 需要确认",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "artifacts-1",
+      "x": 1420,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "artifacts-1-item",
+          "kind": "topAppBar",
+          "label": "构建产物",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "artifacts-2",
+      "x": 1436,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "artifacts-2-item-0",
+          "icon": "download",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Android debug packages",
+          "supporting": "64.2 MB · 尚未过期",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "webhooks-1",
+      "x": 2840,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-1-item",
+          "kind": "topAppBar",
+          "label": "Webhooks",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhooks-2",
+      "x": 2856,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "webhooks-2-item-0",
+          "icon": "link",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "构建通知",
+          "supporting": "https://example.test/build · 已启用",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "deliveries",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "deliveries-1",
+      "x": 4260,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "deliveries-1-item",
+          "kind": "topAppBar",
+          "label": "投递记录",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "deliveries-2",
+      "x": 4276,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "deliveries-2-item-0",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "push · #108",
+          "supporting": "成功 · 200 OK · 1.2秒",
+          "size": 380
+        },
+        {
+          "id": "deliveries-2-item-1",
+          "icon": "error",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "pull_request · #107",
+          "supporting": "失败 · 503 · 可重新投递",
+          "size": 380
+        }
+      ]
+    }
+  ]
+}

@@ -69,8 +69,18 @@ import takagi.ru.monica.github.domain.GithubWebAuthRepository
 class GithubAppDependencies(
     context: Context,
     client: OkHttpClient = GithubNetwork.client
-) {
+) : GithubConversationDependencies {
     private val applicationContext = context.applicationContext
+    private val gitLabAuth =
+        takagi.ru.monica.gitlab.data.GitLabAuthRepositoryImpl(
+            client,
+            takagi.ru.monica.gitlab.data.GitLabEncryptedCredentialStore(applicationContext)
+        )
+    val gitLabAuthRepository: takagi.ru.monica.gitlab.domain.GitLabAuthRepository = gitLabAuth
+    val gitLabProjectsRepository: takagi.ru.monica.gitlab.domain.GitLabProjectsRepository =
+        takagi.ru.monica.gitlab.data.GitLabProjectsRepositoryImpl(client, gitLabAuth)
+    val gitLabWorkRepository: takagi.ru.monica.gitlab.domain.GitLabWorkRepository =
+        takagi.ru.monica.gitlab.data.GitLabWorkRepositoryImpl(client, gitLabAuth)
     private val tokenStore = GithubSecureTokenStore(applicationContext)
     private val cacheFallbackStore = GithubCacheFallbackStore()
     private val cacheStore = GithubInvalidatingCacheStore(
@@ -92,7 +102,7 @@ class GithubAppDependencies(
     val rateLimitMonitor: GithubRateLimitMonitor = GithubNetwork.rateLimitStore
     val cacheFallbackMonitor: GithubCacheFallbackMonitor = cacheFallbackStore
 
-    val authRepository: GithubAuthRepository = GithubAuthRepositoryImpl(
+    override val authRepository: GithubAuthRepository = GithubAuthRepositoryImpl(
         tokenStore = tokenStore,
         accountApi = GithubAccountApi(client),
         cacheStore = cacheStore,
@@ -119,7 +129,7 @@ class GithubAppDependencies(
         callbackUri = BuildConfig.GITHUB_OAUTH_CALLBACK_URI,
         pendingStore = GithubEncryptedPendingOAuthStore(applicationContext)
     )
-    val discussionsRepository: takagi.ru.monica.github.domain.GithubDiscussionsRepository =
+    override val discussionsRepository: takagi.ru.monica.github.domain.GithubDiscussionsRepository =
         takagi.ru.monica.github.data.GithubDiscussionsRepositoryImpl(authenticatedRequests, authenticatedClient)
 
     val notificationsRepository: GithubNotificationsRepository =
@@ -129,20 +139,22 @@ class GithubAppDependencies(
             cacheStore = cacheStore,
             cacheStatusReporter = cacheFallbackStore
         )
-    val issuesRepository: GithubIssuesRepository =
+    override val issuesRepository: GithubIssuesRepository =
         GithubIssuesRepositoryImpl(
             requests = authenticatedRequests,
             client = authenticatedClient,
             cacheStore = cacheStore,
             cacheStatusReporter = cacheFallbackStore
         )
-    val pullRequestsRepository: GithubPullRequestsRepository =
+    override val pullRequestsRepository: GithubPullRequestsRepository =
         GithubPullRequestsRepositoryImpl(
             requests = authenticatedRequests,
             client = authenticatedClient,
             cacheStore = cacheStore,
             cacheStatusReporter = cacheFallbackStore
         )
+    val actionJournal: takagi.ru.monica.github.domain.GithubActionJournal =
+        takagi.ru.monica.github.data.GithubPreferencesActionJournal(applicationContext)
     val actionsRepository: GithubActionsRepository =
         GithubActionsRepositoryImpl(
             requests = authenticatedRequests,
@@ -157,7 +169,7 @@ class GithubAppDependencies(
             cacheStore = cacheStore,
             cacheStatusReporter = cacheFallbackStore
         )
-    val repositoryDetailsRepository: GithubRepositoryDetailsRepository =
+    override val repositoryDetailsRepository: GithubRepositoryDetailsRepository =
         GithubRepositoryDetailsRepositoryImpl(
             requests = authenticatedRequests,
             client = authenticatedClient,
@@ -189,14 +201,14 @@ class GithubAppDependencies(
             client = authenticatedClient,
             cacheStore = cacheStore
         )
-    val repositoryContentsRepository: GithubRepositoryContentsRepository =
+    override val repositoryContentsRepository: GithubRepositoryContentsRepository =
         GithubRepositoryContentsRepositoryImpl(
             requests = authenticatedRequests,
             client = authenticatedClient,
             cacheStore = cacheStore,
             cacheStatusReporter = cacheFallbackStore
         )
-    val issueTemplatesRepository: GithubIssueTemplatesRepository =
+    override val issueTemplatesRepository: GithubIssueTemplatesRepository =
         GithubIssueTemplatesRepositoryImpl(repositoryContentsRepository)
     val starsRepository: GithubStarsRepository =
         GithubStarsRepositoryImpl(

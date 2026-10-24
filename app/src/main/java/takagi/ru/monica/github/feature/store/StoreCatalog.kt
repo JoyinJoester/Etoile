@@ -42,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -84,6 +85,13 @@ import takagi.ru.monica.github.domain.GithubStoreApp
 import takagi.ru.monica.github.domain.toApkPackages
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 import java.io.File
+
+/** Download progress and detail updates do not invalidate the catalog's filter inputs. */
+@Composable
+internal fun rememberFilteredFdroidApps(state: StoreUiState): List<FdroidApp> =
+    remember(state.fdroidApps, state.fdroidFilter, state.fdroidInstalled, state.updates, state.query, state.fdroidProjection) {
+        state.filteredFdroidApps
+    }
 
 /**
  * 类 Droid-ify 的商店页：推荐目录来自高星 Android 开源仓库，可切换到
@@ -151,16 +159,17 @@ internal fun StoreFdroidCatalog(
     onAction: (StoreAction) -> Unit,
     header: @Composable () -> Unit
 ) {
+    val filteredApps = rememberFilteredFdroidApps(state)
     GithubAdaptiveGrid(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 28.dp)
     ) {
         githubFullSpanItem(key = "catalog-header") { header() }
-        if (state.isLoadingFdroid) {
+        if (state.isLoadingFdroid || state.isFilteringFdroid) {
             githubFullSpanItem(key = "fdroid-loading") {
                 GithubListLoadingState(
                     isLoading = true,
-                    hasItems = state.filteredFdroidApps.isNotEmpty() || state.updates.isNotEmpty(),
+                    hasItems = filteredApps.isNotEmpty() || state.updates.isNotEmpty(),
                     row = GithubSkeletonRow.LIST,
                     modifier = Modifier.padding(top = 12.dp)
                 )
@@ -169,7 +178,7 @@ internal fun StoreFdroidCatalog(
         if (state.fdroidError) {
             githubFullSpanItem(key = "fdroid-error") {
                 GithubPagedListStatus(
-                    itemCount = state.filteredFdroidApps.size + state.updates.size,
+                    itemCount = filteredApps.size + state.updates.size,
                     isInitialLoading = false,
                     isLoadingMore = false,
                     hasError = true,
@@ -201,7 +210,7 @@ internal fun StoreFdroidCatalog(
             }
         }
         items(
-            state.filteredFdroidApps,
+            filteredApps,
             key = { it.packageName }
         ) { app ->
             StoreFdroidRow(
@@ -212,8 +221,8 @@ internal fun StoreFdroidCatalog(
         }
         // An update-only catalog is still useful content; don't cover it with
         // the global empty state while the updates section is visible.
-        if (state.filteredFdroidApps.isEmpty() && (state.updates.isEmpty() || state.fdroidFilter != FdroidCatalogFilter.ALL || state.query.isNotBlank()) &&
-            !state.isLoadingFdroid && !state.fdroidError) {
+        if (filteredApps.isEmpty() && (state.updates.isEmpty() || state.fdroidFilter != FdroidCatalogFilter.ALL || state.query.isNotBlank()) &&
+            !state.isLoadingFdroid && !state.isFilteringFdroid && !state.fdroidError) {
             githubFullSpanItem(key = "fdroid-empty") {
                 GithubPagedListStatus(
                     itemCount = 0,

@@ -212,7 +212,9 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                     owner = route.owner,
                     name = route.name,
                     repository = scope.dependencies.actionsRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session,
+                    journal = scope.dependencies.actionJournal
                 )
             }
             val workflowsViewModel: ActionsWorkflowsViewModel = viewModel(
@@ -220,9 +222,6 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val workflowsState by workflowsViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, workflowsViewModel) {
-                workflowsViewModel.onSessionChanged(scope.sessionState.session)
-            }
             ActionsWorkflowsScreen(
                 state = workflowsState,
                 onAction = workflowsViewModel::onAction,
@@ -251,7 +250,8 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                     name = route.name,
                     workflowId = route.workflowId,
                     workflowName = route.workflowName,
-                    repository = scope.dependencies.actionsRepository
+                    repository = scope.dependencies.actionsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val runsViewModel: WorkflowRunsViewModel = viewModel(
@@ -259,6 +259,7 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val runsState by runsViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(runsState.viewerAccountId) {
             WorkflowRunsScreen(
                 state = runsState,
                 onAction = runsViewModel::onAction,
@@ -273,6 +274,7 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubActionsRunRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubActionsRunRoute>()
@@ -282,7 +284,9 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                     name = route.name,
                     runId = route.runId,
                     repository = scope.dependencies.actionsRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session,
+                    journal = scope.dependencies.actionJournal
                 )
             }
             val runViewModel: ActionsRunDetailViewModel = viewModel(
@@ -290,9 +294,7 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val runState by runViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, runViewModel) {
-                runViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(runState.viewerAccountId) {
             ActionsRunDetailScreen(
                 state = runState,
                 onAction = runViewModel::onAction,
@@ -307,6 +309,7 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubActionsJobRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubActionsJobRoute>()
@@ -315,7 +318,8 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                     owner = route.owner,
                     name = route.name,
                     jobId = route.jobId,
-                    repository = scope.dependencies.actionsRepository
+                    repository = scope.dependencies.actionsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val jobViewModel: ActionsJobDetailViewModel = viewModel(
@@ -323,6 +327,7 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val jobState by jobViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(jobState.viewerAccountId) {
             ActionsJobDetailScreen(
                 state = jobState,
                 onAction = jobViewModel::onAction,
@@ -330,6 +335,7 @@ internal fun NavGraphBuilder.githubActionsGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
 
 }

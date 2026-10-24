@@ -1,0 +1,1077 @@
+{
+  "scope": "M3E Canvas browser preview only; no Android device render",
+  "results": [
+    {
+      "project": "collaboration",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "issue",
+          "name": "Issue #128",
+          "outside": []
+        },
+        {
+          "id": "pull",
+          "name": "PR #130",
+          "outside": []
+        },
+        {
+          "id": "management",
+          "name": "更多操作",
+          "outside": []
+        },
+        {
+          "id": "issues",
+          "name": "Issue",
+          "outside": []
+        },
+        {
+          "id": "pulls",
+          "name": "Pull Request",
+          "outside": []
+        },
+        {
+          "id": "discussions",
+          "name": "讨论",
+          "outside": []
+        },
+        {
+          "id": "discussion",
+          "name": "下个版本的方向",
+          "outside": []
+        },
+        {
+          "id": "edit",
+          "name": "编辑内容",
+          "outside": []
+        },
+        {
+          "id": "comment",
+          "name": "添加评论",
+          "outside": []
+        },
+        {
+          "id": "review",
+          "name": "审查更改",
+          "outside": []
+        },
+        {
+          "id": "merge",
+          "name": "合并 Pull Request",
+          "outside": []
+        },
+        {
+          "id": "metadata",
+          "name": "标签与负责人",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "collaboration",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "issue",
+          "name": "Issue #128",
+          "outside": []
+        },
+        {
+          "id": "pull",
+          "name": "PR #130",
+          "outside": []
+        },
+        {
+          "id": "management",
+          "name": "更多操作",
+          "outside": []
+        },
+        {
+          "id": "issues",
+          "name": "Issue",
+          "outside": []
+        },
+        {
+          "id": "pulls",
+          "name": "Pull Request",
+          "outside": []
+        },
+        {
+          "id": "discussions",
+          "name": "讨论",
+          "outside": []
+        },
+        {
+          "id": "discussion",
+          "name": "下个版本的方向",
+          "outside": []
+        },
+        {
+          "id": "edit",
+          "name": "编辑内容",
+          "outside": []
+        },
+        {
+          "id": "comment",
+          "name": "添加评论",
+          "outside": []
+        },
+        {
+          "id": "review",
+          "name": "审查更改",
+          "outside": []
+        },
+        {
+          "id": "merge",
+          "name": "合并 Pull Request",
+          "outside": []
+        },
+        {
+          "id": "metadata",
+          "name": "标签与负责人",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "accounts",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "accounts",
+          "name": "账户",
+          "outside": []
+        },
+        {
+          "id": "signin",
+          "name": "登录 GitHub",
+          "outside": []
+        },
+        {
+          "id": "device",
+          "name": "设备代码",
+          "outside": []
+        },
+        {
+          "id": "token",
+          "name": "个人访问令牌",
+          "outside": []
+        },
+        {
+          "id": "gitlab-accounts",
+          "name": "GitLab 账户",
+          "outside": []
+        },
+        {
+          "id": "settings",
+          "name": "设置",
+          "outside": []
+        },
+        {
+          "id": "appearance",
+          "name": "外观",
+          "outside": []
+        },
+        {
+          "id": "language",
+          "name": "语言",
+          "outside": []
+        },
+        {
+          "id": "scale",
+          "name": "显示缩放",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "accounts",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "accounts",
+          "name": "账户",
+          "outside": []
+        },
+        {
+          "id": "signin",
+          "name": "登录 GitHub",
+          "outside": []
+        },
+        {
+          "id": "device",
+          "name": "设备代码",
+          "outside": []
+        },
+        {
+          "id": "token",
+          "name": "个人访问令牌",
+          "outside": []
+        },
+        {
+          "id": "gitlab-accounts",
+          "name": "GitLab 账户",
+          "outside": []
+        },
+        {
+          "id": "settings",
+          "name": "设置",
+          "outside": []
+        },
+        {
+          "id": "appearance",
+          "name": "外观",
+          "outside": []
+        },
+        {
+          "id": "language",
+          "name": "语言",
+          "outside": []
+        },
+        {
+          "id": "scale",
+          "name": "显示缩放",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "automation",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "workflows",
+          "name": "Actions",
+          "outside": []
+        },
+        {
+          "id": "runs",
+          "name": "Android CI",
+          "outside": []
+        },
+        {
+          "id": "run",
+          "name": "Build #108",
+          "outside": []
+        },
+        {
+          "id": "job",
+          "name": "作业日志",
+          "outside": []
+        },
+        {
+          "id": "run-actions",
+          "name": "运行操作",
+          "outside": []
+        },
+        {
+          "id": "artifacts",
+          "name": "构建产物",
+          "outside": []
+        },
+        {
+          "id": "webhooks",
+          "name": "Webhooks",
+          "outside": []
+        },
+        {
+          "id": "deliveries",
+          "name": "投递记录",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "automation",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "workflows",
+          "name": "Actions",
+          "outside": []
+        },
+        {
+          "id": "runs",
+          "name": "Android CI",
+          "outside": []
+        },
+        {
+          "id": "run",
+          "name": "Build #108",
+          "outside": []
+        },
+        {
+          "id": "job",
+          "name": "作业日志",
+          "outside": []
+        },
+        {
+          "id": "run-actions",
+          "name": "运行操作",
+          "outside": []
+        },
+        {
+          "id": "artifacts",
+          "name": "构建产物",
+          "outside": []
+        },
+        {
+          "id": "webhooks",
+          "name": "Webhooks",
+          "outside": []
+        },
+        {
+          "id": "deliveries",
+          "name": "投递记录",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "gitlab",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "projects",
+          "name": "GitLab 项目",
+          "outside": []
+        },
+        {
+          "id": "project",
+          "name": "Etoile / android",
+          "outside": []
+        },
+        {
+          "id": "tree",
+          "name": "app",
+          "outside": []
+        },
+        {
+          "id": "file",
+          "name": "build.gradle.kts",
+          "outside": []
+        },
+        {
+          "id": "revision",
+          "name": "选择修订",
+          "outside": []
+        },
+        {
+          "id": "issues",
+          "name": "Issue",
+          "outside": []
+        },
+        {
+          "id": "mrs",
+          "name": "Merge Request",
+          "outside": []
+        },
+        {
+          "id": "pipelines",
+          "name": "Pipeline",
+          "outside": []
+        },
+        {
+          "id": "conversation",
+          "name": "讨论详情",
+          "outside": []
+        },
+        {
+          "id": "pipeline",
+          "name": "Pipeline #108",
+          "outside": []
+        },
+        {
+          "id": "log",
+          "name": "作业日志",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "gitlab",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "projects",
+          "name": "GitLab 项目",
+          "outside": []
+        },
+        {
+          "id": "project",
+          "name": "Etoile / android",
+          "outside": []
+        },
+        {
+          "id": "tree",
+          "name": "app",
+          "outside": []
+        },
+        {
+          "id": "file",
+          "name": "build.gradle.kts",
+          "outside": []
+        },
+        {
+          "id": "revision",
+          "name": "选择修订",
+          "outside": []
+        },
+        {
+          "id": "issues",
+          "name": "Issue",
+          "outside": []
+        },
+        {
+          "id": "mrs",
+          "name": "Merge Request",
+          "outside": []
+        },
+        {
+          "id": "pipelines",
+          "name": "Pipeline",
+          "outside": []
+        },
+        {
+          "id": "conversation",
+          "name": "讨论详情",
+          "outside": []
+        },
+        {
+          "id": "pipeline",
+          "name": "Pipeline #108",
+          "outside": []
+        },
+        {
+          "id": "log",
+          "name": "作业日志",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "repositories",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "repository",
+          "name": "android",
+          "outside": []
+        },
+        {
+          "id": "more",
+          "name": "更多",
+          "outside": []
+        },
+        {
+          "id": "files",
+          "name": "代码",
+          "outside": []
+        },
+        {
+          "id": "reader",
+          "name": "README.md",
+          "outside": []
+        },
+        {
+          "id": "administration",
+          "name": "仓库信息与管理",
+          "outside": []
+        },
+        {
+          "id": "issues",
+          "name": "Issue",
+          "outside": []
+        },
+        {
+          "id": "pulls",
+          "name": "Pull Request",
+          "outside": []
+        },
+        {
+          "id": "discussions",
+          "name": "讨论",
+          "outside": []
+        },
+        {
+          "id": "actions",
+          "name": "Actions",
+          "outside": []
+        },
+        {
+          "id": "branches",
+          "name": "分支",
+          "outside": []
+        },
+        {
+          "id": "tags",
+          "name": "标签",
+          "outside": []
+        },
+        {
+          "id": "releases",
+          "name": "发行版",
+          "outside": []
+        },
+        {
+          "id": "commits",
+          "name": "提交",
+          "outside": []
+        },
+        {
+          "id": "collaborators",
+          "name": "协作者",
+          "outside": []
+        },
+        {
+          "id": "webhooks",
+          "name": "Webhooks",
+          "outside": []
+        },
+        {
+          "id": "deliveries",
+          "name": "投递记录",
+          "outside": []
+        },
+        {
+          "id": "release",
+          "name": "Etoile 1.4.0",
+          "outside": []
+        },
+        {
+          "id": "assets",
+          "name": "发行版附件",
+          "outside": []
+        },
+        {
+          "id": "diff",
+          "name": "提交差异",
+          "outside": []
+        },
+        {
+          "id": "code-reader",
+          "name": "build.gradle.kts",
+          "outside": []
+        },
+        {
+          "id": "fork-confirm",
+          "name": "复刻仓库？",
+          "outside": []
+        },
+        {
+          "id": "archive-confirm",
+          "name": "归档仓库？",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "repositories",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "repository",
+          "name": "android",
+          "outside": []
+        },
+        {
+          "id": "more",
+          "name": "更多",
+          "outside": []
+        },
+        {
+          "id": "files",
+          "name": "代码",
+          "outside": []
+        },
+        {
+          "id": "reader",
+          "name": "README.md",
+          "outside": []
+        },
+        {
+          "id": "administration",
+          "name": "仓库信息与管理",
+          "outside": []
+        },
+        {
+          "id": "issues",
+          "name": "Issue",
+          "outside": []
+        },
+        {
+          "id": "pulls",
+          "name": "Pull Request",
+          "outside": []
+        },
+        {
+          "id": "discussions",
+          "name": "讨论",
+          "outside": []
+        },
+        {
+          "id": "actions",
+          "name": "Actions",
+          "outside": []
+        },
+        {
+          "id": "branches",
+          "name": "分支",
+          "outside": []
+        },
+        {
+          "id": "tags",
+          "name": "标签",
+          "outside": []
+        },
+        {
+          "id": "releases",
+          "name": "发行版",
+          "outside": []
+        },
+        {
+          "id": "commits",
+          "name": "提交",
+          "outside": []
+        },
+        {
+          "id": "collaborators",
+          "name": "协作者",
+          "outside": []
+        },
+        {
+          "id": "webhooks",
+          "name": "Webhooks",
+          "outside": []
+        },
+        {
+          "id": "deliveries",
+          "name": "投递记录",
+          "outside": []
+        },
+        {
+          "id": "release",
+          "name": "Etoile 1.4.0",
+          "outside": []
+        },
+        {
+          "id": "assets",
+          "name": "发行版附件",
+          "outside": []
+        },
+        {
+          "id": "diff",
+          "name": "提交差异",
+          "outside": []
+        },
+        {
+          "id": "code-reader",
+          "name": "build.gradle.kts",
+          "outside": []
+        },
+        {
+          "id": "fork-confirm",
+          "name": "复刻仓库？",
+          "outside": []
+        },
+        {
+          "id": "archive-confirm",
+          "name": "归档仓库？",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "states",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "loading",
+          "name": "仓库",
+          "outside": []
+        },
+        {
+          "id": "empty",
+          "name": "星标收藏",
+          "outside": []
+        },
+        {
+          "id": "error",
+          "name": "仓库",
+          "outside": []
+        },
+        {
+          "id": "busy",
+          "name": "保存内容",
+          "outside": []
+        },
+        {
+          "id": "permission",
+          "name": "仓库管理",
+          "outside": []
+        },
+        {
+          "id": "danger",
+          "name": "删除确认",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "states",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "loading",
+          "name": "仓库",
+          "outside": []
+        },
+        {
+          "id": "empty",
+          "name": "星标收藏",
+          "outside": []
+        },
+        {
+          "id": "error",
+          "name": "仓库",
+          "outside": []
+        },
+        {
+          "id": "busy",
+          "name": "保存内容",
+          "outside": []
+        },
+        {
+          "id": "permission",
+          "name": "仓库管理",
+          "outside": []
+        },
+        {
+          "id": "danger",
+          "name": "删除确认",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "people",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "public-profile",
+          "name": "开发者",
+          "outside": []
+        },
+        {
+          "id": "followers",
+          "name": "关注者",
+          "outside": []
+        },
+        {
+          "id": "following",
+          "name": "已关注",
+          "outside": []
+        },
+        {
+          "id": "blocked",
+          "name": "已屏蔽用户",
+          "outside": []
+        },
+        {
+          "id": "organizations",
+          "name": "组织",
+          "outside": []
+        },
+        {
+          "id": "stars",
+          "name": "星标收藏",
+          "outside": []
+        },
+        {
+          "id": "labels",
+          "name": "管理标签",
+          "outside": []
+        },
+        {
+          "id": "repositories",
+          "name": "仓库",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "people",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "public-profile",
+          "name": "开发者",
+          "outside": []
+        },
+        {
+          "id": "followers",
+          "name": "关注者",
+          "outside": []
+        },
+        {
+          "id": "following",
+          "name": "已关注",
+          "outside": []
+        },
+        {
+          "id": "blocked",
+          "name": "已屏蔽用户",
+          "outside": []
+        },
+        {
+          "id": "organizations",
+          "name": "组织",
+          "outside": []
+        },
+        {
+          "id": "stars",
+          "name": "星标收藏",
+          "outside": []
+        },
+        {
+          "id": "labels",
+          "name": "管理标签",
+          "outside": []
+        },
+        {
+          "id": "repositories",
+          "name": "仓库",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "workspace",
+      "mode": "dark",
+      "frames": [
+        {
+          "id": "home",
+          "name": "首页",
+          "outside": []
+        },
+        {
+          "id": "home-continuation",
+          "name": "首页 · 下半部分",
+          "outside": []
+        },
+        {
+          "id": "inbox",
+          "name": "通知",
+          "outside": []
+        },
+        {
+          "id": "explore",
+          "name": "探索",
+          "outside": []
+        },
+        {
+          "id": "store",
+          "name": "商店",
+          "outside": []
+        },
+        {
+          "id": "profile",
+          "name": "我的",
+          "outside": []
+        },
+        {
+          "id": "home-wide",
+          "name": "首页 · 宽屏",
+          "outside": []
+        },
+        {
+          "id": "home-continuation-wide",
+          "name": "首页下半部分 · 宽屏",
+          "outside": []
+        },
+        {
+          "id": "my-issues",
+          "name": "我的 Issue",
+          "outside": []
+        },
+        {
+          "id": "my-pulls",
+          "name": "我的 PR",
+          "outside": []
+        },
+        {
+          "id": "repositories",
+          "name": "仓库",
+          "outside": []
+        },
+        {
+          "id": "stars",
+          "name": "星标收藏",
+          "outside": []
+        },
+        {
+          "id": "organizations",
+          "name": "组织",
+          "outside": []
+        },
+        {
+          "id": "followers",
+          "name": "关注者",
+          "outside": []
+        },
+        {
+          "id": "following",
+          "name": "已关注",
+          "outside": []
+        },
+        {
+          "id": "accounts",
+          "name": "GitHub 账户",
+          "outside": []
+        },
+        {
+          "id": "gitlab",
+          "name": "GitLab 账户",
+          "outside": []
+        },
+        {
+          "id": "sources",
+          "name": "应用来源",
+          "outside": []
+        },
+        {
+          "id": "app",
+          "name": "AntennaPod",
+          "outside": []
+        },
+        {
+          "id": "settings",
+          "name": "设置",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "project": "workspace",
+      "mode": "light",
+      "frames": [
+        {
+          "id": "home",
+          "name": "首页",
+          "outside": []
+        },
+        {
+          "id": "home-continuation",
+          "name": "首页 · 下半部分",
+          "outside": []
+        },
+        {
+          "id": "inbox",
+          "name": "通知",
+          "outside": []
+        },
+        {
+          "id": "explore",
+          "name": "探索",
+          "outside": []
+        },
+        {
+          "id": "store",
+          "name": "商店",
+          "outside": []
+        },
+        {
+          "id": "profile",
+          "name": "我的",
+          "outside": []
+        },
+        {
+          "id": "home-wide",
+          "name": "首页 · 宽屏",
+          "outside": []
+        },
+        {
+          "id": "home-continuation-wide",
+          "name": "首页下半部分 · 宽屏",
+          "outside": []
+        },
+        {
+          "id": "my-issues",
+          "name": "我的 Issue",
+          "outside": []
+        },
+        {
+          "id": "my-pulls",
+          "name": "我的 PR",
+          "outside": []
+        },
+        {
+          "id": "repositories",
+          "name": "仓库",
+          "outside": []
+        },
+        {
+          "id": "stars",
+          "name": "星标收藏",
+          "outside": []
+        },
+        {
+          "id": "organizations",
+          "name": "组织",
+          "outside": []
+        },
+        {
+          "id": "followers",
+          "name": "关注者",
+          "outside": []
+        },
+        {
+          "id": "following",
+          "name": "已关注",
+          "outside": []
+        },
+        {
+          "id": "accounts",
+          "name": "GitHub 账户",
+          "outside": []
+        },
+        {
+          "id": "gitlab",
+          "name": "GitLab 账户",
+          "outside": []
+        },
+        {
+          "id": "sources",
+          "name": "应用来源",
+          "outside": []
+        },
+        {
+          "id": "app",
+          "name": "AntennaPod",
+          "outside": []
+        },
+        {
+          "id": "settings",
+          "name": "设置",
+          "outside": []
+        }
+      ],
+      "pageErrors": []
+    }
+  ]
+}

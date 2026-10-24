@@ -4,9 +4,12 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -14,6 +17,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.Executors
 import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubSession
 
@@ -25,7 +29,7 @@ class GithubAuthRepositoryImplTest {
         val account = account()
         val store = FakeTokenStore()
         val remote = FakeAccountRemote { Result.success(account) }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
 
         val result = repository.signInWithToken(TOKEN_ONE)
 
@@ -43,7 +47,7 @@ class GithubAuthRepositoryImplTest {
         val remote = FakeAccountRemote { token ->
             Result.success(if (token == TOKEN_ONE) first else second)
         }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
 
         repository.signInWithToken(TOKEN_ONE)
         repository.signInWithToken(TOKEN_TWO)
@@ -60,7 +64,7 @@ class GithubAuthRepositoryImplTest {
         val pendingValidation = CompletableDeferred<Result<GithubAccount>>()
         val store = FakeTokenStore()
         val cache = TestGithubCacheStore()
-        val repository = GithubAuthRepositoryImpl(
+        val repository = authRepository(
             store,
             FakeAccountRemote { token ->
                 if (token == TOKEN_ONE) Result.success(first) else pendingValidation.await()
@@ -92,7 +96,7 @@ class GithubAuthRepositoryImplTest {
         val pendingValidation = CompletableDeferred<Result<GithubAccount>>()
         val store = FakeTokenStore()
         val cache = TestGithubCacheStore()
-        val repository = GithubAuthRepositoryImpl(
+        val repository = authRepository(
             store,
             FakeAccountRemote { token ->
                 if (token == TOKEN_ONE) Result.success(first)
@@ -142,7 +146,7 @@ class GithubAuthRepositoryImplTest {
         val cache = TestGithubCacheStore().apply {
             write("account", GithubCachedResponse("cached", null, null, 1L))
         }
-        val repository = GithubAuthRepositoryImpl(store, remote, cache)
+        val repository = authRepository(store, remote, cache)
         repository.restore()
 
         val result = repository.switchAccount(2L)
@@ -169,7 +173,7 @@ class GithubAuthRepositoryImplTest {
             if (token == TOKEN_ONE) Result.success(first)
             else Result.failure(IllegalStateException("offline"))
         }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
         repository.restore()
 
         val result = repository.switchAccount(2L)
@@ -194,7 +198,7 @@ class GithubAuthRepositoryImplTest {
         val remote = FakeAccountRemote { token ->
             Result.success(if (token == TOKEN_ONE) first else second)
         }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
         repository.restore()
 
         repository.signOut()
@@ -208,7 +212,7 @@ class GithubAuthRepositoryImplTest {
     fun legacySingleTokenIsMigratedAfterSuccessfulRestore() = runTest {
         val account = account()
         val store = FakeTokenStore(legacyToken = TOKEN_ONE)
-        val repository = GithubAuthRepositoryImpl(
+        val repository = authRepository(
             store,
             FakeAccountRemote { Result.success(account) }
         )
@@ -236,7 +240,7 @@ class GithubAuthRepositoryImplTest {
             if (token == TOKEN_TWO) Result.failure(GithubAuthenticationException())
             else Result.success(valid)
         }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
 
         val result = repository.restore()
 
@@ -250,7 +254,7 @@ class GithubAuthRepositoryImplTest {
     fun malformedTokenNeverReachesNetworkOrStorage() = runTest {
         val store = FakeTokenStore()
         val remote = FakeAccountRemote { Result.success(account()) }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
 
         val result = repository.signInWithToken("short token")
 
@@ -265,7 +269,7 @@ class GithubAuthRepositoryImplTest {
         val remote = FakeAccountRemote { Result.failure(GithubAuthenticationException()) }
         val cache = TestGithubCacheStore()
         cache.write("account", GithubCachedResponse("cached", null, null, 1L))
-        val repository = GithubAuthRepositoryImpl(store, remote, cache)
+        val repository = authRepository(store, remote, cache)
 
         val result = repository.restore()
 
@@ -279,7 +283,7 @@ class GithubAuthRepositoryImplTest {
     fun transientRestoreFailureKeepsEncryptedTokenForRetry() = runTest {
         val store = FakeTokenStore(legacyToken = TOKEN_ONE)
         val remote = FakeAccountRemote { Result.failure(IllegalStateException("offline")) }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
 
         repository.restore()
 
@@ -292,7 +296,7 @@ class GithubAuthRepositoryImplTest {
     fun oauthLoginPersistsRefreshCredentialsOnlyAfterAccountVerification() = runTest {
         val store = FakeTokenStore()
         val remote = FakeAccountRemote { Result.success(account()) }
-        val repository = GithubAuthRepositoryImpl(store, remote)
+        val repository = authRepository(store, remote)
         val oauth = takagi.ru.monica.github.domain.GithubDeviceAccessToken(
             TOKEN_ONE, "bearer", emptySet(), "ghr_" + "a".repeat(40), 100_000L, 200_000L
         )
@@ -307,7 +311,7 @@ class GithubAuthRepositoryImplTest {
     @Test
     fun rejectedOAuthLoginDoesNotPersistRefreshCredentials() = runTest {
         val store = FakeTokenStore()
-        val repository = GithubAuthRepositoryImpl(store,
+        val repository = authRepository(store,
             FakeAccountRemote { Result.failure(GithubAuthenticationException()) })
         val oauth = takagi.ru.monica.github.domain.GithubDeviceAccessToken(
             TOKEN_ONE, "bearer", emptySet(), "ghr_" + "a".repeat(40)
@@ -325,10 +329,134 @@ class GithubAuthRepositoryImplTest {
                 TOKEN_TWO, "bearer", emptySet(), "ghr_" + "b".repeat(40), 1000000, 9999999))
         }, { 2000 })
         val remote = FakeAccountRemote { Result.success(account()) }
-        val repository = GithubAuthRepositoryImpl(store, remote, credentialRefresher = refresher)
+        val repository = authRepository(store, remote, credentialRefresher = refresher)
         assertTrue(repository.restore().isSuccess)
         assertEquals(listOf(TOKEN_TWO), remote.tokens)
     }
+
+    @Test fun constructionDoesNotReadCredentialsAndStorageFailureCanBeRetriedWithoutDeletingAnything() = runTest {
+        val original = FakeTokenStore(credentials = listOf(GithubStoredCredential(account(), TOKEN_ONE)), activeAccountId = 1)
+        var locked = true
+        var reads = 0
+        val failingStore = object : GithubTokenStore by original {
+            override fun storedCredentials(): List<GithubStoredCredential> {
+                reads++
+                if (locked) throw IllegalStateException("Keystore temporarily unavailable")
+                return original.storedCredentials()
+            }
+        }
+        val remote = FakeAccountRemote { Result.success(account()) }
+        val repository = authRepository(failingStore, remote)
+        assertEquals(0, reads)
+        assertTrue(repository.accounts.value.isEmpty())
+        assertTrue(repository.restore().isFailure)
+        assertEquals(GithubSession.Error(recoverable = true), repository.session.value)
+        assertFalse(original.cleared)
+        assertTrue(remote.tokens.isEmpty())
+        locked = false
+        assertTrue(repository.restore().isSuccess)
+        assertEquals(GithubSession.SignedIn(account()), repository.session.value)
+        assertEquals(listOf(account()), repository.accounts.value)
+        assertEquals(TOKEN_ONE, original.read())
+    }
+
+    @Test fun cancelledRestoreCannotPersistALateVerifiedAccount() = runTest {
+        val pending = CompletableDeferred<Result<GithubAccount>>()
+        val store = FakeTokenStore(legacyToken = TOKEN_ONE)
+        val repository = authRepository(store, FakeAccountRemote {
+            withContext(NonCancellable) { pending.await() }
+        })
+        val request = launch { repository.restore() }; runCurrent()
+        request.cancel()
+        pending.complete(Result.success(account()))
+        request.join()
+        assertTrue(request.isCancelled)
+        assertTrue(store.storedCredentials().isEmpty())
+        assertEquals(TOKEN_ONE, store.read())
+        assertFalse(repository.session.value is GithubSession.SignedIn)
+    }
+
+    @Test fun cancelledSwitchCannotActivateALateSuccessfulVerification() = runTest {
+        val first = account()
+        val second = account(2, "second")
+        val store = FakeTokenStore(credentials = listOf(GithubStoredCredential(first, TOKEN_ONE), GithubStoredCredential(second, TOKEN_TWO)), activeAccountId = 1)
+        val pending = CompletableDeferred<Result<GithubAccount>>()
+        val cache = TestGithubCacheStore()
+        val repository = authRepository(store, FakeAccountRemote { token ->
+            if (token == TOKEN_ONE) Result.success(first) else withContext(NonCancellable) { pending.await() }
+        }, cache)
+        repository.restore()
+        val cached = GithubCachedResponse("cached first account", null, null, 1)
+        cache.write("account", cached)
+        val request = launch { repository.switchAccount(2) }; runCurrent()
+        request.cancel()
+        pending.complete(Result.success(second)); request.join()
+        assertTrue(request.isCancelled)
+        assertEquals(1L, store.activeAccountId())
+        assertEquals(GithubSession.SignedIn(first), repository.session.value)
+        assertEquals(cached, cache.read("account"))
+    }
+
+    @Test fun cacheStorageFailureCannotLeaveActiveCredentialsDifferentFromVisibleSession() = runTest {
+        val first = account()
+        val second = account(2, "second")
+        val store = FakeTokenStore(credentials = listOf(GithubStoredCredential(first, TOKEN_ONE), GithubStoredCredential(second, TOKEN_TWO)), activeAccountId = 1)
+        val cache = object : GithubCacheStore by TestGithubCacheStore() {
+            override fun clear() { throw IllegalStateException("Encrypted cache unavailable") }
+        }
+        val repository = authRepository(store, FakeAccountRemote { token ->
+            Result.success(if (token == TOKEN_ONE) first else second)
+        }, cache)
+        repository.restore()
+        assertTrue(repository.switchAccount(2).isFailure)
+        assertEquals(1L, store.activeAccountId())
+        assertEquals(GithubSession.SignedIn(first), repository.session.value)
+        assertTrue(repository.removeAccount(1).isFailure)
+        assertEquals(1L, store.activeAccountId())
+        assertEquals(GithubSession.SignedIn(first), repository.session.value)
+        assertEquals(2, store.storedCredentials().size)
+    }
+
+    @Test fun allAccountOperationsConfineCredentialAndCacheAccessToTheInjectedWorker() = runTest {
+        val observations = mutableListOf<Pair<String, String>>()
+        fun observe(operation: String) { observations += operation to Thread.currentThread().name }
+        val original = FakeTokenStore()
+        val store = object : GithubTokenStore by original {
+            override fun storedCredentials(): List<GithubStoredCredential> { observe("stored"); return original.storedCredentials() }
+            override fun read(): String? { observe("read"); return original.read() }
+            override fun activeAccountId(): Long? { observe("active"); return original.activeAccountId() }
+            override fun save(account: GithubAccount, token: String) { observe("save"); original.save(account, token) }
+            override fun remove(accountId: Long): Boolean { observe("remove"); return original.remove(accountId) }
+            override fun clear() { observe("clear"); original.clear() }
+        }
+        val cache = object : GithubCacheStore by TestGithubCacheStore() {
+            override fun clear() { observe("cache-clear") }
+        }
+        Executors.newSingleThreadExecutor { task -> Thread(task, "github-storage-test") }.asCoroutineDispatcher().use { worker ->
+            val repository = GithubAuthRepositoryImpl(store, FakeAccountRemote { token ->
+                observe("verify")
+                Result.success(if (token == TOKEN_ONE) account() else account(2, "second"))
+            }, cache, ioDispatcher = worker)
+            assertTrue(observations.isEmpty())
+            assertTrue(repository.signInWithToken(TOKEN_ONE).isSuccess)
+            assertTrue(repository.signInWithToken(TOKEN_TWO).isSuccess)
+            assertTrue(repository.switchAccount(1).isSuccess)
+            assertTrue(repository.removeAccount(2).isSuccess)
+            assertTrue(repository.restore().isSuccess)
+            repository.signOut()
+        }
+        assertTrue(observations.isNotEmpty())
+        assertEquals(setOf("github-storage-test"), observations.map { it.second }.toSet())
+        assertTrue(observations.map { it.first }.containsAll(listOf("stored", "active", "save", "remove", "read", "cache-clear", "verify")))
+    }
+
+    private fun TestScope.authRepository(
+        tokenStore: GithubTokenStore,
+        accountApi: GithubAccountRemoteDataSource,
+        cacheStore: GithubCacheStore = NoOpGithubCacheStore,
+        credentialRefresher: GithubCredentialRefresher? = null
+    ) = GithubAuthRepositoryImpl(tokenStore, accountApi, cacheStore, credentialRefresher,
+        ioDispatcher = StandardTestDispatcher(testScheduler))
 
     private class FakeTokenStore(
         legacyToken: String? = null,

@@ -249,9 +249,10 @@ private fun FavoritesSection(
                     Surface(
                         modifier = Modifier.fillMaxWidth(),
                         shape = GithubExpressiveShapes.container,
-                        color = MaterialTheme.colorScheme.surfaceContainerLow
+                        color = if (LocalDesignStyle.current == DesignStyle.MATERIAL) MaterialTheme.colorScheme.surface
+                            else MaterialTheme.colorScheme.surfaceContainerLow
                     ) {
-                        Column(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        Column(modifier = Modifier.padding(horizontal = if (LocalDesignStyle.current == DesignStyle.MATERIAL) 0.dp else 8.dp)) {
                             items.forEach { item ->
                                 GithubRepositoryRow(
                                     repository = item.repository,

@@ -44,6 +44,7 @@ import takagi.ru.monica.github.feature.inbox.InboxScreen
 import takagi.ru.monica.github.feature.inbox.InboxUiState
 import takagi.ru.monica.github.feature.profile.ProfileScreen
 import takagi.ru.monica.github.feature.profile.ProfileUiState
+import takagi.ru.monica.github.feature.repository.RepositoryMoreScreen
 import takagi.ru.monica.github.feature.repository.RepositoryDetailScreen
 import takagi.ru.monica.github.feature.repository.RepositoryDetailUiState
 import takagi.ru.monica.github.feature.starred.StarredUiState
@@ -80,7 +81,8 @@ internal fun M3eWorkspaceSamples(
     var settingsPage by rememberSaveable {
         mutableStateOf(initialPage.takeIf { it in setOf("settings", "appearance", "language") })
     }
-    var showRepository by rememberSaveable { mutableStateOf(initialPage == "repository") }
+    var showRepository by rememberSaveable { mutableStateOf(initialPage in setOf("repository", "repository-more")) }
+    var repositoryMore by rememberSaveable { mutableStateOf(initialPage == "repository-more") }
     var largeScreenPage by rememberSaveable {
         mutableStateOf(initialPage.takeIf { it in largeScreenSamplePages })
     }
@@ -124,7 +126,7 @@ internal fun M3eWorkspaceSamples(
         when (settingsPage) {
             "appearance", "language" -> settingsPage = "settings"
             "settings" -> settingsPage = null
-            else -> if (largeScreenPage != null) largeScreenPage = null else if (detailPage != null) {
+            else -> if (repositoryMore) repositoryMore = false else if (largeScreenPage != null) largeScreenPage = null else if (detailPage != null) {
                 detailPage = if (detailPage == "actions-job") "actions-run" else null
             } else showRepository = false
         }
@@ -165,20 +167,30 @@ internal fun M3eWorkspaceSamples(
                     onBack = { settingsPage = "settings" },
                     onLanguageSelected = { language = it }
                 )
+                showRepository && repositoryMore -> RepositoryMoreScreen(
+                    state = sampleRepositoryState,
+                    onAction = { onReport("Repository: $it") },
+                    onBack = { repositoryMore = false },
+                    onOpenBranches = { onReport("Branches") },
+                    onOpenTags = { onReport("Tags") },
+                    onOpenCollaborators = { onReport("Collaborators") },
+                    onOpenWebhooks = { onReport("Webhooks") },
+                    onOpenActions = { onReport("Actions") },
+                    onOpenDiscussions = { onReport("Discussions") },
+                    onOpenCommits = { onReport("Commits") },
+                    isSignedIn = true,
+                    onSignIn = { onReport("Sign in") },
+                    onOpenExternal = onReport
+                )
                 showRepository -> RepositoryDetailScreen(
                     state = sampleRepositoryState,
                     onAction = { onReport("Repository: $it") },
                     onBack = { showRepository = false },
                     onBrowseCode = { onReport("Files") },
-                    onOpenBranches = { onReport("Branches") },
-                    onOpenTags = { onReport("Tags") },
-                    onOpenCollaborators = { onReport("Collaborators") },
-                    onOpenWebhooks = { onReport("Webhooks") },
                     onOpenIssues = { onReport("Issues") },
                     onOpenPullRequests = { onReport("Pull requests") },
-                    onOpenActions = { onReport("Actions") },
                     onOpenReleases = { onReport("Releases") },
-                    onOpenCommits = { onReport("Commits") },
+                    onOpenMore = { repositoryMore = true },
                     isSignedIn = true,
                     onSignIn = { onReport("Sign in") },
                     onOpenRepository = { onReport(it.fullName) },

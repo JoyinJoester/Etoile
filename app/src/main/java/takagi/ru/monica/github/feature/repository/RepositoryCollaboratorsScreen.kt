@@ -6,16 +6,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
@@ -42,22 +38,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
 import takagi.ru.monica.github.component.GithubAvatar
 import takagi.ru.monica.github.component.GithubDetailScaffold
-import takagi.ru.monica.github.component.GithubDotDivider
-import takagi.ru.monica.github.component.GithubDotMatrix
 import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.GithubPullToRefreshBox
-import takagi.ru.monica.github.component.GithubSegmentedBar
 import takagi.ru.monica.github.component.GithubTechnicalLabel
 import takagi.ru.monica.github.component.GithubTechnicalSectionHeader
 import takagi.ru.monica.github.component.GithubTechnicalTag
@@ -78,7 +71,6 @@ fun RepositoryCollaboratorsScreen(
     modifier: Modifier = Modifier
 ) {
     val showingContributors = state.items.any(GithubCollaborator::isContributor)
-    val topContributions = state.items.maxOfOrNull { it.contributions ?: 0 } ?: 0
     val snackbarHostState = remember { SnackbarHostState() }
     // A write either lands with its own sentence or explains why GitHub refused it.
     val feedbackMessage = state.outcome?.let { collaboratorOutcomeText(it) }
@@ -89,7 +81,10 @@ fun RepositoryCollaboratorsScreen(
             onAction(RepositoryCollaboratorsAction.DismissFeedback)
         }
     }
-    var pendingRemoval by rememberSaveable(state.fullName) { mutableStateOf<String?>(null) }
+    var pendingRemoval by remember(state.fullName, state.viewerAccountId, state.canManage) { mutableStateOf<String?>(null) }
+    var pendingRole by remember(state.fullName, state.viewerAccountId, state.canManage) {
+        mutableStateOf<Pair<String, GithubCollaboratorRole>?>(null)
+    }
     GithubDetailScaffold(
         contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = stringResource(R.string.github_collaborators),
@@ -155,22 +150,20 @@ fun RepositoryCollaboratorsScreen(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 2.dp)
                 )
             }
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(168.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)),
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalSpacing = 10.dp
             ) {
                 items(state.filteredItems, key = { it.user.login }) { collaborator ->
-                    GithubCollaboratorTile(
+                    GithubCollaboratorRow(
                         collaborator = collaborator,
-                        topContributions = topContributions,
                         manageable = state.isManageable(collaborator),
                         isWriting = state.isWriting,
                         onClick = { onOpenUser(collaborator.user.login) },
                         onChangeRole = { role ->
-                            onAction(RepositoryCollaboratorsAction.ChangeRole(collaborator.user.login, role))
+                            pendingRole = collaborator.user.login to role
                         },
                         onRemove = { pendingRemoval = collaborator.user.login }
                     )
@@ -193,15 +186,33 @@ fun RepositoryCollaboratorsScreen(
           }
         }
     }
+    pendingRole?.let { (login, role) ->
+        val collaborator = state.items.firstOrNull { it.user.login == login }
+        if (collaborator != null && state.isManageable(collaborator)) {
+            AlertDialog(
+                onDismissRequest = { pendingRole = null },
+                title = { Text(stringResource(R.string.github_change_permission)) },
+                text = { Text(stringResource(R.string.github_confirm_collaborator_role, login, state.fullName, collaboratorRoleText(role))) },
+                confirmButton = {
+                    TextButton(enabled = !state.isWriting, onClick = {
+                        pendingRole = null
+                        onAction(RepositoryCollaboratorsAction.ChangeRole(login, role))
+                    }) { Text(stringResource(R.string.github_comment_confirm)) }
+                },
+                dismissButton = { TextButton(onClick = { pendingRole = null }) { Text(stringResource(R.string.github_cancel)) } }
+            )
+        }
+    }
     pendingRemoval?.let { login ->
-        AlertDialog(
+        val collaborator = state.items.firstOrNull { it.user.login == login }
+        if (collaborator != null && state.isManageable(collaborator)) AlertDialog(
             onDismissRequest = { pendingRemoval = null },
             title = { Text(stringResource(R.string.github_remove_collaborator_title, login)) },
             text = {
                 Text(stringResource(R.string.github_remove_collaborator_message, login, state.fullName))
             },
             confirmButton = {
-                TextButton(onClick = {
+                TextButton(enabled = !state.isWriting, onClick = {
                     pendingRemoval = null
                     onAction(RepositoryCollaboratorsAction.Remove(login))
                 }) {
@@ -220,14 +231,10 @@ fun RepositoryCollaboratorsScreen(
     }
 }
 
-/**
- * 平铺卡片磁贴,参考 Monica Android 验证器页面的双列磁贴:
- * 发丝边框、大面积头像、等宽技术标签,并用点阵元素填充留白。
- */
+/** Keep identity and contribution/permission information together in one scan line. */
 @Composable
-private fun GithubCollaboratorTile(
+private fun GithubCollaboratorRow(
     collaborator: GithubCollaborator,
-    topContributions: Int,
     manageable: Boolean,
     isWriting: Boolean,
     onClick: () -> Unit,
@@ -236,71 +243,30 @@ private fun GithubCollaboratorTile(
 ) {
     Surface(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 148.dp),
+        modifier = Modifier.fillMaxWidth(),
         shape = GithubExpressiveShapes.control,
         color = MaterialTheme.colorScheme.surfaceContainerLow
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp).padding(14.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                GithubAvatar(
-                    login = collaborator.user.login,
-                    avatarUrl = collaborator.user.avatarUrl,
-                    size = 32.dp
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    text = collaborator.user.login,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
-                )
-            }
-            if (collaborator.isContributor) {
-                Column {
-                    Text(
-                        text = formatContributions(collaborator.contributions ?: 0),
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1
-                    )
-                    GithubTechnicalLabel(
-                        text = stringResource(R.string.github_contributions_label),
-                        modifier = Modifier.padding(top = 2.dp)
-                    )
-                    GithubSegmentedBar(
-                        filled = contributionSegments(collaborator.contributions ?: 0, topContributions),
-                        total = MAX_PERMISSION_STEPS,
-                        modifier = Modifier.padding(top = 8.dp)
-                    )
+            GithubAvatar(login = collaborator.user.login, avatarUrl = collaborator.user.avatarUrl, size = 44.dp)
+            Column(Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                Text(collaborator.user.login, Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (collaborator.isContributor) {
+                    Text(formatContributions(collaborator.contributions ?: 0), Modifier.fillMaxWidth(),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary,
+                        maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
-            } else {
-                GithubDotMatrix(
-                    columns = 14,
-                    rows = 2,
-                    seed = collaborator.user.login.hashCode(),
-                    modifier = Modifier.padding(top = 4.dp, bottom = 4.dp)
-                )
+                Text(collaboratorRoleLabel(collaborator), Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            GithubDotDivider()
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                GithubTechnicalTag(
-                    label = collaboratorRoleLabel(collaborator),
-                    modifier = Modifier.weight(1f)
-                )
-                if (manageable) {
-                    CollaboratorManageMenu(
-                        currentRole = collaborator.role,
-                        enabled = !isWriting,
-                        onChangeRole = onChangeRole,
-                        onRemove = onRemove
-                    )
-                }
+            if (manageable) {
+                CollaboratorManageMenu(collaborator.role, !isWriting, onChangeRole, onRemove)
             }
         }
     }
@@ -357,18 +323,10 @@ private fun CollaboratorManageMenu(
     }
 }
 
-private const val MAX_PERMISSION_STEPS = 5
-
 @Composable
 private fun formatContributions(contributions: Int): String = stringResource(
     R.string.github_contributions_count, contributions
 )
-
-private fun contributionSegments(contributions: Int, top: Int): Int {
-    if (top <= 0) return 1
-    val ratio = contributions.toFloat() / top
-    return (ratio * MAX_PERMISSION_STEPS).toInt().coerceIn(1, MAX_PERMISSION_STEPS)
-}
 
 @Composable
 private fun collaboratorRoleLabel(collaborator: GithubCollaborator): String = when {

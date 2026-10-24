@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.data
 
 import android.content.Context
+import android.content.SharedPreferences
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 import kotlinx.serialization.Serializable
@@ -50,17 +51,20 @@ interface GithubTokenStore {
 
 class GithubSecureTokenStore(
     context: Context,
-    private val json: Json = Json { ignoreUnknownKeys = true }
+    private val json: Json = Json { ignoreUnknownKeys = true },
+    private val preferencesFactory: (() -> SharedPreferences)? = null
 ) : GithubTokenStore {
-    private val preferences = EncryptedSharedPreferences.create(
-        context.applicationContext,
-        PREFERENCES_NAME,
-        MasterKey.Builder(context.applicationContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    private val preferences by lazy {
+        preferencesFactory?.invoke() ?: EncryptedSharedPreferences.create(
+            context.applicationContext,
+            PREFERENCES_NAME,
+            MasterKey.Builder(context.applicationContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+    }
 
     @Synchronized
     override fun read(): String? {
@@ -92,8 +96,7 @@ class GithubSecureTokenStore(
     @Synchronized
     override fun storedCredentials(): List<GithubStoredCredential> {
         val encoded = preferences.getString(KEY_CREDENTIALS, null) ?: return emptyList()
-        return runCatching {
-            json.decodeFromString(StoredCredentialsPayload.serializer(), encoded)
+        return json.decodeFromString(StoredCredentialsPayload.serializer(), encoded)
                 .accounts
                 .asSequence()
                 .filter { it.id > 0L && it.login.isNotBlank() && isStoredTokenValid(it.token) }
@@ -101,7 +104,6 @@ class GithubSecureTokenStore(
                 .take(MAX_STORED_ACCOUNTS)
                 .map(StoredCredentialDto::toStoredCredential)
                 .toList()
-        }.getOrDefault(emptyList())
     }
 
     @Synchronized

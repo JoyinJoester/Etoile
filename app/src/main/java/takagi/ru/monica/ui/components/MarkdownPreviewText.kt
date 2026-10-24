@@ -1,26 +1,31 @@
 package takagi.ru.monica.ui.components
 
 import android.graphics.Bitmap
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.key
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
-import takagi.ru.monica.data.DesignStyle
-import takagi.ru.monica.github.design.LocalDesignStyle
 import androidx.compose.ui.Modifier
-import com.mikepenz.markdown.coil3.Coil3ImageTransformerImpl
+import androidx.compose.ui.unit.dp
 import com.mikepenz.markdown.compose.components.markdownComponents
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
-import com.mikepenz.markdown.m3.markdownTypography
+import com.mikepenz.markdown.model.markdownInlineContent
 
 /**
- * 完整的 Markdown 渲染（GFM）：标题、列表、表格、任务列表、引用、
- * 围栏代码块、图片、删除线等全部支持，配色自动跟随 Material 3 全局主题
- * （Nothing / Miuix 设计下同样跟随映射后的色板）。
+ * Markdown/GFM 文档阅读组件，支持常见 README HTML 混排。
+ * 使用独立的阅读字号与图片尺寸，配色跟随当前主题。
  *
  * 内部基于 multiplatform-markdown-renderer，图片经 Coil3 异步加载。
  *
@@ -33,46 +38,76 @@ fun MarkdownPreviewText(
     onOpenExternalLink: ((String) -> Unit)? = null,
     renderImages: Boolean = true,
     maxElements: Int = Int.MAX_VALUE,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    imageContext: MarkdownImageContext? = null,
+    documentBaseUrl: String? = null,
+    imageBaseUrl: String? = documentBaseUrl
 ) {
-    val defaultUriHandler = LocalUriHandler.current
-    val uriHandler = object : UriHandler {
-        override fun openUri(uri: String) {
-            if (onOpenExternalLink != null) onOpenExternalLink(uri)
-            else defaultUriHandler.openUri(uri)
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    // A new document owns a new state; a cancelled old parse cannot replace newer content.
+    val documentState = key(markdown, darkTheme) {
+        produceState<PreparedMarkdownDocument?>(null) {
+            value = prepareMarkdownDocument(markdown, darkTheme)
         }
     }
-    // Keep repository content dense enough for long issue and PR descriptions.
-    // Nothing's display scale is intentionally reserved for page-level emphasis.
-    val body = if (LocalDesignStyle.current == DesignStyle.NOTHING) {
-        MaterialTheme.typography.bodyMedium
-    } else {
-        MaterialTheme.typography.bodyLarge
+    val document = documentState.value
+    if (document == null) {
+        Box(modifier.fillMaxWidth().height(24.dp))
+        return
     }
-    val typography = if (LocalDesignStyle.current == DesignStyle.NOTHING) {
-        // Reading headings should not inherit the dotted display typography.
-        markdownTypography(
-            h1 = body.copy(fontSize = 24.sp, lineHeight = 30.sp, fontWeight = FontWeight.Medium),
-            h2 = body.copy(fontSize = 20.sp, lineHeight = 26.sp, fontWeight = FontWeight.Medium),
-            h3 = body.copy(fontSize = 18.sp, lineHeight = 24.sp, fontWeight = FontWeight.Medium),
-            h4 = body.copy(fontWeight = FontWeight.Medium),
-            h5 = body.copy(fontWeight = FontWeight.Medium),
-            h6 = body.copy(fontWeight = FontWeight.Medium)
-        )
-    } else markdownTypography()
+    val content = document.content
+    val images = document.images
+    val imagesByOffset = remember(images) { images.associateBy { it.offset } }
+    val references = document.references
+    val typography = remember { markdownReadingTypography() }
+    val codeStyle = typography.inlineCode.copy(background = MaterialTheme.colorScheme.surfaceContainerHigh).toSpanStyle()
+    val defaultUriHandler = LocalUriHandler.current
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val uriHandler = object : UriHandler {
+        override fun openUri(uri: String) {
+            val target = if (documentBaseUrl != null) resolveMarkdownDocumentLink(uri, documentBaseUrl) ?: return
+                else uri.removeSurrounding("<", ">")
+            val scheme = Regex("^([A-Za-z][A-Za-z0-9+.-]*):").find(target)?.groupValues?.get(1)?.lowercase()
+            if (scheme != null && scheme !in setOf("http", "https", "mailto")) return
+            if (onOpenExternalLink == null && scheme == null) return
+            if (onOpenExternalLink != null) onOpenExternalLink(target)
+            else try {
+                defaultUriHandler.openUri(target)
+            } catch (_: IllegalArgumentException) {
+                android.widget.Toast.makeText(context, takagi.ru.monica.R.string.github_external_link_unavailable, android.widget.Toast.LENGTH_SHORT).show()
+            } catch (_: android.content.ActivityNotFoundException) {
+                android.widget.Toast.makeText(context, takagi.ru.monica.R.string.github_external_link_unavailable, android.widget.Toast.LENGTH_SHORT).show()
+            } catch (_: SecurityException) {
+                android.widget.Toast.makeText(context, takagi.ru.monica.R.string.github_external_link_unavailable, android.widget.Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    val annotator = remember(imagesByOffset, renderImages, codeStyle, references, uriHandler) {
+        markdownReadingAnnotator(imagesByOffset, renderImages, codeStyle, typography.textLink, references, uriHandler::openUri)
+    }
     CompositionLocalProvider(LocalUriHandler provides uriHandler) {
-    Markdown(
-        content = markdown,
-        colors = markdownColor(),
-        typography = typography,
-        imageTransformer = Coil3ImageTransformerImpl,
-        components = if (renderImages) {
-            markdownComponents()
-        } else {
-            // 不渲染图片时占位为空（issue/PR 正文里的表情图片等不显示）
-            markdownComponents(image = { })
-        },
-        modifier = modifier
-    )
+        BoxWithConstraints(modifier.fillMaxWidth()) {
+            val inline = if (renderImages) markdownImageInlineContent(images, maxWidth, imageContext, imageBaseUrl) else emptyMap()
+            val density = LocalDensity.current
+            Markdown(
+                content = content,
+                colors = markdownColor(),
+                typography = typography,
+                annotator = annotator,
+                inlineContent = markdownInlineContent(inline),
+                components = markdownComponents(image = { model ->
+                    imagesByOffset[model.node.startOffset]?.let { image ->
+                        inline[image.key]?.let { item ->
+                            with(density) {
+                                Box(Modifier.size(item.placeholder.width.toDp(), item.placeholder.height.toDp())) {
+                                    item.children(image.description)
+                                }
+                            }
+                        }
+                    }
+                }),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
     }
 }

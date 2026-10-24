@@ -1,0 +1,1018 @@
+{
+  "title": "Etoile · 账户与设置",
+  "brief": "当前多账户和GitLab能力完整保留；登录方法、偏好与安全确认各自有明确层级。 基于2026-10-21当前功能优化。示例内容不是实时账户数据。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": true,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "accounts",
+      "name": "账户",
+      "x": 0,
+      "y": 0,
+      "bg": "surface",
+      "note": "服务与实例明确标注，头像左、身份右；账号切换与移除不混淆。"
+    },
+    {
+      "id": "signin",
+      "name": "登录 GitHub",
+      "x": 1420,
+      "y": 0,
+      "bg": "surface",
+      "note": "浏览公开项目无需登录。浏览器OAuth为主入口，设备代码和令牌留作明确替代方法。"
+    },
+    {
+      "id": "device",
+      "name": "设备代码",
+      "x": 2840,
+      "y": 0,
+      "bg": "surface",
+      "note": "显示已有设备授权流程与轮询状态，取消停止等待。"
+    },
+    {
+      "id": "token",
+      "name": "个人访问令牌",
+      "x": 4260,
+      "y": 0,
+      "bg": "surface",
+      "note": "输入隐藏显示，不在设计稿放真实凭据。"
+    },
+    {
+      "id": "gitlab-accounts",
+      "name": "GitLab 账户",
+      "x": 0,
+      "y": 1000,
+      "bg": "surface",
+      "note": "实例和身份明确；浏览器与PAT分别显示各自表单，授权中禁切换。"
+    },
+    {
+      "id": "settings",
+      "name": "设置",
+      "x": 1420,
+      "y": 1000,
+      "bg": "surface",
+      "note": "保留三个独立二级页面，不把所有选择展开在首页。"
+    },
+    {
+      "id": "appearance",
+      "name": "外观",
+      "x": 2840,
+      "y": 1000,
+      "bg": "surface",
+      "note": "保留三种风格与配色选项；M3E采用一致的语义色和字号层级。"
+    },
+    {
+      "id": "language",
+      "name": "语言",
+      "x": 4260,
+      "y": 1000,
+      "bg": "surface",
+      "note": "语言用本名展示，修改立即生效并保留返回位置。"
+    },
+    {
+      "id": "scale",
+      "name": "显示缩放",
+      "x": 0,
+      "y": 2000,
+      "bg": "surface",
+      "note": "百分比预览与滑块保留；布局由可读宽度决定，字号增加后恢复单列。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "accounts-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "accounts-1-item",
+          "kind": "topAppBar",
+          "label": "账户",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "accounts-2",
+      "x": 16,
+      "y": 112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "accounts-2-item-0",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "etoile",
+          "supporting": "GitHub · 当前账户",
+          "size": 380
+        },
+        {
+          "id": "accounts-2-item-1",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "etoile-reviewer",
+          "supporting": "GitHub · 点击切换",
+          "size": 380
+        },
+        {
+          "id": "accounts-2-item-2",
+          "icon": "hub",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "etoile",
+          "supporting": "gitlab.com",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "gitlab-accounts",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "accounts-3",
+      "x": 16,
+      "y": 388,
+      "axis": "x",
+      "items": [
+        {
+          "id": "accounts-3-item",
+          "kind": "button",
+          "label": "添加 GitHub 账户",
+          "icon": "add",
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "signin",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "accounts-4",
+      "x": 16,
+      "y": 468,
+      "axis": "x",
+      "items": [
+        {
+          "id": "accounts-4-item",
+          "kind": "button",
+          "label": "管理 GitLab 账户",
+          "icon": "hub",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "gitlab-accounts",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "signin-1",
+      "x": 1420,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "signin-1-item",
+          "kind": "topAppBar",
+          "label": "登录 GitHub",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "signin-2",
+      "x": 1436,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "signin-2-item",
+          "kind": "card",
+          "label": "连接 GitHub",
+          "icon": "account_circle",
+          "variant": "filled",
+          "supporting": "同步仓库、通知与收藏",
+          "noImage": true,
+          "size": 380,
+          "size2": 148,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "signin-3",
+      "x": 1436,
+      "y": 300,
+      "axis": "x",
+      "items": [
+        {
+          "id": "signin-3-item",
+          "kind": "button",
+          "label": "在浏览器中登录",
+          "icon": "login",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "signin-4",
+      "x": 1436,
+      "y": 396,
+      "axis": "y",
+      "items": [
+        {
+          "id": "signin-4-item-0",
+          "icon": "devices",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "使用设备代码",
+          "supporting": "在其他设备完成授权",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "device",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "signin-4-item-1",
+          "icon": "key",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "使用个人访问令牌",
+          "supporting": "在本机安全保存",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "token",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "device-1",
+      "x": 2840,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "device-1-item",
+          "kind": "topAppBar",
+          "label": "设备代码",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "device-2",
+      "x": 2856,
+      "y": 136,
+      "axis": "x",
+      "items": [
+        {
+          "id": "device-2-item",
+          "kind": "card",
+          "label": "ABCD-1234",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "在 github.com/login/device 输入代码",
+          "noImage": true,
+          "size": 380,
+          "size2": 156,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "device-3",
+      "x": 2856,
+      "y": 336,
+      "axis": "x",
+      "items": [
+        {
+          "id": "device-3-item",
+          "kind": "button",
+          "label": "打开授权网页",
+          "icon": "open_in_new",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "device-4",
+      "x": 2856,
+      "y": 440,
+      "axis": "x",
+      "items": [
+        {
+          "id": "device-4-item",
+          "kind": "text",
+          "label": "等待浏览器完成授权…",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "device-5",
+      "x": 2856,
+      "y": 508,
+      "axis": "x",
+      "items": [
+        {
+          "id": "device-5-item",
+          "kind": "button",
+          "label": "取消",
+          "icon": null,
+          "variant": "text",
+          "size": 380,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "token-1",
+      "x": 4260,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "token-1-item",
+          "kind": "topAppBar",
+          "label": "个人访问令牌",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "token-2",
+      "x": 4276,
+      "y": 128,
+      "axis": "x",
+      "items": [
+        {
+          "id": "token-2-item",
+          "kind": "textField",
+          "label": "访问令牌",
+          "icon": "key",
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "凭据仅在本机安全保存"
+        }
+      ]
+    },
+    {
+      "id": "token-3",
+      "x": 4276,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "token-3-item",
+          "kind": "button",
+          "label": "登录",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-1",
+      "x": 0,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "gitlab-accounts-1-item",
+          "kind": "topAppBar",
+          "label": "GitLab 账户",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-2",
+      "x": 16,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "gitlab-accounts-2-item-0",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "etoile",
+          "supporting": "gitlab.com · 当前账户",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-3",
+      "x": 16,
+      "y": 1228,
+      "axis": "x",
+      "items": [
+        {
+          "id": "gitlab-accounts-3-item",
+          "kind": "text",
+          "label": "添加账户",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-4",
+      "x": 16,
+      "y": 1280,
+      "axis": "x",
+      "items": [
+        {
+          "id": "gitlab-accounts-4-item",
+          "kind": "textField",
+          "label": "实例地址",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "https://gitlab.com 或自建实例"
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-5",
+      "x": 16,
+      "y": 1368,
+      "axis": "x",
+      "items": [
+        {
+          "id": "gitlab-accounts-5-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "浏览器 OAuth",
+          "checked": true
+        },
+        {
+          "id": "gitlab-accounts-5-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "访问令牌",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-6",
+      "x": 16,
+      "y": 1432,
+      "axis": "x",
+      "items": [
+        {
+          "id": "gitlab-accounts-6-item",
+          "kind": "textField",
+          "label": "应用 ID",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "使用已配置的GitLab OAuth应用"
+        }
+      ]
+    },
+    {
+      "id": "gitlab-accounts-7",
+      "x": 16,
+      "y": 1548,
+      "axis": "x",
+      "items": [
+        {
+          "id": "gitlab-accounts-7-item",
+          "kind": "button",
+          "label": "在浏览器中登录",
+          "icon": "login",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "settings-1",
+      "x": 1420,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "settings-1-item",
+          "kind": "topAppBar",
+          "label": "设置",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "settings-2",
+      "x": 1436,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "settings-2-item-0",
+          "icon": "palette",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "外观",
+          "supporting": "Material 3 Expressive · 跟随系统",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "appearance",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "settings-2-item-1",
+          "icon": "language",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "语言",
+          "supporting": "中文",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "language",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "settings-2-item-2",
+          "icon": "text_fields",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "显示缩放",
+          "supporting": "100%",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "scale",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "appearance-1",
+      "x": 2840,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-1-item",
+          "kind": "topAppBar",
+          "label": "外观",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "appearance-2",
+      "x": 2856,
+      "y": 1104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-2-item",
+          "kind": "card",
+          "label": "Material 3 Expressive",
+          "icon": "palette",
+          "variant": "filled",
+          "supporting": "内容清晰，操作有层次",
+          "noImage": true,
+          "size": 380,
+          "size2": 112,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "appearance-3",
+      "x": 2856,
+      "y": 1248,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-3-item",
+          "kind": "text",
+          "label": "设计风格",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "appearance-4",
+      "x": 2856,
+      "y": 1296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-4-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "Nothing",
+          "checked": false
+        },
+        {
+          "id": "appearance-4-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "M3E",
+          "checked": true
+        },
+        {
+          "id": "appearance-4-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "Miuix",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "appearance-5",
+      "x": 2856,
+      "y": 1368,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-5-item",
+          "kind": "text",
+          "label": "明暗模式",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "appearance-6",
+      "x": 2856,
+      "y": 1416,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-6-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "跟随系统",
+          "checked": true
+        },
+        {
+          "id": "appearance-6-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "浅色",
+          "checked": false
+        },
+        {
+          "id": "appearance-6-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "深色",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "appearance-7",
+      "x": 2856,
+      "y": 1488,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-7-item",
+          "kind": "text",
+          "label": "配色",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "appearance-8",
+      "x": 2856,
+      "y": 1536,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-8-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "默认",
+          "checked": true
+        },
+        {
+          "id": "appearance-8-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "海洋蓝",
+          "checked": false
+        },
+        {
+          "id": "appearance-8-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "科技紫",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "appearance-9",
+      "x": 2856,
+      "y": 1584,
+      "axis": "x",
+      "items": [
+        {
+          "id": "appearance-9-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "日落橙",
+          "checked": true
+        },
+        {
+          "id": "appearance-9-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "森林绿",
+          "checked": false
+        },
+        {
+          "id": "appearance-9-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "MIUI 蓝",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "language-1",
+      "x": 4260,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "language-1-item",
+          "kind": "topAppBar",
+          "label": "语言",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "language-2",
+      "x": 4276,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "language-2-item-0",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "跟随系统",
+          "supporting": "",
+          "size": 380
+        },
+        {
+          "id": "language-2-item-1",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "English",
+          "supporting": "",
+          "size": 380
+        },
+        {
+          "id": "language-2-item-2",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "中文",
+          "supporting": "当前选择",
+          "size": 380
+        },
+        {
+          "id": "language-2-item-3",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Tiếng Việt",
+          "supporting": "",
+          "size": 380
+        },
+        {
+          "id": "language-2-item-4",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "日本語",
+          "supporting": "",
+          "size": 380
+        },
+        {
+          "id": "language-2-item-5",
+          "icon": "radio_button_unchecked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Русский",
+          "supporting": "",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "scale-1",
+      "x": 0,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "scale-1-item",
+          "kind": "topAppBar",
+          "label": "显示缩放",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "scale-2",
+      "x": 16,
+      "y": 2112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "scale-2-item",
+          "kind": "card",
+          "label": "100%",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "调整界面显示大小",
+          "noImage": true,
+          "size": 380,
+          "size2": 132,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "scale-3",
+      "x": 16,
+      "y": 2296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "scale-3-item",
+          "kind": "slider",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "value": 50
+        }
+      ]
+    },
+    {
+      "id": "scale-4",
+      "x": 16,
+      "y": 2376,
+      "axis": "x",
+      "items": [
+        {
+          "id": "scale-4-item",
+          "kind": "text",
+          "label": "较小                                      较大",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    }
+  ]
+}

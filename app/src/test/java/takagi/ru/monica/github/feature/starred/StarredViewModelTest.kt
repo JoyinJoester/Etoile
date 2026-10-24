@@ -1,11 +1,15 @@
 package takagi.ru.monica.github.feature.starred
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -306,13 +310,160 @@ class StarredViewModelTest {
         assertEquals(listOf(1L, 2L), viewModel.state.value.repositories.map { it.repository.id })
     }
 
+    @Test fun automaticPagingContinuesPastOneHundredAndDeduplicatesThroughTheLastPage() = runTest(dispatcher) {
+        val repository = FakeStarsRepository().apply {
+            pageBlock = { page -> Result.success(GithubPage(
+                (when (page) { 1 -> 1..100; 2 -> 100..199; else -> 200..257 }).map { Companion.repository(it.toLong()) },
+                if (page < 3) page + 1 else null
+            )) }
+        }
+        val store = FakeLabelStore()
+        val label = store.createLabel("Later page").getOrThrow()
+        store.toggleAssignment(257, label.id)
+        val vm = StarredViewModel(repository, store)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        assertEquals(100, vm.state.value.repositories.size)
+        assertEquals(null, vm.state.value.nextAutomaticPage(5, 102))
+        repeat(2) {
+            val total = vm.state.value.repositories.size + 2
+            assertEquals(it + 2, vm.state.value.nextAutomaticPage(total - 2, total))
+            vm.onAction(StarredAction.LoadMoreAutomatically)
+            vm.onAction(StarredAction.LoadMoreAutomatically)
+            advanceUntilIdle()
+        }
+        assertEquals((1L..257L).toList(), vm.state.value.repositories.map { it.repository.id })
+        assertEquals(listOf(label), vm.state.value.repositories.last().labels)
+        assertEquals(null, vm.state.value.nextAutomaticPage(258, 259))
+        vm.onAction(StarredAction.LoadMoreAutomatically); advanceUntilIdle()
+        assertEquals(listOf(1, 2, 3), repository.requested)
+    }
+
+    @Test fun emptyLocalSearchKeepsPagingUntilAMatchBeyondTheFirstPage() = runTest(dispatcher) {
+        val repository = FakeStarsRepository().apply {
+            pageBlock = { page -> Result.success(GithubPage(
+                ((page - 1) * 100 + 1..page * 100).map { Companion.repository(it.toLong()) },
+                if (page < 3) page + 1 else null
+            )) }
+        }
+        val vm = StarredViewModel(repository, FakeLabelStore())
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(StarredAction.QueryChanged("etoile-250"))
+        repeat(2) {
+            assertTrue(vm.state.value.visibleRepositories.isEmpty())
+            assertEquals(it + 2, vm.state.value.nextAutomaticPage(1, 2))
+            vm.onAction(StarredAction.LoadMoreAutomatically); advanceUntilIdle()
+        }
+        assertEquals(listOf(250L), vm.state.value.visibleRepositories.map { it.repository.id })
+        assertEquals(listOf(1, 2, 3), repository.requested)
+    }
+
+    @Test fun automaticPagingStopsOnFailureUntilExplicitRetry() = runTest(dispatcher) {
+        val repository = FakeStarsRepository()
+        val vm = StarredViewModel(repository, FakeLabelStore())
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        repository.failNext = IllegalStateException("offline")
+        vm.onAction(StarredAction.LoadMoreAutomatically); advanceUntilIdle()
+        assertEquals(null, vm.state.value.nextAutomaticPage(2, 3))
+        repeat(3) { vm.onAction(StarredAction.LoadMoreAutomatically) }
+        advanceUntilIdle()
+        assertEquals(listOf(1, 2), repository.requested)
+        assertEquals(1, vm.state.value.repositories.size)
+        repository.failNext = null
+        vm.onAction(StarredAction.Retry); advanceUntilIdle()
+        assertEquals(listOf(1, 2, 2), repository.requested)
+        assertEquals(2, vm.state.value.repositories.size)
+    }
+
+    @Test fun automaticPagingPausesDuringRefreshAndRejectsLateResultsAfterSignOut() = runTest(dispatcher) {
+        val repository = FakeStarsRepository()
+        val vm = StarredViewModel(repository, FakeLabelStore())
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        val delayed = CompletableDeferred<Result<GithubPage<GithubRepository>>>()
+        repository.pageBlock = { withContext(NonCancellable) { delayed.await() } }
+        vm.onAction(StarredAction.PullToRefresh); runCurrent()
+        assertEquals(null, vm.state.value.nextAutomaticPage(2, 3))
+        vm.onAction(StarredAction.LoadMoreAutomatically); runCurrent()
+        assertEquals(listOf(1, 1), repository.requested)
+        vm.onSessionChanged(GithubSession.SignedOut)
+        delayed.complete(Result.success(GithubPage(listOf(Companion.repository(999)), 2)))
+        advanceUntilIdle()
+        assertTrue(vm.state.value.requiresAuthentication)
+        assertTrue(vm.state.value.repositories.isEmpty())
+        vm.onAction(StarredAction.LoadMoreAutomatically); advanceUntilIdle()
+        assertEquals(listOf(1, 1), repository.requested)
+    }
+
+    @Test fun switchingAccountsResetsEveryAccountOwnedControlAndUsesScopedLabels() = runTest(dispatcher) {
+        val firstStore = FakeLabelStore().apply { createLabel("Private collection").getOrThrow() }
+        val secondStore = FakeLabelStore().apply { createLabel("Second account label").getOrThrow() }
+        val rootStore = object : GithubStarLabelStore by firstStore {
+            override fun forAccount(accountId: Long): GithubStarLabelStore = if (accountId == 1L) firstStore else secondStore
+        }
+        val vm = StarredViewModel(FakeStarsRepository(), rootStore)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(StarredAction.SelectionToggled(1))
+        vm.onAction(StarredAction.BatchLabelRequested)
+        vm.onAction(StarredAction.LabelsRequested(1))
+        vm.onAction(StarredAction.LabelManagerRequested)
+        vm.onAction(StarredAction.QueryChanged("private query"))
+        vm.onAction(StarredAction.FilterSelected(GithubStarFilter.Label(firstStore.labels().single().id)))
+        vm.onSessionChanged(GithubSession.SignedIn(account().copy(id = 2)))
+        assertEquals("", vm.state.value.query)
+        assertEquals(GithubStarFilter.All, vm.state.value.selectedFilter)
+        assertTrue(vm.state.value.selectedRepositories.isEmpty())
+        assertFalse(vm.state.value.selectionMode)
+        assertFalse(vm.state.value.labelManagerVisible)
+        assertFalse(vm.state.value.batchLabelVisible)
+        assertEquals(null, vm.state.value.editingRepositoryId)
+        advanceUntilIdle()
+        assertEquals(listOf("Second account label"), vm.state.value.labels.map { it.name })
+        vm.onAction(StarredAction.LabelCreated("Second only"))
+        assertEquals(listOf("Private collection"), firstStore.labels().map { it.name })
+        assertEquals(listOf("Second account label", "Second only"), secondStore.labels().map { it.name })
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        assertEquals(listOf("Private collection"), vm.state.value.labels.map { it.name })
+    }
+
+    @Test fun sessionLoadingCancelsOldFetchAndRejectsLabelWrites() = runTest(dispatcher) {
+        val delayed = CompletableDeferred<Result<GithubPage<GithubRepository>>>()
+        val repository = FakeStarsRepository().apply { pageBlock = { withContext(NonCancellable) { delayed.await() } } }
+        val store = FakeLabelStore()
+        val vm = StarredViewModel(repository, store)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); runCurrent()
+        vm.onSessionChanged(GithubSession.Loading)
+        vm.onAction(StarredAction.LabelCreated("must not persist"))
+        vm.onAction(StarredAction.PullToRefresh)
+        delayed.complete(Result.success(GithubPage(listOf(Companion.repository(999)), null))); advanceUntilIdle()
+        assertTrue(store.labels().isEmpty())
+        assertTrue(vm.state.value.repositories.isEmpty())
+        assertTrue(vm.state.value.requiresAuthentication)
+        assertEquals(listOf(1), repository.requested)
+    }
+
+    @Test fun refreshPrunesSelectionsAndEditorForRepositoriesThatAreNoLongerStarred() = runTest(dispatcher) {
+        val repository = FakeStarsRepository()
+        val vm = StarredViewModel(repository, FakeLabelStore())
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(StarredAction.SelectionToggled(1))
+        vm.onAction(StarredAction.BatchLabelRequested)
+        vm.onAction(StarredAction.LabelsRequested(1))
+        repository.pageBlock = { Result.success(GithubPage(emptyList(), null)) }
+        vm.onAction(StarredAction.PullToRefresh); advanceUntilIdle()
+        assertTrue(vm.state.value.selectedRepositories.isEmpty())
+        assertFalse(vm.state.value.selectionMode)
+        assertFalse(vm.state.value.batchLabelVisible)
+        assertEquals(null, vm.state.value.editingRepositoryId)
+    }
+
     private class FakeStarsRepository : GithubStarsRepository {
         val requested = mutableListOf<Int>()
         var failNext: Throwable? = null
+        var pageBlock: (suspend (Int) -> Result<GithubPage<GithubRepository>>)? = null
 
         override suspend fun starredRepositories(page: Int, perPage: Int): Result<GithubPage<GithubRepository>> {
             requested += page
             failNext?.let { return Result.failure(it) }
+            pageBlock?.let { return it(page) }
             return Result.success(
                 GithubPage(
                     items = listOf(repository(page.toLong())),

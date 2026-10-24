@@ -4,6 +4,7 @@ import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.component.githubFullSpanItem
 import takagi.ru.monica.github.component.GithubAdaptiveGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,9 +42,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.key
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -51,6 +55,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.filterNotNull
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubFlatCard
@@ -195,7 +200,17 @@ private fun StarredContent(
     onAction: (StarredAction) -> Unit,
     onOpenRepository: (GithubRepository) -> Unit
 ) {
+    val gridState = rememberLazyGridState()
+    val latestState by rememberUpdatedState(state)
+    val latestAction by rememberUpdatedState(onAction)
+    LaunchedEffect(gridState) {
+        snapshotFlow {
+            val layout = gridState.layoutInfo
+            latestState.nextAutomaticPage(layout.visibleItemsInfo.lastOrNull()?.index ?: -1, layout.totalItemsCount)
+        }.filterNotNull().collect { latestAction(StarredAction.LoadMoreAutomatically) }
+    }
     GithubAdaptiveGrid(
+        state = gridState,
         contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 28.dp)
     ) {
         githubFullSpanItem(key = "overview") {
@@ -263,7 +278,9 @@ private fun StarredOverview(state: StarredUiState) {
     GithubFlatCard {
         Row(verticalAlignment = Alignment.Bottom) {
             Column(modifier = Modifier.weight(1f)) {
-                GithubTechnicalLabel(stringResource(R.string.github_star_overview_total))
+                GithubTechnicalLabel(stringResource(
+                    if (state.nextPage != null) R.string.github_star_overview_loaded else R.string.github_star_overview_total
+                ))
                 Text(
                     text = total.toString(),
                     style = MaterialTheme.typography.displaySmall,
@@ -281,6 +298,14 @@ private fun StarredOverview(state: StarredUiState) {
         }
         Spacer(Modifier.height(12.dp))
         GithubSegmentedBar(filled = labeled, total = total.coerceAtLeast(1))
+        if (state.nextPage != null) {
+            Text(
+                stringResource(R.string.github_star_loading_hint),
+                modifier = Modifier.padding(top = 8.dp),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
     }
 }
 

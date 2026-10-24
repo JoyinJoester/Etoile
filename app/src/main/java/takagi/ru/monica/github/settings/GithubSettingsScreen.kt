@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -56,6 +57,9 @@ import takagi.ru.monica.data.DesignStyle
 import takagi.ru.monica.data.Language
 import takagi.ru.monica.data.ThemeMode
 import takagi.ru.monica.utils.DisplayDensity
+import takagi.ru.monica.github.component.GithubPreferenceGroup
+import takagi.ru.monica.github.component.GithubPreferenceGroupDivider
+import takagi.ru.monica.github.component.GithubPreferenceRow
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubSectionHeader
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
@@ -72,7 +76,8 @@ fun GithubSettingsScreen(
     onOpenAppearance: () -> Unit,
     onOpenLanguage: () -> Unit,
     onOpenDisplayScale: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenAbout: () -> Unit = {}
 ) {
     SettingsPage(
         title = stringResource(R.string.github_settings),
@@ -81,30 +86,54 @@ fun GithubSettingsScreen(
         modifier = modifier
     ) {
         Spacer(Modifier.height(12.dp))
-        SettingsDestinationRow(
-            title = stringResource(R.string.github_appearance),
-            summary = listOfNotNull(
-                designStyleLabel(settings.designStyle),
-                themeLabel(settings.themeMode),
-                paletteLabel(settings.colorScheme).takeUnless { settings.designStyle == DesignStyle.NOTHING }
-            ).joinToString(" · "),
-            icon = Icons.Default.Palette,
-            onClick = onOpenAppearance
-        )
-        Spacer(Modifier.height(12.dp))
-        SettingsDestinationRow(
-            title = stringResource(R.string.github_language),
-            summary = languageLabel(settings.language),
-            icon = Icons.Default.Language,
-            onClick = onOpenLanguage
-        )
-        Spacer(Modifier.height(12.dp))
-        SettingsDestinationRow(
-            title = stringResource(R.string.github_display_scale),
-            summary = stringResource(R.string.github_display_scale_value, settings.displayScale),
-            icon = Icons.Default.Tune,
-            onClick = onOpenDisplayScale
-        )
+        if (LocalDesignStyle.current == DesignStyle.MATERIAL) {
+            GithubPreferenceGroup {
+                GithubPreferenceRow(Icons.Default.Palette, stringResource(R.string.github_appearance),
+                    listOf(designStyleLabel(settings.designStyle), themeLabel(settings.themeMode),
+                        paletteLabel(settings.colorScheme)).joinToString(" · "), onClick = onOpenAppearance)
+                GithubPreferenceGroupDivider()
+                GithubPreferenceRow(Icons.Default.Language, stringResource(R.string.github_language),
+                    languageLabel(settings.language), onClick = onOpenLanguage)
+                GithubPreferenceGroupDivider()
+                GithubPreferenceRow(Icons.Default.Tune, stringResource(R.string.github_display_scale),
+                    stringResource(R.string.github_display_scale_value, settings.displayScale), onClick = onOpenDisplayScale)
+                GithubPreferenceGroupDivider()
+                GithubPreferenceRow(Icons.Default.Info, stringResource(R.string.github_about),
+                    stringResource(R.string.github_about_summary), onClick = onOpenAbout)
+            }
+        } else {
+            SettingsDestinationRow(
+                title = stringResource(R.string.github_appearance),
+                summary = listOfNotNull(
+                    designStyleLabel(settings.designStyle),
+                    themeLabel(settings.themeMode),
+                    paletteLabel(settings.colorScheme).takeUnless { settings.designStyle == DesignStyle.NOTHING }
+                ).joinToString(" · "),
+                icon = Icons.Default.Palette,
+                onClick = onOpenAppearance
+            )
+            Spacer(Modifier.height(12.dp))
+            SettingsDestinationRow(
+                title = stringResource(R.string.github_language),
+                summary = languageLabel(settings.language),
+                icon = Icons.Default.Language,
+                onClick = onOpenLanguage
+            )
+            Spacer(Modifier.height(12.dp))
+            SettingsDestinationRow(
+                title = stringResource(R.string.github_display_scale),
+                summary = stringResource(R.string.github_display_scale_value, settings.displayScale),
+                icon = Icons.Default.Tune,
+                onClick = onOpenDisplayScale
+            )
+            Spacer(Modifier.height(12.dp))
+            SettingsDestinationRow(
+                title = stringResource(R.string.github_about),
+                summary = stringResource(R.string.github_about_summary),
+                icon = Icons.Default.Info,
+                onClick = onOpenAbout
+            )
+        }
     }
 }
 

@@ -1,5 +1,7 @@
 package takagi.ru.monica.github.data
 
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import takagi.ru.monica.github.domain.GithubDeviceAccessToken
@@ -31,6 +33,7 @@ class GithubCredentialRefresher(
                 else -> throw GithubAuthenticationException()
             }
             val rotated = refreshChannel(refreshToken).getOrThrow()
+            currentCoroutineContext().ensureActive()
             if (rotated.authorizationSource != credential.authorizationSource) throw GithubAuthenticationException()
             if (!store.rotate(credential, rotated)) {
                 // The user may have removed or reauthorized the account while the request ran.

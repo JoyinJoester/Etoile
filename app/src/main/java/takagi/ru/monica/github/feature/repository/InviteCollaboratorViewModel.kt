@@ -12,10 +12,15 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import takagi.ru.monica.github.domain.GithubCollaboratorChange
 import takagi.ru.monica.github.domain.GithubCollaboratorInvite
 import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
+import takagi.ru.monica.github.domain.GithubSession
 
 @Immutable
 data class InviteCollaboratorUiState(
@@ -23,13 +28,14 @@ data class InviteCollaboratorUiState(
     val role: GithubCollaboratorRole = GithubCollaboratorRole.WRITE,
     val isSubmitting: Boolean = false,
     val failure: RepositoryWriteFailure? = null,
-    val feedback: RepositoryCollaboratorFeedback? = null
+    val feedback: RepositoryCollaboratorFeedback? = null,
+    val canManage: Boolean = false
 ) {
     val isLoginUsable: Boolean get() = GithubCollaboratorInvite.isValidLogin(login)
 
     // A typed-but-unusable name deserves a hint while a blank one is only a disabled button.
     val showLoginHint: Boolean get() = login.isNotBlank() && !isLoginUsable
-    val canSubmit: Boolean get() = isLoginUsable && !isSubmitting
+    val canSubmit: Boolean get() = isLoginUsable && !isSubmitting && canManage
 }
 
 sealed interface InviteCollaboratorAction {
@@ -43,15 +49,42 @@ class InviteCollaboratorViewModel(
     private val owner: String,
     private val name: String,
     private val repository: GithubRepositoryDetailsRepository,
-    private val savedState: SavedStateHandle = SavedStateHandle()
+    private val savedState: SavedStateHandle = SavedStateHandle(),
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
-    private val _state = MutableStateFlow(
-        InviteCollaboratorUiState(
-            login = savedState.get<String>(LOGIN_KEY).orEmpty(),
-            role = savedState.get<String>(ROLE_KEY).toRestoredRole()
-        )
-    )
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
+    private val _state = MutableStateFlow(InviteCollaboratorUiState())
     val state: StateFlow<InviteCollaboratorUiState> = _state.asStateFlow()
+
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+    private val drafts = mutableMapOf<Long, Pair<String, GithubCollaboratorRole>>()
+
+    init {
+        sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } }
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && account?.id == accountId) return
+        accountId?.let { drafts[it] = _state.value.login to _state.value.role }
+        sessionInitialized = true
+        accountId = account?.id
+        requests.coroutineContext.cancelChildren()
+        val draft = account?.id?.let { id ->
+            drafts[id] ?: if (savedState.contains("$LOGIN_KEY:$id")) {
+                savedState.get<String>("$LOGIN_KEY:$id").orEmpty() to savedState.get<String>("$ROLE_KEY:$id").toRestoredRole()
+            } else if (savedState.get<Long>(ACCOUNT_KEY) == id) {
+                savedState.get<String>(LOGIN_KEY).orEmpty() to savedState.get<String>(ROLE_KEY).toRestoredRole()
+            } else null
+        }
+        _state.value = InviteCollaboratorUiState(login = draft?.first.orEmpty(), role = draft?.second ?: GithubCollaboratorRole.WRITE)
+        if (account == null) return
+        requests.launch {
+            val role = repository.details(owner, name).currentRepositoryResult().getOrNull()?.viewerRole
+            _state.update { it.copy(canManage = role?.canAdmin == true) }
+        }
+    }
 
     fun onAction(action: InviteCollaboratorAction) {
         if (action == InviteCollaboratorAction.ConsumeFeedback) {
@@ -71,16 +104,26 @@ class InviteCollaboratorViewModel(
         _state.value = next.copy(failure = null)
         savedState[LOGIN_KEY] = next.login
         savedState[ROLE_KEY] = next.role.name
+        accountId?.let { id ->
+            savedState[ACCOUNT_KEY] = id
+            savedState["$LOGIN_KEY:$id"] = next.login
+            savedState["$ROLE_KEY:$id"] = next.role.name
+        }
     }
 
     private fun submit() {
         val current = _state.value
+        if (!current.canSubmit) return
         val invite = GithubCollaboratorInvite.fromInput(current.login, current.role).getOrNull() ?: return
         _state.update { it.copy(isSubmitting = true, failure = null, feedback = null) }
-        viewModelScope.launch {
-            repository.setCollaborator(owner, name, invite).fold(
+        requests.launch {
+            repository.setCollaborator(owner, name, invite).currentRepositoryResult().fold(
                 onSuccess = { change ->
                     savedState.remove<Any>(LOGIN_KEY)
+                    accountId?.let { id ->
+                        savedState["$LOGIN_KEY:$id"] = ""
+                        drafts.remove(id)
+                    }
                     _state.update {
                         it.copy(
                             login = "",
@@ -114,24 +157,26 @@ class InviteCollaboratorViewModel(
     class Factory(
         private val owner: String,
         private val name: String,
-        private val repository: GithubRepositoryDetailsRepository
+        private val repository: GithubRepositoryDetailsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             require(modelClass.isAssignableFrom(InviteCollaboratorViewModel::class.java))
             return InviteCollaboratorViewModel(
-                owner, name, repository, extras.createSavedStateHandle()
+                owner, name, repository, extras.createSavedStateHandle(), sessions
             ) as T
         }
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(InviteCollaboratorViewModel::class.java))
-            return InviteCollaboratorViewModel(owner, name, repository) as T
+            return InviteCollaboratorViewModel(owner, name, repository, sessions = sessions) as T
         }
     }
 
     private companion object {
+        const val ACCOUNT_KEY = "invite_collaborator_account"
         const val LOGIN_KEY = "invite_collaborator_login"
         const val ROLE_KEY = "invite_collaborator_role"
     }

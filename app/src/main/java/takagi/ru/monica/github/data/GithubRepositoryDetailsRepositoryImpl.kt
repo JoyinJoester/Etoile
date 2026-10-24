@@ -19,6 +19,7 @@ import takagi.ru.monica.github.domain.GithubUserSummary
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
 import takagi.ru.monica.github.domain.GithubWebhookDelivery
+import takagi.ru.monica.github.domain.GithubWebhookDeliveriesPage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
@@ -67,7 +68,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                     .header("Accept", "application/vnd.github.raw+json")
                     .get()
                     .build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     when {
                         response.code == 404 -> null
                         !response.isSuccessful -> throw GithubApiException.of(response)
@@ -119,7 +120,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                     .header("Accept", "application/vnd.github+json")
                     .put(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
                     .build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     val body = response.body?.string().orEmpty()
                     val result = json.decodeFromString(TopicsResponseDto.serializer(), body)
@@ -148,7 +149,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 .header("Accept", "application/vnd.github+json")
                 .patch(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 val dto = json.decodeFromString(
                     GithubRepositoryDto.serializer(),
@@ -214,7 +215,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 .header("Accept", "application/vnd.github+json")
                 .put(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 // 201 created an invitation to accept; anything else restated an existing role.
                 val change = if (response.code == 201) {
@@ -238,7 +239,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 .header("Accept", "application/vnd.github+json")
                 .delete()
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
@@ -338,7 +339,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 .header("Accept", "application/vnd.github+json")
                 .patch(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 val webhook = json.decodeFromString(
                     WebhookDto.serializer(), response.body?.string().orEmpty()
@@ -359,7 +360,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 .header("Accept", "application/vnd.github+json")
                 .delete()
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
@@ -370,14 +371,14 @@ class GithubRepositoryDetailsRepositoryImpl(
         owner: String,
         name: String,
         id: Long,
-        page: Int,
+        cursor: String?,
         perPage: Int
-    ): Result<GithubPage<GithubWebhookDelivery>> = withContext(Dispatchers.IO) {
+    ): Result<GithubWebhookDeliveriesPage> = withContext(Dispatchers.IO) {
         githubRunCatching {
             val url = webhookEndpoint(owner, name, id).toHttpUrl().newBuilder()
                 .addPathSegment("deliveries")
                 .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
-                .addQueryParameter("page", page.coerceAtLeast(1).toString())
+                .apply { cursor?.takeIf(String::isNotBlank)?.let { addQueryParameter("cursor", it) } }
                 .build()
             val cacheKey = GithubCacheKeys.endpoint("repository-webhook-deliveries", requests.cacheScope(), url.toString())
             cachedGet.execute(
@@ -387,11 +388,11 @@ class GithubRepositoryDetailsRepositoryImpl(
                     requests.builder(url.toString()).get().withCacheValidator(etag).build()
                 },
                 decode = { body, linkHeader ->
-                    GithubPage(
+                    GithubWebhookDeliveriesPage(
                         items = json.decodeFromString(
                             ListSerializer(WebhookDeliveryDto.serializer()), body
                         ).map(WebhookDeliveryDto::toDomain),
-                        nextPage = GithubPagination.nextPage(linkHeader)
+                        nextCursor = GithubPagination.nextCursor(linkHeader)
                     )
                 }
             )
@@ -414,7 +415,7 @@ class GithubRepositoryDetailsRepositoryImpl(
                 .header("Accept", "application/vnd.github+json")
                 .post("".toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
@@ -557,7 +558,7 @@ class GithubRepositoryDetailsRepositoryImpl(
         val guid: String? = null,
         @SerialName("delivered_at") val deliveredAt: String? = null,
         val redelivery: Boolean = false,
-        val duration: Int? = null,
+        val duration: Double? = null,
         val status: String? = null,
         @SerialName("status_code") val statusCode: Int? = null,
         val event: String? = null,
@@ -568,7 +569,8 @@ class GithubRepositoryDetailsRepositoryImpl(
             guid = guid,
             deliveredAt = deliveredAt,
             redelivery = redelivery,
-            durationMs = duration,
+            durationMs = duration?.takeIf { it.isFinite() && it >= 0 }
+                ?.let { kotlin.math.round(it * 1000).coerceAtMost(Int.MAX_VALUE.toDouble()).toInt() },
             status = status,
             statusCode = statusCode,
             event = event,

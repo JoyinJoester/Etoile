@@ -1,15 +1,11 @@
 package takagi.ru.monica.github.feature.profile
 
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -25,7 +21,9 @@ import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.GithubPullToRefreshBox
-import takagi.ru.monica.github.component.GithubUserTile
+import takagi.ru.monica.github.component.GithubUserRow
+import takagi.ru.monica.github.component.GithubAdaptiveGrid
+import takagi.ru.monica.github.component.githubFullSpanItem
 import takagi.ru.monica.github.domain.GithubUserConnectionKind
 import takagi.ru.monica.github.domain.GithubUserSummary
 import takagi.ru.monica.github.navigation.GithubWebUrls
@@ -75,15 +73,14 @@ fun GithubUserConnectionsScreen(
             enabled = !state.isLoading && !state.isLoadingMore,
             modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(168.dp * LocalDensity.current.fontScale.coerceAtLeast(1f)),
+            GithubAdaptiveGrid(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                horizontalSpacing = 10.dp
             ) {
                 if (state.isLoading) {
-                    item(key = "loading", span = { GridItemSpan(maxLineSpan) }) {
+                    githubFullSpanItem(key = "loading") {
                         GithubListLoadingState(
                             isLoading = true,
                             hasItems = state.users.isNotEmpty(),
@@ -92,14 +89,14 @@ fun GithubUserConnectionsScreen(
                     }
                 }
                 items(state.users, key = GithubUserSummary::login) { user ->
-                    GithubUserTile(
+                    GithubUserRow(
                         login = user.login,
                         avatarUrl = user.avatarUrl,
                         supportingText = stringResource(R.string.github_user),
                         onClick = { onOpenUser(user.login) }
                     )
                 }
-                item(key = "list-status", span = { GridItemSpan(maxLineSpan) }) {
+                githubFullSpanItem(key = "list-status") {
                     GithubPagedListStatus(
                         itemCount = state.users.size,
                         isInitialLoading = state.isLoading,

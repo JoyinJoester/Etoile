@@ -41,6 +41,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -163,10 +166,10 @@ fun CommitsScreen(
 private fun CommitListRow(commit: GithubCommit, onClick: () -> Unit) {
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().githubCollectionSurface()
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = 56.dp)
-            .padding(vertical = 13.dp)
+            .githubCollectionPadding()
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
@@ -226,9 +229,8 @@ private fun CommitListRow(commit: GithubCommit, onClick: () -> Unit) {
                 modifier = Modifier.padding(start = 8.dp, top = 3.dp).size(18.dp)
             )
         }
-        androidx.compose.material3.HorizontalDivider(
-            modifier = Modifier.padding(top = 13.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+        GithubCollectionDivider(
+            modifier = Modifier.padding(top = 13.dp)
         )
     }
 }

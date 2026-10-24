@@ -70,6 +70,7 @@ import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubStoreApp
 import takagi.ru.monica.github.domain.toApkPackages
 import takagi.ru.monica.ui.components.MarkdownPreviewText
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import java.io.File
 
 /**
@@ -216,6 +217,7 @@ internal fun StoreAppDetail(
                 contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 28.dp)
             ) {
                 if (!expanded) item(key = "summary") { summary() }
+                if (!expanded && app.latestRelease != null) downloadItems()
                 item(key = "release-header") {
                     GithubTechnicalSectionHeader(
                         label = stringResource(R.string.github_store_latest),
@@ -270,13 +272,13 @@ internal fun StoreAppDetail(
                                     release.body?.takeIf(String::isNotBlank)?.let { body ->
                                         MarkdownPreviewText(
                                             markdown = body,
+                                            imageContext = MarkdownImageContext(app.repository.fullName, release.tagName),
                                             modifier = Modifier.padding(top = 8.dp)
                                         )
                                     }
                                 }
                             }
                         }
-                        if (!expanded) downloadItems()
                     }
                 }
                 if (!expanded) item(key = "open-repo") { repositoryLink() }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -21,6 +22,9 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PauseCircle
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -45,6 +49,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubDetailScaffold
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
+import takagi.ru.monica.github.design.LocalDesignStyle
+import takagi.ru.monica.data.DesignStyle
 import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
@@ -59,9 +68,11 @@ fun RepositoryWebhooksScreen(
     onAction: (RepositoryWebhooksAction) -> Unit,
     onBack: () -> Unit,
     onOpenExternal: (String) -> Unit,
+    onOpenDeliveries: (Long) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var pendingDelete by remember { mutableStateOf<GithubRepositoryWebhook?>(null) }
+    var pendingToggle by remember(state.fullName, state.viewerAccountId, state.canManage) { mutableStateOf<Pair<Long, Boolean>?>(null) }
+    var pendingDelete by remember(state.fullName, state.viewerAccountId) { mutableStateOf<GithubRepositoryWebhook?>(null) }
     GithubDetailScaffold(
         contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
         title = stringResource(R.string.github_webhooks),
@@ -106,10 +117,11 @@ fun RepositoryWebhooksScreen(
                         webhook = webhook,
                         canManage = state.canManage,
                         isBusy = state.isUpdatingWebhook,
-                        onOpen = {
+                        onOpen = { onOpenDeliveries(webhook.id) },
+                        onOpenExternal = {
                             onOpenExternal(GithubWebUrls.repositoryWebhookSettings(state.fullName, webhook.id))
                         },
-                        onToggle = { enabled -> onAction(RepositoryWebhooksAction.SetEnabled(webhook.id, enabled)) },
+                        onToggle = { enabled -> pendingToggle = webhook.id to enabled },
                         onRequestDelete = { pendingDelete = webhook }
                     )
                 }
@@ -132,6 +144,21 @@ fun RepositoryWebhooksScreen(
         }
     }
 
+    pendingToggle?.let { (id, enabled) ->
+        val hook = state.items.firstOrNull { it.id == id }
+        if (hook != null && state.canManage) {
+            AlertDialog(
+                onDismissRequest = { pendingToggle = null },
+                title = { Text(stringResource(R.string.github_confirm_webhook_toggle_title)) },
+                text = { Text(stringResource(R.string.github_confirm_webhook_toggle_message, state.fullName, id)) },
+                confirmButton = { TextButton(enabled = !state.isUpdatingWebhook, onClick = {
+                    pendingToggle = null
+                    onAction(RepositoryWebhooksAction.SetEnabled(id, enabled))
+                }) { Text(stringResource(R.string.github_comment_confirm)) } },
+                dismissButton = { TextButton(onClick = { pendingToggle = null }) { Text(stringResource(R.string.github_cancel)) } }
+            )
+        }
+    }
     pendingDelete?.let { webhook ->
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
@@ -171,11 +198,15 @@ private fun RepositoryWebhookRow(
     canManage: Boolean,
     isBusy: Boolean,
     onOpen: () -> Unit,
+    onOpenExternal: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onRequestDelete: () -> Unit
 ) {
+    val material = LocalDesignStyle.current == DesignStyle.MATERIAL
+    var menuExpanded by remember(webhook.id) { mutableStateOf(false) }
     Column(modifier = Modifier
         .fillMaxWidth()
+        .githubCollectionSurface()
         .heightIn(min = 56.dp)
         .clickable(role = Role.Button, onClick = onOpen)
         .semantics(mergeDescendants = true) {
@@ -185,7 +216,7 @@ private fun RepositoryWebhookRow(
                 webhook.lastResponseCode?.let { "HTTP $it" }
             ).joinToString(", ")
         }
-        .padding(vertical = 13.dp)) {
+        .githubCollectionPadding(vertical = 13.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.Link,
@@ -200,7 +231,26 @@ private fun RepositoryWebhookRow(
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            if (canManage) {
+            if (material) {
+                Icon(
+                    imageVector = if (webhook.isActive) Icons.Default.CheckCircle else Icons.Default.PauseCircle,
+                    contentDescription = stringResource(if (webhook.isActive) R.string.github_webhook_active else R.string.github_webhook_inactive),
+                    tint = if (webhook.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                )
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) { Icon(Icons.Default.MoreVert, stringResource(R.string.github_more_actions)) }
+                    DropdownMenu(menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.github_open_on_github)) },
+                            onClick = { menuExpanded = false; onOpenExternal() })
+                        if (canManage) {
+                            DropdownMenuItem(text = { Text(stringResource(if (webhook.isActive) R.string.github_webhook_disable else R.string.github_webhook_enable)) },
+                                enabled = !isBusy, onClick = { menuExpanded = false; onToggle(!webhook.isActive) })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.github_webhook_delete), color = MaterialTheme.colorScheme.error) },
+                                enabled = !isBusy, onClick = { menuExpanded = false; onRequestDelete() })
+                        }
+                    }
+                }
+            } else if (canManage) {
                 // Active state is edited in place, so the switch replaces the read-only status glyph.
                 Switch(checked = webhook.isActive, onCheckedChange = onToggle, enabled = !isBusy)
                 IconButton(onClick = onRequestDelete, enabled = !isBusy) {
@@ -218,7 +268,7 @@ private fun RepositoryWebhookRow(
                     tint = if (webhook.isActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                 )
             }
-            GithubOpenOnGithubButton(onClick = onOpen)
+            if (!material) GithubOpenOnGithubButton(onClick = onOpenExternal)
         }
         Text(
             text = webhook.url?.takeIf(String::isNotBlank) ?: "#${webhook.id}",
@@ -250,9 +300,9 @@ private fun RepositoryWebhookRow(
             )
             }
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 13.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
-        )
+        TextButton(onClick = onOpen, modifier = Modifier.padding(start = 24.dp)) {
+            Text(stringResource(R.string.github_webhook_deliveries))
+        }
     }
+    GithubCollectionDivider()
 }

@@ -8,6 +8,8 @@ import takagi.ru.monica.github.component.githubFullSpanItem
 import takagi.ru.monica.github.component.GithubAdaptiveGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -25,6 +27,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -52,6 +55,8 @@ import takagi.ru.monica.github.component.GithubPullToRefreshBox
 import takagi.ru.monica.github.component.GithubSectionHeader
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.domain.GithubArtifactOutput
+import takagi.ru.monica.github.domain.GithubActionKind
+import takagi.ru.monica.github.domain.GithubActionOperation
 import takagi.ru.monica.github.domain.GithubWorkflow
 import takagi.ru.monica.github.domain.GithubWorkflowArtifact
 import takagi.ru.monica.github.domain.GithubWorkflowJob
@@ -67,74 +72,111 @@ fun ActionsWorkflowsScreen(
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    GithubDetailScaffold(
-        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
-        title = state.name,
-        subtitle = stringResource(R.string.github_actions),
-        backContentDescription = stringResource(R.string.github_back),
-        onBack = onBack,
-        modifier = modifier,
-        actions = {
-            IconButton(
-                onClick = { onAction(ActionsWorkflowsAction.Refresh) },
-                enabled = !state.isRefreshing && !state.isLoading
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
-            }
-            GithubOpenOnGithubButton {
-                onOpenExternal(GithubWebUrls.actions(state.fullName))
-            }
+    val savedPages = androidx.compose.runtime.saveable.rememberSaveableStateHolder()
+    var dispatchTargetId by remember(state.fullName, state.viewerAccountId, state.canManageWorkflows) { mutableStateOf<Long?>(null) }
+    val dispatchTarget = state.items.firstOrNull { it.id == dispatchTargetId }
+    if (dispatchTarget != null && state.canManageWorkflows) {
+        savedPages.SaveableStateProvider("dispatch:${state.fullName}:${state.viewerAccountId}:${dispatchTarget.id}") {
+            var ref by rememberSaveable { mutableStateOf("main") }
+            var inputs by rememberSaveable { mutableStateOf("") }
+            WorkflowDispatchScreen(state.fullName, dispatchTarget, ref, inputs, { ref = it }, { inputs = it },
+                dispatchTarget.id in state.dispatchBusyIds, onDismiss = { dispatchTargetId = null },
+                onSubmit = { requestedRef, values, repeatConfirmed ->
+                    dispatchTargetId = null
+                    onAction(ActionsWorkflowsAction.DispatchWorkflow(dispatchTarget.id, requestedRef, values, state.viewerAccountId, repeatConfirmed))
+                }, unconfirmed = GithubActionOperation(GithubActionKind.DISPATCH, dispatchTarget.id) in state.unconfirmedOperations,
+                viewerAccountId = state.viewerAccountId,
+                onCheck = { dispatchTargetId = null; onOpenWorkflow(dispatchTarget) },
+                onAcknowledge = { onAction(ActionsWorkflowsAction.Acknowledge(GithubActionOperation(GithubActionKind.DISPATCH, dispatchTarget.id), state.viewerAccountId)) })
         }
-    ) { padding ->
-        GithubPullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onAction(ActionsWorkflowsAction.Refresh) },
-            enabled = !state.isRefreshing && !state.isLoading && !state.isLoadingMore,
-            modifier = Modifier.fillMaxSize().padding(padding)
-        ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-            GithubListLoadingState(
-                isLoading = state.isLoading,
-                hasItems = state.items.isNotEmpty(),
-                row = GithubSkeletonRow.LIST,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
-            )
-            GithubAdaptiveGrid(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
-            ) {
-                items(state.items, key = GithubWorkflow::id) { workflow ->
-                    ActionsWorkflowRow(
-                        workflow = workflow,
-                        onClick = { onOpenWorkflow(workflow) },
-                        canManage = state.canManageWorkflows,
-                        isUpdating = workflow.id in state.workflowBusyIds,
-                        hasError = workflow.id in state.workflowErrorIds,
-                        isDispatching = workflow.id in state.dispatchBusyIds,
-                        hasDispatchError = workflow.id in state.dispatchErrorIds,
-                        onEnabledChanged = { enabled ->
-                            onAction(ActionsWorkflowsAction.SetWorkflowEnabled(workflow.id, enabled))
-                        },
-                        onDispatch = { ref, inputs ->
-                            onAction(ActionsWorkflowsAction.DispatchWorkflow(workflow.id, ref, inputs))
-                        }
-                    )
+        return
+    }
+    savedPages.SaveableStateProvider("workflowList:${state.fullName}:${state.viewerAccountId}") {
+        GithubDetailScaffold(
+            contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
+            title = state.name,
+            subtitle = stringResource(R.string.github_actions),
+            backContentDescription = stringResource(R.string.github_back),
+            onBack = onBack,
+            modifier = modifier,
+            actions = {
+                IconButton(
+                    onClick = { onAction(ActionsWorkflowsAction.Refresh) },
+                    enabled = !state.isRefreshing && !state.isLoading
+                ) {
+                    Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.github_web_refresh))
                 }
-                githubFullSpanItem(key = "list-status") {
-                    GithubPagedListStatus(
-                        itemCount = state.items.size,
-                        isInitialLoading = state.isLoading,
-                        isLoadingMore = state.isLoadingMore,
-                        hasError = state.error,
-                        canLoadMore = state.canLoadMore,
-                        errorMessage = stringResource(R.string.github_actions_workflows_error),
-                        emptyMessage = stringResource(R.string.github_no_workflows),
-                        onRetry = { onAction(ActionsWorkflowsAction.Retry) },
-                        onLoadMore = { onAction(ActionsWorkflowsAction.LoadMore) },
-                        emptyIcon = Icons.Default.PlayArrow
-                    )
+                GithubOpenOnGithubButton {
+                    onOpenExternal(GithubWebUrls.actions(state.fullName))
                 }
             }
+        ) { padding ->
+            GithubPullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { onAction(ActionsWorkflowsAction.Refresh) },
+                enabled = !state.isRefreshing && !state.isLoading && !state.isLoadingMore,
+                modifier = Modifier.fillMaxSize().padding(padding)
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                GithubListLoadingState(
+                    isLoading = state.isLoading,
+                    hasItems = state.items.isNotEmpty(),
+                    row = GithubSkeletonRow.LIST,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+                GithubAdaptiveGrid(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                ) {
+                    if (state.journalUnavailable) githubFullSpanItem(key = "journal-error") {
+                        GithubMessageState(title = stringResource(R.string.github_actions_journal_error),
+                            actionLabel = stringResource(R.string.github_retry), onAction = { onAction(ActionsWorkflowsAction.Refresh) })
+                    }
+                    state.unconfirmedOperations.filter { operation ->
+                        operation.kind in setOf(GithubActionKind.TOGGLE, GithubActionKind.DISPATCH) && operation.targetId !in state.workflowBusyIds && operation.targetId !in state.dispatchBusyIds
+                    }.forEach { operation ->
+                        githubFullSpanItem(key = "uncertain:${operation.kind}:${operation.targetId}") {
+                            val workflow = state.items.firstOrNull { it.id == operation.targetId }
+                            val label = stringResource(if (operation.kind == GithubActionKind.DISPATCH) R.string.github_actions_dispatch else R.string.github_actions_toggle_workflow, workflow?.name ?: "#${operation.targetId}")
+                            ActionsOutcomeNotice("${state.fullName} · ${workflow?.name ?: "#${operation.targetId}"} · $label",
+                                onCheck = { if (workflow != null) onOpenWorkflow(workflow) else onOpenExternal(GithubWebUrls.actions(state.fullName)) },
+                                onAcknowledge = { onAction(ActionsWorkflowsAction.Acknowledge(operation, state.viewerAccountId)) })
+                        }
+                    }
+                    items(state.items, key = GithubWorkflow::id) { workflow ->
+                        ActionsWorkflowRow(
+                            workflow = workflow,
+                            onClick = { onOpenWorkflow(workflow) },
+                            canManage = state.canManageWorkflows && state.journalReady,
+                            isUpdating = workflow.id in state.workflowBusyIds,
+                            hasError = workflow.id in state.workflowErrorIds,
+                            isDispatching = workflow.id in state.dispatchBusyIds,
+                            hasDispatchError = workflow.id in state.dispatchErrorIds,
+                            onEnabledChanged = { enabled ->
+                                onAction(ActionsWorkflowsAction.SetWorkflowEnabled(workflow.id, enabled, state.viewerAccountId,
+                                    GithubActionOperation(GithubActionKind.TOGGLE, workflow.id) in state.unconfirmedOperations))
+                            },
+                            onRequestDispatch = { dispatchTargetId = workflow.id },
+                            viewerAccountId = state.viewerAccountId,
+                            uncertainToggle = GithubActionOperation(GithubActionKind.TOGGLE, workflow.id) in state.unconfirmedOperations
+                        )
+                    }
+                    githubFullSpanItem(key = "list-status") {
+                        GithubPagedListStatus(
+                            itemCount = state.items.size,
+                            isInitialLoading = state.isLoading,
+                            isLoadingMore = state.isLoadingMore,
+                            hasError = state.error,
+                            canLoadMore = state.canLoadMore,
+                            errorMessage = stringResource(R.string.github_actions_workflows_error),
+                            emptyMessage = stringResource(R.string.github_no_workflows),
+                            onRetry = { onAction(ActionsWorkflowsAction.Retry) },
+                            onLoadMore = { onAction(ActionsWorkflowsAction.LoadMore) },
+                            emptyIcon = Icons.Default.PlayArrow
+                        )
+                    }
+                }
+                }
             }
         }
     }
@@ -221,7 +263,7 @@ fun ActionsRunDetailScreen(
     val run = state.run
     val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
     val context = LocalContext.current
-    var downloadTarget by rememberSaveable { mutableStateOf(0L) }
+    var downloadTarget by rememberSaveable(state.viewerAccountId, state.runId) { mutableStateOf(0L) }
     val artifactPicker = if (enableArtifactDownloads) {
         rememberLauncherForActivityResult(
             ActivityResultContracts.CreateDocument("application/zip")
@@ -256,19 +298,22 @@ fun ActionsRunDetailScreen(
         }
     ) { padding ->
         when {
-            run == null && state.isLoadingRun -> Box(
-                modifier = Modifier.fillMaxSize().padding(padding),
-                contentAlignment = Alignment.Center
+            run == null && state.isLoadingRun -> Column(
+                modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)
             ) {
+                ActionsRunOutcome(state, onAction)
                 CircularProgressIndicator()
             }
-            run == null && state.runError -> GithubMessageState(
+            run == null && state.runError -> Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+                ActionsRunOutcome(state, onAction)
+                GithubMessageState(
                 title = stringResource(R.string.github_actions_run_error),
                 color = MaterialTheme.colorScheme.error,
                 actionLabel = stringResource(R.string.github_retry),
                 onAction = { onAction(ActionsRunDetailAction.RetryRun) },
-                modifier = Modifier.padding(padding).padding(horizontal = 20.dp)
+                modifier = Modifier.fillMaxWidth()
             )
+            }
             run != null -> BoxWithConstraints(modifier = Modifier.fillMaxSize().padding(padding)) {
                 if (maxWidth >= GithubAdaptiveLayout.detailTwoPaneWidth * fontScale) {
                     Row(modifier = Modifier.fillMaxSize()) {
@@ -277,12 +322,15 @@ fun ActionsRunDetailScreen(
                             contentPadding = PaddingValues(16.dp)
                         ) {
                             item(key = "summary") {
+                                ActionsRunOutcome(state, onAction)
                                 ActionsRunSummaryCard(
                                     run = run,
-                                    onAction = { action -> onAction(ActionsRunDetailAction.PerformRunAction(action)) },
-                                    canManage = state.canManageRun,
+                                    onAction = { action -> onAction(ActionsRunDetailAction.PerformRunAction(action, state.viewerAccountId, state.unconfirmedAction)) },
+                                    canManage = state.canManageRun && state.journalReady,
                                     isPerformingAction = state.isPerformingAction,
-                                    actionError = state.actionError
+                                    actionError = state.actionError,
+                                    viewerAccountId = state.viewerAccountId,
+                                    unconfirmed = state.unconfirmedAction
                                 )
                             }
                             actionsArtifacts(state, onAction, requestDownload)
@@ -316,6 +364,14 @@ fun ActionsRunDetailScreen(
 }
 
 @Composable
+private fun ActionsRunOutcome(state: ActionsRunDetailUiState, onAction: (ActionsRunDetailAction) -> Unit) {
+    if (state.journalUnavailable) Text(stringResource(R.string.github_actions_journal_error), color = MaterialTheme.colorScheme.error)
+    if (state.unconfirmedAction && !state.isPerformingAction) ActionsOutcomeNotice("${state.fullName} · #${state.runId}",
+        onCheck = { onAction(ActionsRunDetailAction.RetryRun) },
+        onAcknowledge = { onAction(ActionsRunDetailAction.Acknowledge(state.viewerAccountId)) })
+}
+
+@Composable
 private fun ActionsJobsList(
     state: ActionsRunDetailUiState,
     onAction: (ActionsRunDetailAction) -> Unit,
@@ -331,12 +387,15 @@ private fun ActionsJobsList(
         if (includeSummary) {
             state.run?.let { run ->
                 item(key = "summary") {
+                    ActionsRunOutcome(state, onAction)
                     ActionsRunSummaryCard(
                         run = run,
-                        onAction = { action -> onAction(ActionsRunDetailAction.PerformRunAction(action)) },
-                        canManage = state.canManageRun,
+                        onAction = { action -> onAction(ActionsRunDetailAction.PerformRunAction(action, state.viewerAccountId, state.unconfirmedAction)) },
+                        canManage = state.canManageRun && state.journalReady,
                         isPerformingAction = state.isPerformingAction,
-                        actionError = state.actionError
+                        actionError = state.actionError,
+                        viewerAccountId = state.viewerAccountId,
+                                    unconfirmed = state.unconfirmedAction
                     )
                 }
             }

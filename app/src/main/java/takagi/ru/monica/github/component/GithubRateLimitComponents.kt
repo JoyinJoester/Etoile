@@ -165,15 +165,12 @@ private fun GithubCompactStatusRow(
                 text = title,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
-                color = tint,
-                maxLines = 1
+                color = tint
             )
             Text(
                 text = supportingText,
                 style = MaterialTheme.typography.labelMedium,
-                color = tint.copy(alpha = 0.78f),
-                maxLines = 1,
-                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                color = tint.copy(alpha = 0.78f)
             )
         }
     }

@@ -13,6 +13,12 @@ data object GithubSignInRoute
 data object GithubSettingsRoute
 
 @Serializable
+data object GithubAboutRoute
+
+@Serializable
+data class GithubLegalRoute(val document: String)
+
+@Serializable
 data object GithubAppearanceRoute
 
 @Serializable
@@ -23,6 +29,24 @@ data object GithubDisplayScaleRoute
 
 @Serializable
 data object GithubAccountsRoute
+
+@Serializable
+data object GitLabAccountsRoute
+
+@Serializable
+data class GitLabProjectsRoute(val accountKey: String)
+
+@Serializable
+data class GitLabProjectRoute(val accountKey: String, val projectId: Long)
+
+@Serializable
+data class GitLabWorkRoute(val accountKey: String, val projectId: Long, val section: String = "ISSUES")
+
+@Serializable
+data class GitLabConversationRoute(val accountKey: String, val projectId: Long, val kind: String, val number: Long)
+
+@Serializable
+data class GitLabPipelineRoute(val accountKey: String, val projectId: Long, val pipelineId: Long)
 
 @Serializable
 data object GithubStarredRoute
@@ -71,6 +95,9 @@ data class GithubUserFollowingRoute(val login: String)
 
 @Serializable
 data object GithubBlockedUsersRoute
+
+@Serializable
+data class GithubRepositoryMoreRoute(val fullName: String)
 
 @Serializable
 data class GithubRepositoryRoute(val fullName: String) {
@@ -130,6 +157,12 @@ data class GithubInviteCollaboratorRoute(val fullName: String) {
 
 @Serializable
 data class GithubRepositoryWebhooksRoute(val fullName: String, val viewerCanAdmin: Boolean = false) {
+    val owner: String get() = fullName.substringBefore('/')
+    val name: String get() = fullName.substringAfter('/')
+}
+
+@Serializable
+data class GithubWebhookDeliveriesRoute(val fullName: String, val webhookId: Long) {
     val owner: String get() = fullName.substringBefore('/')
     val name: String get() = fullName.substringAfter('/')
 }

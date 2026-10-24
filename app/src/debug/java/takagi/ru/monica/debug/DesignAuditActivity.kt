@@ -88,6 +88,11 @@ class DesignAuditActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     Box(Modifier.fillMaxSize()) {
                     when (sample) {
+                        "gitlab-accounts" -> GitLabAccountsSample(onBack = { finish() }, report = ::report)
+                        "repository-safety", "repository-safety-failure" -> RepositorySafetySample(
+                            failWrites = sample.endsWith("failure"), onBack = { finish() }, report = ::report
+                        )
+                        "markdown-images" -> MarkdownImagesSample()
                         "store-reader" -> StoreReaderSample()
                         "discussions" -> DiscussionsSample()
                         "create-pr" -> CreatePullRequestSample()
@@ -206,7 +211,7 @@ class DesignAuditActivity : ComponentActivity() {
                                 )
                             ),
                             onAction = { report(it.toString()) }, onBack = { finish() },
-                            onOpenExternal = { report(it) }
+                            onOpenExternal = { report(it) }, onOpenDeliveries = { report("Deliveries: $it") }
                         )
                         "issue-templates", "issue-templates-empty", "issue-templates-required", "issue-templates-load-error", "issue-templates-submit-error" -> {
                             IssueTemplateSample(sample, intent.getStringExtra("locale") ?: "en", onBack = { finish() }, onReport = ::report)
@@ -274,7 +279,7 @@ class DesignAuditActivity : ComponentActivity() {
                                     canManage = true,
                                     hasDispatchError = true,
                                     onEnabledChanged = { report("Workflow enabled: $it") },
-                                    onDispatch = { ref, inputs -> report("Dispatch: $ref $inputs") }
+                                    onRequestDispatch = { report("Open workflow dispatch") }
                                 )
                                 ActionsLogPanel(GithubActionsLog(
                                     (1..12).joinToString("\n") { "Step $it: compiling app/src/main/java/sample/LongRepositoryDetailsViewModel.kt for arm64-v8a with release checks" },

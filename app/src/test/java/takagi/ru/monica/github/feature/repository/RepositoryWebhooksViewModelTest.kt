@@ -1,5 +1,6 @@
 package takagi.ru.monica.github.feature.repository
 
+import takagi.ru.monica.github.domain.GithubWebhookDeliveriesPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -28,7 +29,6 @@ import takagi.ru.monica.github.domain.GithubRepositorySettings
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
-import takagi.ru.monica.github.domain.GithubWebhookDelivery
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class RepositoryWebhooksViewModelTest {
@@ -229,8 +229,8 @@ class RepositoryWebhooksViewModelTest {
         }
 
         override suspend fun webhookDeliveries(
-            owner: String, name: String, id: Long, page: Int, perPage: Int
-        ): Result<GithubPage<GithubWebhookDelivery>> = Result.failure(UnsupportedOperationException())
+            owner: String, name: String, id: Long, cursor: String?, perPage: Int
+        ): Result<GithubWebhookDeliveriesPage> = Result.failure(UnsupportedOperationException())
         override suspend fun redeliverWebhook(owner: String, name: String, id: Long, deliveryId: Long): Result<Unit> =
             Result.failure(UnsupportedOperationException())
 

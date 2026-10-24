@@ -2,6 +2,9 @@ package takagi.ru.monica.github.data
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
 import org.junit.Test
@@ -50,6 +53,25 @@ class GithubCredentialRefresherTest {
         val store = Store(original)
         val refresher = GithubCredentialRefresher(store, { Result.failure(java.io.IOException("offline")) }, { 2000 })
         assertTrue(refresher.token(1).isFailure)
+        assertEquals(original, store.value)
+    }
+
+    @Test fun cancelledRefreshNeverRotatesCredentialsFromALateResponse() = runTest {
+        val original = credential()
+        val store = Store(original)
+        val entered = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        val refresher = GithubCredentialRefresher(store, {
+            entered.complete(Unit)
+            withContext(NonCancellable) { release.await() }
+            Result.success(rotated())
+        }, { 2000 })
+        val request = launch { refresher.token(1) }
+        entered.await()
+        request.cancel()
+        release.complete(Unit)
+        request.join()
+        assertTrue(request.isCancelled)
         assertEquals(original, store.value)
     }
 

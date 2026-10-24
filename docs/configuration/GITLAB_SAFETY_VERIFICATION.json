@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-21",
+  "commands": [
+    ":app:testDebugUnitTest",
+    ":app:lintDebug",
+    ":app:assembleDebug"
+  ],
+  "tests": {
+    "tests": 752,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "lint": {
+    "Error": 0,
+    "Fatal": 0,
+    "Warning": 103
+  },
+  "native": {
+    "checks": [
+      "Workflow switch opens confirmation; cancel sends no action",
+      "Workflow confirmation dispatches only after explicit confirmation",
+      "Actions rerun requires confirmation; cancel dispatches nothing",
+      "Actions rerun confirmation dispatches the requested action",
+      "GitLab account removal requires confirmation; cancel keeps account",
+      "GitLab confirmed removal removes only the selected local account"
+    ],
+    "fontScale": 1.5
+  },
+  "browserSmokeTest": "GitLab login launched Chrome with a dummy public client ID; Chrome first-run setup prevented completing a real authorization.",
+  "remoteWritesPerformed": false,
+  "realGitLabAuthenticationVerified": false,
+  "apks": [
+    {
+      "file": "Etoile-Android-armeabi-v7a-0.1.0-26102101-04.APK",
+      "sha256": "650440d352dd50c5784356dcbae8be31aca37e5cda99704b52aea5568061644e"
+    },
+    {
+      "file": "Etoile-Android-arm64-v8a-0.1.0-26102101-04.APK",
+      "sha256": "6cb7e4811a887567f8acbc84aac64deaa58b5c6533232800fb3ccb4536d78161"
+    }
+  ]
+}

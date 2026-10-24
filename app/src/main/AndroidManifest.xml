@@ -50,6 +50,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="etoile" android:host="oauth" />
+                <data android:scheme="etoile" android:host="gitlab-oauth" />
             </intent-filter>
             <!-- Supported GitHub work-item links. Unknown GitHub paths are
                  intentionally not claimed and continue opening in a browser. -->

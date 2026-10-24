@@ -57,9 +57,9 @@ class TestGithubRepositoryDetailsRepository(
         owner: String,
         name: String,
         id: Long,
-        page: Int,
+        cursor: String?,
         perPage: Int
-    ): Result<GithubPage<GithubWebhookDelivery>> = Result.failure(UnsupportedOperationException())
+    ): Result<GithubWebhookDeliveriesPage> = Result.failure(UnsupportedOperationException())
 
     override suspend fun redeliverWebhook(
         owner: String,

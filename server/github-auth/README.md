@@ -14,4 +14,4 @@ Node.js 22+，无第三方运行依赖。用于原生客户端的授权码交换
 
 成功响应包含 `access_token`、`refresh_token`、`expires_in`、`refresh_token_expires_in`、`token_type`、`scope`。客户端必须加密保存并原子更新两个令牌。授权被拒绝返回 401；限流 429；GitHub 或交换失败 502。错误信息不包含 GitHub 的原始响应。
 
-此服务不代替安装授权：仓库访问范围仍由 GitHub App 安装、用户自身权限和组织策略决定。Android 端服务地址配置和接入尚待完成。
+此服务不代替安装授权：仓库访问范围仍由 GitHub App 安装、用户自身权限和组织策略决定。Android 端已支持服务地址配置、交换和刷新，见 [GitHub OAuth 配置](../../docs/configuration/GITHUB_OAUTH.md)。公网部署和真实账号授权仍未验收。

@@ -1,5 +1,8 @@
 package takagi.ru.monica.github.feature.repository
 
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -27,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,10 +65,10 @@ fun RepositoryTagsScreen(
     onSignIn: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var createVisible by rememberSaveable { mutableStateOf(false) }
-    var tagName by rememberSaveable { mutableStateOf("") }
-    var sourceRef by rememberSaveable { mutableStateOf(state.defaultBranch) }
-    var deleteCandidate by rememberSaveable { mutableStateOf<String?>(null) }
+    var createVisible by remember(state.fullName, state.viewerAccountId) { mutableStateOf(false) }
+    var tagName by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
+    var sourceRef by rememberSaveable(state.fullName, state.viewerAccountId, state.defaultBranch) { mutableStateOf(state.defaultBranch) }
+    var deleteCandidate by remember(state.fullName, state.viewerAccountId) { mutableStateOf<String?>(null) }
     val creating = state.pendingWrite is RepositoryTagWrite.Create
     val pendingDelete = state.pendingWrite as? RepositoryTagWrite.Delete
     val deleting = pendingDelete != null
@@ -241,9 +245,10 @@ private fun RepositoryTagRow(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .githubCollectionSurface()
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = 56.dp)
-            .padding(horizontal = 4.dp, vertical = 12.dp)
+            .githubCollectionPadding(vertical = 12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(

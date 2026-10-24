@@ -9,8 +9,10 @@ data class GithubWebAuthorization(
 interface GithubWebAuthRepository {
     val isConfigured: Boolean
     fun isCallbackUrl(url: String): Boolean
+    /** Performs encrypted storage IO; callers must execute on a worker dispatcher. */
     fun start(): Result<GithubWebAuthorization>
     suspend fun exchangeCallback(url: String): Result<GithubDeviceAccessToken>
+    /** Performs encrypted storage IO; serialize with start and execute on a worker dispatcher. */
     fun cancel()
 }
 

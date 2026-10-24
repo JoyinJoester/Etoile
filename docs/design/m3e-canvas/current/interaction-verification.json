@@ -1,0 +1,15 @@
+{
+  "scope": "M3E Canvas browser prototype; no account writes",
+  "checks": [
+    "首页 → 星标收藏",
+    "星标收藏 → 首页",
+    "首页 → 我的",
+    "我的 → 关注者",
+    "我的 → 设置",
+    "android → 更多",
+    "更多 → 仓库信息与管理",
+    "仓库信息与管理 → 归档仓库？",
+    "归档确认 → 返回"
+  ],
+  "pageErrors": []
+}

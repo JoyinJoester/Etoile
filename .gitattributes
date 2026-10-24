@@ -1,0 +1,2 @@
+# Preserve archived upstream license texts byte-for-byte, including original whitespace.
+docs/legal/**/*.txt -text -whitespace

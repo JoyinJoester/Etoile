@@ -110,8 +110,12 @@ data class GithubPullRequestReviewComment(
     val author: GithubUserSummary,
     val createdAt: String,
     val updatedAt: String,
-    val htmlUrl: String
-)
+    val htmlUrl: String,
+    val inReplyToId: Long? = null,
+    val originalLine: Int? = null
+) {
+    val threadId: Long get() = inReplyToId ?: id
+}
 
 class GithubPullRequestDraft private constructor(
     val title: String,
@@ -184,6 +188,20 @@ data class GithubMergeResult(
 )
 
 interface GithubPullRequestsRepository {
+    suspend fun reviewSnapshot(owner: String, name: String, number: Int): Result<GithubPullRequest> = pullRequest(owner, name, number)
+
+    suspend fun createLineComment(owner: String, name: String, number: Int, commitSha: String, comment: GithubReviewLineComment): Result<GithubPullRequestReviewComment> =
+        Result.failure(UnsupportedOperationException("Line comments unavailable"))
+
+    suspend fun submitReviewBatch(owner: String, name: String, number: Int, draft: GithubReviewSubmissionDraft): Result<GithubPullRequestReview> =
+        Result.failure(UnsupportedOperationException("Batch reviews unavailable"))
+
+    suspend fun reviewThreadStatuses(owner: String, name: String, number: Int, cursor: String? = null): Result<GithubReviewThreadPage> =
+        Result.failure(UnsupportedOperationException("Review threads unavailable"))
+
+    suspend fun setReviewThreadResolved(threadId: String, resolved: Boolean): Result<GithubReviewThreadStatus> =
+        Result.failure(UnsupportedOperationException("Review thread updates unavailable"))
+
     suspend fun compare(
         owner: String,
         name: String,
@@ -228,6 +246,14 @@ interface GithubPullRequestsRepository {
         page: Int = 1,
         perPage: Int = 100
     ): Result<GithubPage<GithubPullRequestReviewComment>>
+
+    suspend fun replyToReviewComment(
+        owner: String,
+        name: String,
+        number: Int,
+        draft: GithubReviewCommentReplyDraft
+    ): Result<GithubPullRequestReviewComment> =
+        Result.failure(UnsupportedOperationException("Review comment replies unavailable"))
 
     suspend fun submitReview(
         owner: String,

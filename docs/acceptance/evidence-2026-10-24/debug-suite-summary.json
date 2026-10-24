@@ -1,0 +1,1058 @@
+[
+  {
+    "name": "takagi.ru.monica.github.component.GithubActionConfirmationTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d0b3aba76c18ad7b9e56422306d0c635513988ef267c2ae2da2256aecfa0e111"
+  },
+  {
+    "name": "takagi.ru.monica.github.component.GithubAvatarTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "083733eeeb2be589feedc2930b55585b121d0946d8a3f07eb82665937e30d992"
+  },
+  {
+    "name": "takagi.ru.monica.github.component.GithubPagingComponentsTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "5cc75026608119b0c3348a1a60fa5a5a6835079a97d407cc876db217542d8924"
+  },
+  {
+    "name": "takagi.ru.monica.github.component.GithubUiArchitectureTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "647f3b5383ea368a718c63651b47a39e24122fdfa41da46d7142a0372b612a61"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubActionJournalTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "33e3a35ba5b277f8f34c7ca966c18835fabbf91a37838505834abe19ba64d694"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubActionsRepositoryImplTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d75ae984368455893146ae958023a2422b0bb60bd0a49bfff84d7da3757acdaa"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubApiExceptionTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "487f312cb92ffb41afbb519846973fbc9ac6347c6f88a96284c2010ddf0625ec"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubApiRepositorySearchRepositoryTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "89d33e67d319c1a005db8ab2ce6138232fc95cfcb20338a98aa53adcb4b60379"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubApiTransportTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "f69a36d6e81db2ae3788d3e5a626c4cbe46965d6fa4b82e78f88f839ac6130b4"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubApkManagerTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c149a9e1545f057740679accfc8521da2a328981d5b0a6faefab18f98b3241c6"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubAuthRepositoryImplTest",
+    "tests": 20,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ffa22c4f0972a34dcbe76a30aace879784fe7b6efc18d28f831dcdbd5f7a4536"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubAuthRequestTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ac36c4eed9b3b95b57235c6c03885ee5a5ad5aac83abb9793d7d54ef22dd6987"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubAuthServiceClientTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c7af60dfb1c6cd01a063db792acc33b67055f15f9855f3e24bb8c9536f3b4394"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubAvatarRepositoryImplTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ccf15d27f1da1a15305d7952a947fa24c610b41f4d8558894eadff190b0769b1"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubCacheTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "4a9ded461dccd309ca2c888ccccc19984c8860046988a970b7b6b03b17165af1"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubCommitsRepositoryImplTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "90677b9da2dca7b7bb1f8b154805f6288d0790fcc09786366d99a7e4384691b9"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubContributionsRepositoryImplTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "e4c0963f038c3d71b68fe640b4dde693fcc35b7fbdce33f10d77e1909cc88298"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubCredentialRefresherTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "bd0d1e0994631dde12955a9a0c019aeb8c52effe11c22aa8c7551e9dd8fcd3a7"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubDiscussionsRepositoryImplTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "f02a5ebfcccc7a334c9fa5877a350148edb472cb8610d34d16c69467a73fc2ec"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubDiscussionsTransportTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "50f53e3137581680487f19364da477b61a87a9890d510c42e931b56b0208b4e7"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubEncryptedStoreInitializationTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ea8eea16f638b9bd0691515de7eff55e23922468928e978693fe453773c47658"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubGlobalSearchRepositoryTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "5e7232393f2012b168e15d82a1aee1ca155138a98d5f77a6275916831f5695ac"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubIssuesRepositoryImplTest",
+    "tests": 18,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "bea3653e442b38643f9ba750a70a543fc325db2b8508ca2856a47518ee9e7cef"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubIssueTemplateParserTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "46d29051f43cbdc7ca79f65090b4de687400a09b4eab5e6f8c9bed41c98a7d00"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubIssueTemplatesRepositoryImplTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "8dbb27c97fedd4e55fabc6c8a6f74e46a6461f824b486cfb93e5a90dc555f521"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubMutationTransportTest",
+    "tests": 52,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "efe3d01ab665c4d1790b94187fc6c3569bb69c555b70624ed993fe3651e92492"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubNotificationsRepositoryImplTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "309ee989cb3c4764e2cdb280c0b6ce2b46381d546852cd8520c50144f2716b4b"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubOAuthDeviceAuthRepositoryTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "6817ed125a1a324ed56999512a001e17cff51a478732c92ab48689a4d389087e"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubOrganizationsRepositoryImplTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9d6e2f2ff774301c5e2b71faefaed8b63ccbe18f48f6f5a40f8ee57d8f68ef95"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubPreferencesActionJournalTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "32215aeb4d928f2e9c9cf899b12bef1442e832b630f1ef31def66cb553e79f33"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubPreferencesStarLabelStoreTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "5a03a59364e2bca488e2e0cf26b51d1957c728832486da66922ff089b74dc8fd"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubPublicUserRepositoryImplTest",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9d227ea4f1053b5622a0b6c853e9b3e98409af5880cb04025ccd8f4a0daf916a"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubPullRequestsRepositoryImplTest",
+    "tests": 26,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "2249a891f8e751f4f009aaba5f78833cdff9b1724cc6940d74ec5483be8329c7"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubPullRequestTemplatesTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "a8a9f16057507dd8e148ffb8149c089f3421ea21ad1415b0109f6c632bd3bf74"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubRateLimitStoreTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "94da6556a61a47801cf5724c3004116585951e13073191dc76b53789fd6fb5ab"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubReleasesRepositoryImplTest",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "913779dc6bc0cd73184d207c96503506cf764890961f8c9b8b6b8c988139276e"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubRepositoryActionsRepositoryImplTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "44bfb8eb0e04dcde18657b95a03ea3f776ccd5a2e0eb5209f0ae4a25a49f7414"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubRepositoryContentsRepositoryImplTest",
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9681e8710159a29e14f75176fefdd4dd881cd9f9a744bb594b4d8bd9adddaca9"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubRepositoryDetailsRepositoryImplTest",
+    "tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d29686ea9d3eefc20c70eae5f963ff24d0a880d76a8bc8083703d691ff85f4d5"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubResourceAccountBindingTest",
+    "tests": 32,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "33cc9b8a45d0717759c12f40d06ef688a9e2123ed8c532cceb296f9e4081ca6d"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubStarsRepositoryImplTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "a2fdd8fde7ece82c411c641346ea2df29a4fda5bbe6b2e61c2069253a85a0e3e"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubStoreSourceStoreTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "8f73a4638f0c242b4ce9b00b97e08904d2eff726e52bb56fff4f6bc57648b13a"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubTokenExpiryTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "45cf8c982ac1c5e99ce7ef99ca8f79d0a1678863cb3853fecae235aa9c4f6efc"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubTokenRefreshRepositoryTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "b283ecd7877fae51d1f6eeb7e0bcdc2c119a94acc3cafab3181bb5a1f137dde5"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubUserRepositoriesRepositoryImplTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "8683f23175692d7a563cc630e70e89e80742850799d5a61f932ca3d363c3737d"
+  },
+  {
+    "name": "takagi.ru.monica.github.data.GithubWebOAuthRepositoryTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "33d39c0110c01264ed38acc5b98f3e8aaa0ee8c4560a15e6be393aa57b782da3"
+  },
+  {
+    "name": "takagi.ru.monica.github.design.NativeDesignRenderingTest",
+    "tests": 25,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9c4e733c5dcf7868e3ae1fe4c124e39368bd3d3c01852b7fceabd6bf769f8867"
+  },
+  {
+    "name": "takagi.ru.monica.github.design.NativeMarkdownImagesTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "7ea133f60775155face6ff76a334df617f4130b9004b32a9c8d222453e684352"
+  },
+  {
+    "name": "takagi.ru.monica.github.design.NativeReleaseSafetyTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "23ea2f1879e260ee639ff445611ada9d6338ee579f81496c74633a6cc24abaf0"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubBuiltInIssueTemplatesTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "942e8e3d170dfdff86abe43d04b77b2b23823e47283748208c85539e00789298"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubCollaboratorInviteTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "4f28a881a77632f3f8632de6cc94212d46857dab65ef568c64721ef636e8fc96"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubCreatePullRequestDraftTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "58f3f47a1353c5054fde8694d9b0290c21591c002a8cbf138df80c4a5185f41b"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubDeviceAuthTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d0a5ce979ac83659b69a3bc7dac33dd26e57c8ae4bfa7d6fc70c0548672deb1a"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubDomainArchitectureTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "5a34506ee9d7aca0eff8837ecef4c5dbcadb4cc99374ff516b186871addf2694"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubFileWriteTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c729d8becb35947438897d12ec3c092b7e74e68b21a9a78e0e198b9c7402d0d0"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubGitRefTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "46f97cb2afd0753fb0033feda1b0afee4efe3033a76b3ce2eb07116aabf5c821"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubIssueDraftTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "fd9a75264e7e6ba63ae265cdc891c9938a86772837f9cda3e3c0b32d02113754"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubPageTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c06f678ecc9baaf886c56b3a3d5166b62779f58b62bece5c434b504db0399ac1"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubPullRequestReviewDraftTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9edb3b1119b019eb4ccba48cea3464d30fd0f2356dd49961e7ba21d79f97d37e"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubRateLimitTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "f71437f510a9d3dfe4a32ff95734718636daabba52d22b0936bc52cff7101ec5"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubRelativeTimeTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9f32694af0fa60ae98c970020d4728125b99b2332279b29e5fdb87591113b676"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubRepositoryCreateDraftTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d0bea64cc1f4b2bc4972bcf656e639d11d4550024f5ebf8cc282b9102addf0e5"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubReviewCommentReplyTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "7e413700ce5ee1192d5d61316ccb9aaba3639421f7d30591fd4f4c698f9af4f7"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubReviewSubmissionDraftTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "71e2eba7f7c46214684f1dca89c32c87a96f3384d326784653eb11f0e1d6c680"
+  },
+  {
+    "name": "takagi.ru.monica.github.domain.GithubStarLabelValidationTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "140b37ece4cc4d6dba2eb21314940cdca9f62a7615d8828426debfd7d827cd21"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.actions.ActionsLogFormattingTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "8a8204c4bb23a1ae8ff83fa9bd798a7bbd3fab5b510cba42b02f5816354ebc16"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.actions.GithubActionsViewModelTest",
+    "tests": 25,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "3b16ddd9eefd949c1070f88c6c1a680d28f40988e2dff2f01b41eff46b6e7e36"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.actions.WorkflowDispatchInputsTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "2322dde0425d10476a0ae406c31eb3fa1e6880e54a70af6f6a59552121b34f84"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.auth.GithubDeviceCodeAutofillTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "6831f8feb51ff98d5f6729ee79fc058e194a48b9c6026844bd3af2d86ef22a45"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.auth.GithubSessionViewModelTest",
+    "tests": 25,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "36a0825419b0ddf77a6a1ef71d984fba8bd06f1b2b783ea7685c3594ad73603f"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.auth.GithubSignInBrowserPolicyTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "bb11923ea1f1f5709b3d334e3f9513a504599340d084ceffdaf3321cf8c39a10"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.commits.CommitsViewModelTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "de08fbd98b299e429cfa8de16b98c909482ad6f75a461630dd65716aa2181db7"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.discussions.DiscussionCommentsLoaderTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "bec6043a61320adc5cae872cf95faa81beec78aa6bc021da8d215eb7e076cc07"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.discussions.DiscussionDetailViewModelTest",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "a22c521527049db9e9bc81a242e118b82cba3c4d5d5811c5190d348d975d98c9"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.discussions.DiscussionSummaryTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d2995d85492754c16b0fda707bbdfe1b4e30df634a9dffa3712c7c63d9291f22"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.discussions.DiscussionsViewModelTest",
+    "tests": 21,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "2aed08ee5bcc8b4a946a70f047d4a29287d4b1d2193dd161f106375c47439047"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.explore.ExploreViewModelTest",
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "13f4e47cad09b5cc962ae0ba2da7a913df83be7176ad618377c54fc6c2b876a7"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.home.HomeViewModelTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ef04f60309d733c7a475e9bf58670ce487c6318cd5a7bbc496a2324e4dae6ee4"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.inbox.InboxViewModelTest",
+    "tests": 23,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "65c652d0f1ca4211a885bcb353db66d3c6b1307ed0caab76259079178cbc0ebc"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.issues.IssuesViewModelTest",
+    "tests": 38,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "604414ec81bb2c7913fc45809b5bd9bf116e07796f155c4e7e0701d54556543d"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.mywork.MyConversationsViewModelTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "52205e13f5cc4262aa5aa0aa611a1b905957197d149a68aa72a13b53572da466"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.organizations.OrganizationsViewModelTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9f1cce867a1e5fd2294a14122835acd5c64df207a2091724f8caaa040fc3c5c5"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.profile.CreateRepositoryViewModelTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "dd2d1d0e5236147b27f25ec05fb8db6f5ce0ab20d58ee53db15b9cfd0e4576ea"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.profile.GithubBlockedUsersViewModelTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c76714f61ad41a3809319c118ec6648f45a45533439ed7296ff97ce4650b56be"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.profile.GithubUserConnectionsViewModelTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "2cff61733e4d450032a868771b5ffad150958c4d470b5f8b44824a93dccd2048"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.profile.ProfileViewModelTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "421e351d875fca21b587bba50f9d38ec99b5da4ee0d1eb53c78c4f034a11b42a"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.profile.PublicUserProfileViewModelTest",
+    "tests": 16,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "e46165a68afe78fae6d65ea3e8dab9f93be794ed41c2983f107c6be00042a1be"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.profile.UserRepositoriesViewModelTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9dfb203d9229df0c68b11ab47b32d109f6a6496a1094666b835ea0a2038e12f0"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.pullrequest.CreatePullRequestViewModelTest",
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "e39a8104952b95a4eec8d2ea2969a3d82657231387759b3c5883c292fd21f3bd"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.pullrequest.PullRequestDiffTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "17d23d488eb209b77522d82cb31157d475cbcd1b465c2c4fc22e8a0d282c9f09"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.pullrequest.PullRequestsViewModelTest",
+    "tests": 44,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "0d7f41d8fa72564fbc56bec6f8c678327ee006e4e1bf719b7bf61f7eacccbb15"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.releases.ReleasesViewModelTest",
+    "tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "8307eed373ac06b769351d327d478e0c05939de88db3b8928a461f8bc30eadac"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.InviteCollaboratorViewModelTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "e9ed55b3ef8408c34f0495038cecaa2eb29d0211c1743ae244eaff0751ba3b11"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryAccountIsolationTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "555a63dea3a4ce9a0880db77d74af8ba9b1c0110692efc6ad00b5b9f01bcaf52"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryBranchesViewModelTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "99c979cd79306f061126f5a88b0182661160fe7ce3049068549076bedc28861b"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryCollaboratorsViewModelTest",
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "598eeb02aacbdeff9323e48885eb15147e199e542c1b64a4b13ee78b2a4da0d2"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryCompareViewModelTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d988c9a685949058517cb692e385e9216091b4c8fd7b9dbb4f9861b591dda585"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryConfirmationIsolationTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "a219bf1b4e434caf838a4151722127a0760d3b1cf1b293d76b558cff21bf80ea"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryContentsViewModelTest",
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "bc9210162685d0d9edae6b355110657de8bc67cc45d6e39ad74358b981700924"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryDetailViewModelTest",
+    "tests": 28,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c3cac75e86cef08536a9e9cab17a6c444f400484767857906aa7fecb02292580"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryFileViewModelWriteTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "156e12d587ad0cdc394f70e7fecf70030b5006deea2f68e9eed4f302310e4020"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryTagsViewModelTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "83e35f877232c4d3498c71c30782136107cf24edd500e586ca2a2e7e1ab3bdd8"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryWebhookDeliveriesViewModelTest",
+    "tests": 13,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "828fe4d26d33b1c9eff0aea1aa9f8e72956fbde3b726e97e040edc4abffb3b0a"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.RepositoryWebhooksViewModelTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "06cb428af66841ae6f79f2aa1bb9ee41cca79595f66339fb6273b8fc0591fa1e"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.repository.ViewerPermissionGatingTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "97062850d1b236b8d859ebc17f87515c46f692bb3817ad3c004f88439134ffbe"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.starred.StarredViewModelTest",
+    "tests": 21,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "4f2e3cfafd504558273774b60f48f042dfa4206d2a1cd8a5c320a6ad12841768"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.store.StoreCatalogFilterTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "307fb31bd652c7fcedd032691ad97cd29bd8537a130f5b1fa75562b1ebbb5ca7"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.store.StoreReaderMotionTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "db79a9fdfb72e3c7702276f916b3994a1181b9be83346718260cb91f5e3b0de6"
+  },
+  {
+    "name": "takagi.ru.monica.github.feature.store.StoreViewModelTest",
+    "tests": 3,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d8183c6ac05372054a13876db5d93c5a91bcb1bc8bd7606fcd2b79a3411f0eb1"
+  },
+  {
+    "name": "takagi.ru.monica.github.GithubApkParserTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "b5e12cf13c8024d0330f08997ddb4ea712402d6e1ce2cba0df94f205e09ad3f1"
+  },
+  {
+    "name": "takagi.ru.monica.github.GithubStoreSourceTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "2958cc34e4cd2ea7e92ce4fe6201f3251754845d3e4aba1cccdfabc63a2d51e2"
+  },
+  {
+    "name": "takagi.ru.monica.github.GithubStreakCalculatorTest",
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "9a9276d34961075dc7fb6b92c8627333ccd8470313901546fb212cf14a9dbfec"
+  },
+  {
+    "name": "takagi.ru.monica.github.navigation.GithubConversationNavigationTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "b2f0b8e244a3edb286c2d61d461920410ccee1afe821c9c1a3d64b9d55301e3d"
+  },
+  {
+    "name": "takagi.ru.monica.github.navigation.GithubLinkRouterTest",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "5788dcf89b66dc9662be50be42533faf4fbb0024b1c8411303aa2b27c768fa63"
+  },
+  {
+    "name": "takagi.ru.monica.github.navigation.GithubLoginNavigationPolicyTest",
+    "tests": 6,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "37e80b997a4591a22e07cf7cb3ffd29fb03da7fa629467a30c64a0fd38e3acf6"
+  },
+  {
+    "name": "takagi.ru.monica.github.navigation.GithubNavigationTransitionsTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "82d7860800aef018f9fc1af7b7b13c876210fbc5513a7be4332310dd4a46a7d2"
+  },
+  {
+    "name": "takagi.ru.monica.github.navigation.GithubWebUrlsTest",
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "94cfbe18087459026869b558c9a9b3dd2fd16f6ad827e87fcdd73dde7dac7be6"
+  },
+  {
+    "name": "takagi.ru.monica.github.StoreReleaseResolverTest",
+    "tests": 7,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ffa74cd0621ca6e0aba8c12f737fa12644e9943f943f4360ffc1026d9e47ea5b"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.data.GitLabAuthRepositoryImplTest",
+    "tests": 16,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "44c52fd1f1e291d8ca0af21b58c872888df7f9670258986d0b5da477cbebded0"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.data.GitLabProjectsRepositoryImplTest",
+    "tests": 12,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "4c4c3f65580df4ca4528030a6ef9e54f7ab3b170c62fd78aec192eef9eb75c8d"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.data.GitLabWorkRepositoryImplTest",
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ff944e01f2c3563a9b7b75bcec197f031c14150e8e3a3543dbbf192581250e3e"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.feature.GitLabAccountsViewModelTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "d4b8a4f5593e0f3541c27d680a18a9ae74cb9615d31f84a5b3dd40f5b5c100ba"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.feature.GitLabBrowserPolicyTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "0dd8fb6ee4d67b4724677c8f7d169c6260fe8a1a54e6f1390ec015d82b460eda"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.feature.GitLabListRestorationTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "bdc88bd16842ccd28ceb9dcda6bf05b5c4262c02b7280f32e4d037313a90979d"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.feature.GitLabProjectsViewModelsTest",
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "a159022a8b91fb8d09e5191a3d7025fa5283121dcef1747759e343e9c7b4b457"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.feature.GitLabWorkViewModelsTest",
+    "tests": 20,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "e1e1f7166a16b64cd25cbda730c2729ccef6e69204aa7b04088bfb55bb08d579"
+  },
+  {
+    "name": "takagi.ru.monica.gitlab.navigation.GitLabWebUrlsTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "69219365ec1876aec21ab27833ec1c5d967d4816b25a2eecd24f0b42d74b7408"
+  },
+  {
+    "name": "takagi.ru.monica.ui.components.MarkdownImagesTest",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "ea99f3ac8145c84c1765594285bbf85d2fcaadcf972ece1992a8b06e2e7d2e56"
+  },
+  {
+    "name": "takagi.ru.monica.ui.components.MarkdownRenderingTest",
+    "tests": 19,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "c5cb5640e6da036451443c307278744465d57385f8ec9e4b6da6cb443344d7bc"
+  },
+  {
+    "name": "takagi.ru.monica.ui.theme.CustomColorSchemeGeneratorTest",
+    "tests": 1,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "e3934fb8ffc5048501e5b74d26c1a7fbcf9b93c6c0770d4b09c06eb284d2e33f"
+  },
+  {
+    "name": "takagi.ru.monica.ui.theme.EtoileOverscrollTest",
+    "tests": 10,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "45fa17acdaf7dcd99b176f6661e10d583d09e6a9661729190459b8c791848a79"
+  },
+  {
+    "name": "takagi.ru.monica.utils.DisplayDensityTest",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "xmlSha256": "4cb8b847f97b5f39979fdbbaf079e880e22658e96ec3f80aa7339fae35b29346"
+  }
+]

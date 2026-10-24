@@ -33,6 +33,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Public
 import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubAvatar
+import takagi.ru.monica.github.component.GithubUserRow
 import takagi.ru.monica.github.component.GithubDetailScaffold
 import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
@@ -113,42 +114,11 @@ private fun OrganizationRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Row(
+    GithubUserRow(
+        login = organization.login,
+        avatarUrl = organization.avatarUrl,
+        supportingText = organization.description.orEmpty(),
+        onClick = onClick,
         modifier = modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .heightIn(min = 56.dp)
-            .semantics(mergeDescendants = true) {
-                contentDescription = organization.login
-            }
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        GithubAvatar(
-            login = organization.login,
-            avatarUrl = organization.avatarUrl,
-            size = 44.dp,
-            shape = GithubExpressiveShapes.control
-        )
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = organization.login,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            organization.description?.takeIf(String::isNotBlank)?.let { description ->
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        Spacer(Modifier.width(4.dp))
-    }
+    )
 }

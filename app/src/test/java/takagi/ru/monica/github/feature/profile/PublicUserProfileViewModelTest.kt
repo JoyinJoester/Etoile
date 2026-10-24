@@ -1,10 +1,15 @@
 package takagi.ru.monica.github.feature.profile
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -160,7 +165,7 @@ class PublicUserProfileViewModelTest {
         assertEquals(false, viewModel.state.value.isBlocked)
         val readsBeforeWrite = repository.blockedReads
 
-        viewModel.onAction(PublicUserProfileAction.ToggleBlocked)
+        viewModel.onAction(PublicUserProfileAction.ConfirmBlock(1, 7))
         advanceUntilIdle()
 
         assertTrue(repository.blocked)
@@ -178,7 +183,7 @@ class PublicUserProfileViewModelTest {
         viewModel.onSessionChanged(GithubSession.SignedIn(account()))
         advanceUntilIdle()
 
-        viewModel.onAction(PublicUserProfileAction.ToggleBlocked)
+        viewModel.onAction(PublicUserProfileAction.ConfirmBlock(1, 7))
         advanceUntilIdle()
 
         assertEquals(false, viewModel.state.value.isBlocked)
@@ -238,12 +243,95 @@ class PublicUserProfileViewModelTest {
         assertEquals(0, repository.blockedWrites)
     }
 
+    @Test
+    fun sameLoginWithDifferentAccountIdClearsRelationshipsAndRejectsOldConsent() = runTest(dispatcher) {
+        val repository = FakeRepository(viewerFollowsResult = Result.success(true))
+        repository.blocked = true
+        val sessions = MutableStateFlow<GithubSession>(GithubSession.SignedIn(account()))
+        val viewModel = PublicUserProfileViewModel("joyins", repository, sessions = sessions)
+        advanceUntilIdle()
+        assertEquals(true, viewModel.state.value.isFollowing)
+        assertEquals(true, viewModel.state.value.isBlocked)
+
+        repository.viewerFollowsResult = Result.success(false)
+        repository.blocked = false
+        sessions.value = GithubSession.SignedIn(account().copy(id = 2))
+        runCurrent()
+        assertEquals(2L, viewModel.state.value.viewerAccountId)
+        assertEquals(false, viewModel.state.value.isFollowing)
+        assertEquals(false, viewModel.state.value.isBlocked)
+        viewModel.onAction(PublicUserProfileAction.ConfirmBlock(1, 7))
+        viewModel.onAction(PublicUserProfileAction.ConfirmBlock(2, 99))
+        viewModel.onAction(PublicUserProfileAction.ToggleBlocked)
+        advanceUntilIdle()
+        assertEquals(0, repository.blockedWrites)
+        viewModel.onAction(PublicUserProfileAction.ConfirmBlock(2, 7))
+        advanceUntilIdle()
+        assertEquals(1, repository.blockedWrites)
+    }
+
+    @Test
+    fun lateRelationshipReadsCannotRefillReplacementSession() = runTest(dispatcher) {
+        val follow = CompletableDeferred<Result<Boolean>>()
+        val block = CompletableDeferred<Result<Boolean>>()
+        val repository = FakeRepository()
+        repository.followingRead = { withContext(NonCancellable) { follow.await() } }
+        repository.blockedRead = { withContext(NonCancellable) { block.await() } }
+        val sessions = MutableStateFlow<GithubSession>(GithubSession.SignedIn(account()))
+        val viewModel = PublicUserProfileViewModel("joyins", repository, sessions = sessions)
+        runCurrent()
+        repository.followingRead = null
+        repository.blockedRead = null
+        sessions.value = GithubSession.SignedIn(account().copy(id = 2))
+        runCurrent()
+        assertEquals(false, viewModel.state.value.isFollowing)
+        assertEquals(false, viewModel.state.value.isBlocked)
+        follow.complete(Result.success(true))
+        block.complete(Result.success(true))
+        advanceUntilIdle()
+        assertEquals(false, viewModel.state.value.isFollowing)
+        assertEquals(false, viewModel.state.value.isBlocked)
+    }
+
+    @Test
+    fun lateWritesCannotAlterReplacementProfileAndRetriesKeepBusyLocks() = runTest(dispatcher) {
+        val follow = CompletableDeferred<Result<Boolean>>()
+        val block = CompletableDeferred<Result<Unit>>()
+        val repository = FakeRepository()
+        val sessions = MutableStateFlow<GithubSession>(GithubSession.SignedIn(account()))
+        val viewModel = PublicUserProfileViewModel("joyins", repository, sessions = sessions)
+        advanceUntilIdle()
+        repository.followingWrite = { withContext(NonCancellable) { follow.await() } }
+        repository.blockedWrite = { withContext(NonCancellable) { block.await() } }
+        viewModel.onAction(PublicUserProfileAction.ToggleFollowing)
+        viewModel.onAction(PublicUserProfileAction.ConfirmBlock(1, 7))
+        runCurrent()
+        viewModel.onAction(PublicUserProfileAction.RetryFollowing)
+        viewModel.onAction(PublicUserProfileAction.RetryBlocked)
+        assertTrue(viewModel.state.value.isUpdatingFollowing)
+        assertTrue(viewModel.state.value.isUpdatingBlocked)
+        sessions.value = GithubSession.SignedIn(account().copy(id = 2))
+        runCurrent()
+        follow.complete(Result.success(true))
+        block.complete(Result.success(Unit))
+        advanceUntilIdle()
+        assertEquals(false, viewModel.state.value.isFollowing)
+        assertEquals(false, viewModel.state.value.isBlocked)
+        assertEquals(4, viewModel.state.value.user?.followers)
+        assertFalse(viewModel.state.value.isUpdatingFollowing)
+        assertFalse(viewModel.state.value.isUpdatingBlocked)
+    }
+
     private class FakeRepository(
         var repositoryFailure: Boolean = false,
         val organization: Boolean = false,
         var viewerFollowsResult: Result<Boolean> = Result.success(false),
         var setFollowingResult: Result<Boolean> = Result.success(true)
     ) : GithubPublicUserRepository {
+        var followingRead: (suspend () -> Result<Boolean>)? = null
+        var blockedRead: (suspend () -> Result<Boolean>)? = null
+        var followingWrite: (suspend () -> Result<Boolean>)? = null
+        var blockedWrite: (suspend () -> Result<Unit>)? = null
         var followingReads = 0
         var followingWrites = 0
         var blockedReads = 0
@@ -272,12 +360,12 @@ class PublicUserProfileViewModelTest {
 
         override suspend fun viewerFollows(login: String): Result<Boolean> {
             followingReads++
-            return viewerFollowsResult
+            return followingRead?.invoke() ?: viewerFollowsResult
         }
 
         override suspend fun setFollowing(login: String, following: Boolean): Result<Boolean> {
             followingWrites++
-            return setFollowingResult.map { following }
+            return followingWrite?.invoke() ?: setFollowingResult.map { following }
         }
 
         override suspend fun blockedUsers(page: Int, perPage: Int): Result<GithubPage<GithubUserSummary>> =
@@ -285,11 +373,13 @@ class PublicUserProfileViewModelTest {
 
         override suspend fun viewerBlocks(login: String): Result<Boolean> {
             blockedReads++
+            blockedRead?.let { return it() }
             return blockReadFailure?.let { Result.failure<Boolean>(it) } ?: Result.success(blocked)
         }
 
         override suspend fun setBlocked(login: String, blocked: Boolean): Result<Unit> {
             blockedWrites++
+            blockedWrite?.let { return it() }
             blockWriteFailure?.let { return Result.failure(it) }
             this.blocked = blocked
             return Result.success(Unit)

@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.data
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.json.Json
@@ -28,9 +29,14 @@ class GithubReleasesRepositoryImpl(
     private val json: Json = Json { ignoreUnknownKeys = true },
     baseUrl: String = "https://api.github.com/",
     private val cacheStore: GithubCacheStore = NoOpGithubCacheStore,
-    cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter
+    private val cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GithubReleasesRepository {
     private val apiBaseUrl = baseUrl.toHttpUrl()
+    override fun forAccount(accountId: Long?): GithubReleasesRepository = GithubReleasesRepositoryImpl(
+        requests.forAccount(accountId), client, json, apiBaseUrl.toString(), cacheStore,
+        cacheStatusReporter, ioDispatcher
+    )
     private val cachedGet = GithubCachedGetExecutor(cacheStore, cacheStatusReporter)
 
     // The shared call timeout is tuned for metadata requests; an APK body needs minutes, not seconds.
@@ -58,7 +64,7 @@ class GithubReleasesRepositoryImpl(
         page: Int,
         perPage: Int,
         forceRefresh: Boolean
-    ): Result<GithubPage<GithubRelease>> = withContext(Dispatchers.IO) {
+    ): Result<GithubPage<GithubRelease>> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "releases").newBuilder()
                 .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
@@ -93,7 +99,7 @@ class GithubReleasesRepositoryImpl(
         owner: String,
         name: String,
         releaseId: Long
-    ): Result<GithubRelease> = withContext(Dispatchers.IO) {
+    ): Result<GithubRelease> = withContext(ioDispatcher) {
         githubRunCatching {
             require(releaseId > 0)
             val url = endpoint(owner, name, "releases", releaseId.toString()).toString()
@@ -119,7 +125,7 @@ class GithubReleasesRepositoryImpl(
         owner: String,
         name: String,
         tagName: String
-    ): Result<GithubRelease> = withContext(Dispatchers.IO) {
+    ): Result<GithubRelease> = withContext(ioDispatcher) {
         githubRunCatching {
             val normalizedTag = tagName.trim()
             require(
@@ -158,7 +164,7 @@ class GithubReleasesRepositoryImpl(
         owner: String,
         name: String,
         draft: GithubReleaseDraft
-    ): Result<GithubRelease> = withContext(Dispatchers.IO) {
+    ): Result<GithubRelease> = withContext(ioDispatcher) {
         githubRunCatching {
             val request = requests.builder(endpoint(owner, name, "releases").toString())
                 .post(payload(draft))
@@ -172,7 +178,7 @@ class GithubReleasesRepositoryImpl(
         name: String,
         releaseId: Long,
         draft: GithubReleaseDraft
-    ): Result<GithubRelease> = withContext(Dispatchers.IO) {
+    ): Result<GithubRelease> = withContext(ioDispatcher) {
         githubRunCatching {
             require(releaseId > 0)
             // Publishing a draft can be the moment its tag is created, so the target has to travel
@@ -188,13 +194,13 @@ class GithubReleasesRepositoryImpl(
         owner: String,
         name: String,
         releaseId: Long
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         githubRunCatching {
             require(releaseId > 0)
             val request = requests.builder(endpoint(owner, name, "releases", releaseId.toString()).toString())
                 .delete()
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { Unit }
             }
@@ -206,13 +212,13 @@ class GithubReleasesRepositoryImpl(
         name: String,
         releaseId: Long,
         asset: GithubReleaseAssetUpload
-    ): Result<GithubReleaseAsset> = withContext(Dispatchers.IO) {
+    ): Result<GithubReleaseAsset> = withContext(ioDispatcher) {
         githubRunCatching {
             require(releaseId > 0)
             val request = requests.builder(uploadEndpoint(owner, name, releaseId, asset).toString())
                 .post(AssetBody(asset))
                 .build()
-            uploadClient.newCall(request).execute().use { response ->
+            uploadClient.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -228,13 +234,13 @@ class GithubReleasesRepositoryImpl(
         owner: String,
         name: String,
         assetId: Long
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         githubRunCatching {
             require(assetId > 0)
             val request = requests.builder(endpoint(owner, name, "releases", "assets", assetId.toString()).toString())
                 .delete()
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { Unit }
             }
@@ -252,7 +258,7 @@ class GithubReleasesRepositoryImpl(
         .apply { if (asset.label.isNotEmpty()) addQueryParameter("label", asset.label) }
         .build()
 
-    /** Calls [GithubReleaseAssetUpload.open] per attempt, so a redirected or retried call never replays an exhausted stream. */
+    /** Opens a fresh stream for an explicitly requested upload; the transport never replays it automatically. */
     private class AssetBody(private val asset: GithubReleaseAssetUpload) : RequestBody() {
         override fun contentType() = asset.contentType.toMediaType()
 
@@ -283,8 +289,8 @@ class GithubReleasesRepositoryImpl(
             draft.targetCommitish?.let { put("target_commitish", it) }
         }.toString().toRequestBody(JSON_MEDIA_TYPE)
 
-    private fun writeRelease(request: Request): GithubRelease =
-        client.newCall(request).execute().use { response ->
+    private suspend fun writeRelease(request: Request): GithubRelease =
+        client.readGithubResponse(request) { response ->
             if (!response.isSuccessful) throw GithubApiException.of(response)
             cacheStore.invalidateAfter {
                 json.decodeFromString(

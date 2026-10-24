@@ -67,6 +67,7 @@ import takagi.ru.monica.github.domain.GithubProfileAchievement
 import takagi.ru.monica.github.domain.GithubProfileAchievementState
 import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.ui.components.MarkdownPreviewText
+import takagi.ru.monica.ui.components.MarkdownImageContext
 
 @Composable
 fun ProfileScreen(
@@ -147,13 +148,6 @@ fun ProfileScreen(
                                     )
                                     GithubPreferenceGroupDivider()
                                     GithubPreferenceRow(
-                                        Icons.Default.Folder,
-                                        stringResource(R.string.github_repositories),
-                                        account.publicRepositories.toString(),
-                                        onClick = onOpenRepositories
-                                    )
-                                    GithubPreferenceGroupDivider()
-                                    GithubPreferenceRow(
                                         Icons.Default.Star,
                                         stringResource(R.string.github_starred),
                                         stringResource(R.string.github_manage),
@@ -185,7 +179,7 @@ fun ProfileScreen(
                             val activity: @Composable () -> Unit = {
                                 ContributionSection(profileState = profileState)
                                 AchievementSection(states = profileState.achievements)
-                                ReadmeSection(profileState = profileState, onOpenExternal = onOpenExternal)
+                                ReadmeSection(profileState = profileState, login = account.login, onOpenExternal = onOpenExternal)
                             }
                             val readableWidth = maxWidth / LocalDensity.current.fontScale.coerceAtLeast(1f)
                             if (readableWidth >= GithubAdaptiveLayout.detailTwoPaneWidth) {
@@ -225,7 +219,8 @@ private fun ProfileHeader(account: GithubAccount) {
         Surface(
             modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             shape = GithubExpressiveShapes.container,
-            color = MaterialTheme.colorScheme.surfaceContainerLow
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically,
@@ -234,13 +229,13 @@ private fun ProfileHeader(account: GithubAccount) {
                         size = 56.dp, shape = GithubExpressiveShapes.compact)
                     Column(modifier = Modifier.weight(1f)) {
                         Text(account.name ?: account.login,
-                            style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                        GithubTechnicalLabel(text = "@${account.login}", modifier = Modifier.padding(top = 2.dp))
+                            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                        GithubTechnicalLabel(text = "@${account.login}", color = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.padding(top = 2.dp))
                     }
                 }
                 account.bio?.takeIf(String::isNotBlank)?.let { bio ->
                     Text(bio, style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
                         modifier = Modifier.padding(top = 12.dp))
                 }
             }
@@ -343,16 +338,8 @@ private fun ProfileMetricLayout(
     metrics: List<@Composable (Modifier) -> Unit>,
     modifier: Modifier = Modifier
 ) {
-    BoxWithConstraints(modifier) {
-        if (maxWidth / LocalDensity.current.fontScale.coerceAtLeast(1f) < 320.dp) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                metrics.forEach { it(Modifier.fillMaxWidth()) }
-            }
-        } else {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                metrics.forEach { it(Modifier.weight(1f)) }
-            }
-        }
+    Row(modifier = modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        metrics.forEach { it(Modifier.weight(1f)) }
     }
 }
 
@@ -530,6 +517,7 @@ private fun GithubProfileAchievement.descriptionRes(): Int = when (this) {
 @Composable
 private fun ReadmeSection(
     profileState: ProfileUiState,
+    login: String,
     onOpenExternal: (String) -> Unit
 ) {
     if (profileState.isLoadingReadme) {
@@ -557,6 +545,7 @@ private fun ReadmeSection(
     ) {
         MarkdownPreviewText(
             markdown = readme,
+            imageContext = MarkdownImageContext("$login/$login"),
             onOpenExternalLink = onOpenExternal,
             modifier = Modifier.padding(16.dp)
         )

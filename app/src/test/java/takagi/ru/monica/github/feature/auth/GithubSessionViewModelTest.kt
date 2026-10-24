@@ -1,6 +1,8 @@
 package takagi.ru.monica.github.feature.auth
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -8,6 +10,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -24,6 +27,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.Collections
 import takagi.ru.monica.github.domain.AwaitGithubDeviceAuthorizationUseCase
 import takagi.ru.monica.github.domain.GithubAccount
 import takagi.ru.monica.github.domain.GithubAuthRepository
@@ -88,6 +96,7 @@ class GithubSessionViewModelTest {
 
         assertEquals(GithubBrowserSignInUiState.Idle, viewModel.state.value.browserSignIn)
         viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        runCurrent()
 
         val opening = viewModel.state.value.browserSignIn as GithubBrowserSignInUiState.Opening
         assertEquals(AUTHORIZATION_URL, opening.authorizationUrl)
@@ -210,6 +219,7 @@ class GithubSessionViewModelTest {
         val viewModel = viewModel(authRepository = authRepository, webRepository = webRepository)
         runCurrent()
         viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        runCurrent()
         viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
         runCurrent()
         assertEquals(GithubBrowserSignInUiState.Verifying, viewModel.state.value.browserSignIn)
@@ -236,6 +246,7 @@ class GithubSessionViewModelTest {
         val viewModel = viewModel(authRepository = repository, webRepository = webRepository)
         runCurrent()
         viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        runCurrent()
         viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
         viewModel.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
         runCurrent()
@@ -298,6 +309,7 @@ class GithubSessionViewModelTest {
         runCurrent()
 
         viewModel.onAction(GithubSessionAction.StartBrowserSignIn)
+        runCurrent()
         runCurrent()
 
         assertEquals(1, deviceRepository.startCount)
@@ -501,10 +513,167 @@ class GithubSessionViewModelTest {
         assertFalse(viewModel.state.value.accountActionError)
     }
 
+    @Test fun thrownAccountActionFailureReleasesBusyStateAndAllowsRetry() = runTest(dispatcher) {
+        var locked = true
+        val repository = FakeAuthRepository(initialSession = GithubSession.SignedIn(account()), removeAccount = {
+            if (locked) throw IllegalStateException("Storage unavailable")
+            Result.success(Unit)
+        })
+        val vm = viewModel(authRepository = repository); runCurrent()
+        vm.onAction(GithubSessionAction.RemoveAccount(1)); runCurrent()
+        assertFalse(vm.state.value.isAccountActionRunning)
+        assertTrue(vm.state.value.accountActionError)
+        assertEquals(GithubSession.SignedIn(account()), vm.state.value.session)
+        locked = false
+        vm.onAction(GithubSessionAction.RemoveAccount(1)); runCurrent()
+        assertFalse(vm.state.value.isAccountActionRunning)
+        assertFalse(vm.state.value.accountActionError)
+        assertEquals(listOf(1L, 1L), repository.removedAccountIds)
+    }
+
+    @Test fun throwingOAuthCancellationReportsFailureAndStillIgnoresLateCallbacks() = runTest(dispatcher) {
+        val delegate = FakeWebAuthRepository()
+        val web = object : GithubWebAuthRepository by delegate {
+            override fun cancel() { throw IllegalStateException("Encrypted pending store unavailable") }
+        }
+        val vm = viewModel(webRepository = web); runCurrent()
+        vm.onAction(GithubSessionAction.CancelBrowserSignIn)
+        runCurrent()
+        assertEquals(GithubBrowserSignInUiState.Failed(GithubBrowserSignInError.REQUEST_FAILED), vm.state.value.browserSignIn)
+        vm.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL)); runCurrent()
+        assertTrue(delegate.callbacks.isEmpty())
+        vm.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        vm.onAction(GithubSessionAction.SignIn); runCurrent()
+        assertFalse(vm.state.value.isSubmitting)
+        assertEquals(1L, vm.state.value.signInCompletionVersion)
+    }
+
+    @Test fun thrownSignInStorageFailureDoesNotLeaveTheFormSubmitting() = runTest(dispatcher) {
+        val vm = viewModel(authRepository = FakeAuthRepository(signIn = { throw IllegalStateException("Storage unavailable") }))
+        runCurrent()
+        vm.onAction(GithubSessionAction.TokenChanged(PERSONAL_TOKEN))
+        vm.onAction(GithubSessionAction.SignIn); runCurrent()
+        assertFalse(vm.state.value.isSubmitting)
+        assertEquals(GithubSignInError.REQUEST_FAILED, vm.state.value.signInError)
+        assertEquals(0L, vm.state.value.signInCompletionVersion)
+    }
+
+    @Test fun blockedBrowserPreparationRunsOffMainAndCancellationCannotOpenTheBrowser() = runTest(dispatcher) {
+        val startEntered = CountDownLatch(1)
+        val releaseStart = CountDownLatch(1)
+        val cleanupFinished = CompletableDeferred<Unit>()
+        val cancellations = AtomicInteger()
+        val operationThreads = Collections.synchronizedList(mutableListOf<Thread>())
+        var pending: String? = null
+        val delegate = FakeWebAuthRepository()
+        val web = object : GithubWebAuthRepository by delegate {
+            override fun start(): Result<GithubWebAuthorization> {
+                operationThreads += Thread.currentThread()
+                startEntered.countDown()
+                check(releaseStart.await(5, TimeUnit.SECONDS))
+                pending = "cancelled-flow"
+                return Result.success(GithubWebAuthorization(AUTHORIZATION_URL))
+            }
+            override fun cancel() {
+                operationThreads += Thread.currentThread()
+                pending = null
+                if (cancellations.incrementAndGet() == 2) cleanupFinished.complete(Unit)
+            }
+        }
+        Executors.newSingleThreadExecutor { task -> Thread(task, "github-browser-crypto") }.asCoroutineDispatcher().use { worker ->
+            try {
+                val vm = viewModel(webRepository = web, browserDispatcher = worker)
+                runCurrent()
+                vm.onAction(GithubSessionAction.StartBrowserSignIn)
+                assertEquals(GithubBrowserSignInUiState.Preparing, vm.state.value.browserSignIn)
+                runCurrent()
+                withContext(Dispatchers.IO) { assertTrue(startEntered.await(5, TimeUnit.SECONDS)) }
+                // Input and cancellation still execute while the storage worker is blocked.
+                vm.onAction(GithubSessionAction.TokenChanged("responsive input"))
+                assertEquals("responsive input", vm.state.value.tokenInput)
+                vm.onAction(GithubSessionAction.CancelBrowserSignIn)
+                assertEquals(GithubBrowserSignInUiState.Idle, vm.state.value.browserSignIn)
+                releaseStart.countDown()
+                cleanupFinished.await()
+                runCurrent()
+                vm.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL)); runCurrent()
+                assertTrue(delegate.callbacks.isEmpty())
+                assertEquals(GithubBrowserSignInUiState.Idle, vm.state.value.browserSignIn)
+                assertEquals(null, pending)
+                assertEquals(1, operationThreads.toSet().size)
+                assertTrue(operationThreads.first() !== Thread.currentThread())
+                assertEquals("github-browser-crypto", operationThreads.first().name.substringBefore(" @coroutine"))
+            } finally { releaseStart.countDown() }
+        }
+    }
+
+    @Test fun slowOldCancellationFinishesBeforeNewAuthorizationAndCannotEraseIt() = runTest(dispatcher) {
+        val cancelEntered = CountDownLatch(1)
+        val releaseCancel = CountDownLatch(1)
+        val clears = AtomicInteger()
+        val starts = AtomicInteger()
+        val events = Collections.synchronizedList(mutableListOf<String>())
+        val operationThreads = Collections.synchronizedList(mutableListOf<Thread>())
+        var pending: String? = null
+        val delegate = FakeWebAuthRepository()
+        val web = object : GithubWebAuthRepository by delegate {
+            override fun start(): Result<GithubWebAuthorization> {
+                operationThreads += Thread.currentThread()
+                val number = starts.incrementAndGet()
+                events += "start-$number"
+                pending = "flow-$number"
+                return Result.success(GithubWebAuthorization("$AUTHORIZATION_URL&flow=$number"))
+            }
+            override fun cancel() {
+                operationThreads += Thread.currentThread()
+                val number = clears.incrementAndGet()
+                if (number == 2) {
+                    events += "cancel-2-enter"
+                    cancelEntered.countDown()
+                    check(releaseCancel.await(5, TimeUnit.SECONDS))
+                }
+                pending = null
+                events += "cancel-$number-done"
+            }
+            override suspend fun exchangeCallback(url: String): Result<GithubDeviceAccessToken> {
+                operationThreads += Thread.currentThread()
+                assertEquals("flow-2", pending)
+                return delegate.exchangeCallback(url)
+            }
+        }
+        Executors.newSingleThreadExecutor { task -> Thread(task, "github-browser-ordering") }.asCoroutineDispatcher().use { worker ->
+            try {
+                val auth = FakeAuthRepository()
+                val vm = viewModel(authRepository = auth, webRepository = web, browserDispatcher = worker)
+                runCurrent()
+                vm.onAction(GithubSessionAction.StartBrowserSignIn)
+                vm.state.first { it.browserSignIn is GithubBrowserSignInUiState.Opening }
+                vm.onAction(GithubSessionAction.CancelBrowserSignIn); runCurrent()
+                withContext(Dispatchers.IO) { assertTrue(cancelEntered.await(5, TimeUnit.SECONDS)) }
+                vm.onAction(GithubSessionAction.StartBrowserSignIn)
+                assertEquals(GithubBrowserSignInUiState.Preparing, vm.state.value.browserSignIn)
+                runCurrent()
+                assertEquals(1, starts.get())
+                releaseCancel.countDown()
+                val ready = vm.state.first { (it.browserSignIn as? GithubBrowserSignInUiState.Opening)?.authorizationUrl?.endsWith("flow=2") == true }
+                assertTrue(ready.browserSignIn is GithubBrowserSignInUiState.Opening)
+                assertEquals("flow-2", pending)
+                assertEquals(listOf("cancel-1-done", "start-1", "cancel-2-enter", "cancel-2-done", "cancel-3-done", "start-2"), events.toList())
+                vm.onAction(GithubSessionAction.BrowserSignInCallback(CALLBACK_URL))
+                vm.state.first { it.signInCompletionVersion == 1L }
+                assertEquals(listOf(OAUTH_TOKEN), auth.signInTokens)
+                assertEquals(1, operationThreads.toSet().size)
+                assertTrue(operationThreads.first() !== Thread.currentThread())
+                assertEquals("github-browser-ordering", operationThreads.first().name.substringBefore(" @coroutine"))
+            } finally { releaseCancel.countDown() }
+        }
+    }
+
     private fun TestScope.viewModel(
         authRepository: FakeAuthRepository = FakeAuthRepository(),
         deviceRepository: FakeDeviceAuthRepository = FakeDeviceAuthRepository(),
-        webRepository: GithubWebAuthRepository = UnavailableGithubWebAuthRepository
+        webRepository: GithubWebAuthRepository = UnavailableGithubWebAuthRepository,
+        browserDispatcher: CoroutineDispatcher = StandardTestDispatcher(testScheduler)
     ): GithubSessionViewModel = GithubSessionViewModel(
         repository = authRepository,
         deviceAuthRepository = deviceRepository,
@@ -513,7 +682,8 @@ class GithubSessionViewModelTest {
             repository = deviceRepository,
             nowEpochMillis = { testScheduler.currentTime },
             delayMillis = { delay(it) }
-        )
+        ),
+        browserIoDispatcher = browserDispatcher
     )
 
     private class FakeAuthRepository(

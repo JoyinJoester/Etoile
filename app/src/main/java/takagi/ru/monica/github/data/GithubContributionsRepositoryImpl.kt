@@ -60,9 +60,15 @@ class GithubContributionsRepositoryImpl(
                         ?.get("contributionCalendar")?.jsonObject
                         ?: throw IllegalStateException("Contribution calendar unavailable")
                     val weeks = calendar["weeks"]?.jsonArray?.map { weekElement ->
-                        // 首尾周的空位在响应里是 date: null，直接跳过，由 UI 按星期补齐。
+                        // GraphQL returns each week as an object containing a
+                        // contributionDays array. Treat a missing array as a
+                        // malformed response instead of attempting to cast the
+                        // week object itself to an array (which made the
+                        // contribution calendar fail to load every time).
+                        val days = weekElement.jsonObject["contributionDays"]?.jsonArray
+                            ?: throw IllegalStateException("Malformed contribution week")
                         GithubContributionWeek(
-                            days = weekElement.jsonArray.mapNotNull { dayElement ->
+                            days = days.mapNotNull { dayElement ->
                                 val day = dayElement.jsonObject
                                 val dateText = day["date"]?.jsonPrimitive
                                     ?.takeIf { it !is JsonNull }

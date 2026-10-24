@@ -1,5 +1,17 @@
 package takagi.ru.monica.github.feature.actions
 
+import takagi.ru.monica.github.data.runAction
+import takagi.ru.monica.github.feature.repository.currentRepositoryResult
+import takagi.ru.monica.github.feature.repository.matchesGithubAccount
+import takagi.ru.monica.github.data.InMemoryGithubActionJournal
+import takagi.ru.monica.github.data.githubRunCatching
+import takagi.ru.monica.github.domain.GithubActionJournal
+import takagi.ru.monica.github.domain.GithubActionKind
+import takagi.ru.monica.github.domain.GithubActionOperation
+import takagi.ru.monica.github.domain.GithubActionScope
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -9,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import takagi.ru.monica.github.domain.GithubActionsLog
 import takagi.ru.monica.github.domain.GithubActionsRepository
@@ -45,7 +58,11 @@ data class ActionsRunDetailUiState(
     val downloadingArtifactId: Long? = null,
     val artifactDownloadFailed: Boolean = false,
     val viewerLogin: String? = null,
-    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN
+    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN,
+    val viewerAccountId: Long? = null,
+    val journalReady: Boolean = false,
+    val journalUnavailable: Boolean = false,
+    val unconfirmedAction: Boolean = false
 ) {
     val fullName: String get() = "$owner/$name"
     val canLoadMoreJobs: Boolean get() = nextJobsPage != null && !isLoadingJobs && !isLoadingMoreJobs
@@ -62,7 +79,8 @@ sealed interface ActionsRunDetailAction {
     data object RetryRun : ActionsRunDetailAction
     data object RetryJobs : ActionsRunDetailAction
     data object LoadMoreJobs : ActionsRunDetailAction
-    data class PerformRunAction(val action: GithubWorkflowRunAction) : ActionsRunDetailAction
+    data class PerformRunAction(val action: GithubWorkflowRunAction, val expectedAccountId: Long? = null, val repeatConfirmed: Boolean = false) : ActionsRunDetailAction
+    data class Acknowledge(val expectedAccountId: Long?) : ActionsRunDetailAction
     data object RetryArtifacts : ActionsRunDetailAction
     data object LoadMoreArtifacts : ActionsRunDetailAction
     data class DownloadArtifact(val artifactId: Long, val open: () -> GithubArtifactOutput) :
@@ -74,8 +92,15 @@ class ActionsRunDetailViewModel(
     private val name: String,
     private val runId: Long,
     private val repository: GithubActionsRepository,
-    private val detailsRepository: GithubRepositoryDetailsRepository
+    private val detailsRepository: GithubRepositoryDetailsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null,
+    private val journal: GithubActionJournal = InMemoryGithubActionJournal()
 ) : ViewModel() {
+    private val sessionSource = sessions
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[kotlinx.coroutines.Job]))
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+
     private val _state = MutableStateFlow(ActionsRunDetailUiState(owner, name, runId))
     val state: StateFlow<ActionsRunDetailUiState> = _state.asStateFlow()
     private var runJob: Job? = null
@@ -83,32 +108,68 @@ class ActionsRunDetailViewModel(
     private var artifactsJob: Job? = null
     private var viewerRoleJob: Job? = null
     private var sessionLogin: String? = null
+    private var journalJob: Job? = null
+    private val operation = GithubActionOperation(GithubActionKind.RUN, runId)
+    private fun scope(id: Long? = accountId) = GithubActionScope(id ?: 0L, owner, name)
+    private fun isCurrent(id: Long?) = accountId == id && sessionSource.matchesGithubAccount(accountId, id)
+    private fun observeJournal() {
+        journalJob?.cancel()
+        val id = accountId
+        if (sessionSource != null && id == null) return
+        journalJob = requests.launch {
+            journal.observe(scope(id)).catch {
+                if (isCurrent(id)) _state.update { it.copy(journalReady = false, journalUnavailable = true) }
+            }.collect { pending ->
+                if (isCurrent(id)) _state.update { it.copy(journalReady = true, journalUnavailable = false, unconfirmedAction = operation in pending) }
+            }
+        }
+    }
+
+    init { sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } } }
 
     init {
+        if (sessions == null) observeJournal()
+        loadRun()
+        loadJobs(reset = true)
+        loadArtifacts(reset = true)
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && accountId == account?.id) return
+        sessionInitialized = true
+        accountId = account?.id
+        requests.coroutineContext.cancelChildren()
+        _state.value = ActionsRunDetailUiState(owner, name, runId, viewerAccountId = account?.id, viewerLogin = account?.login)
+        observeJournal()
+        loadViewerRole(signedIn = account != null)
         loadRun()
         loadJobs(reset = true)
         loadArtifacts(reset = true)
     }
 
     fun onAction(action: ActionsRunDetailAction) {
+        if (action == ActionsRunDetailAction.RetryRun && !_state.value.journalReady) observeJournal()
         when (action) {
             ActionsRunDetailAction.RetryRun -> loadRun()
             ActionsRunDetailAction.RetryJobs -> loadJobs(reset = _state.value.jobs.isEmpty())
             ActionsRunDetailAction.LoadMoreJobs -> loadJobs(reset = false)
-            is ActionsRunDetailAction.PerformRunAction -> performRunAction(action.action)
+            is ActionsRunDetailAction.PerformRunAction -> performRunAction(action.action, action.expectedAccountId, action.repeatConfirmed)
+            is ActionsRunDetailAction.Acknowledge -> {
+                if (!sessionSource.matchesGithubAccount(accountId, action.expectedAccountId) || !_state.value.journalReady) return
+                val id = accountId
+                requests.launch {
+                    if (!isCurrent(id)) return@launch
+                    githubRunCatching { journal.acknowledge(scope(id), operation) }
+                }
+            }
             ActionsRunDetailAction.RetryArtifacts -> loadArtifacts(reset = _state.value.artifacts.isEmpty())
             ActionsRunDetailAction.LoadMoreArtifacts -> loadArtifacts(reset = false)
             is ActionsRunDetailAction.DownloadArtifact -> downloadArtifact(action)
         }
     }
 
-    fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login == sessionLogin) return
-        sessionLogin = login
-        _state.update { it.copy(viewerLogin = login) }
-        loadViewerRole(signedIn = login != null)
-    }
+
 
     private fun loadViewerRole(signedIn: Boolean) {
         viewerRoleJob?.cancel()
@@ -116,9 +177,9 @@ class ActionsRunDetailViewModel(
             _state.update { it.copy(viewerRole = GithubCollaboratorRole.UNKNOWN) }
             return
         }
-        viewerRoleJob = viewModelScope.launch {
+        viewerRoleJob = requests.launch {
             val role = detailsRepository.details(owner, name)
-                .getOrNull()
+                .currentRepositoryResult().getOrNull()
                 ?.viewerRole
                 ?: GithubCollaboratorRole.UNKNOWN
             _state.update { it.copy(viewerRole = role) }
@@ -128,8 +189,8 @@ class ActionsRunDetailViewModel(
     private fun loadRun() {
         runJob?.cancel()
         _state.update { it.copy(isLoadingRun = true, runError = false) }
-        runJob = viewModelScope.launch {
-            repository.workflowRun(owner, name, runId).fold(
+        runJob = requests.launch {
+            repository.workflowRun(owner, name, runId).currentRepositoryResult().fold(
                 onSuccess = { run ->
                     _state.update { it.copy(run = run, isLoadingRun = false, runError = false) }
                 },
@@ -153,8 +214,8 @@ class ActionsRunDetailViewModel(
                 jobsError = false
             )
         }
-        jobsJob = viewModelScope.launch {
-            repository.jobs(owner, name, runId, requestedPage).fold(
+        jobsJob = requests.launch {
+            repository.jobs(owner, name, runId, requestedPage).currentRepositoryResult().fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         state.copy(
@@ -186,8 +247,8 @@ class ActionsRunDetailViewModel(
                 artifactsError = false
             )
         }
-        artifactsJob = viewModelScope.launch {
-            repository.artifacts(owner, name, runId, requestedPage).fold(
+        artifactsJob = requests.launch {
+            repository.artifacts(owner, name, runId, requestedPage).currentRepositoryResult().fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         state.copy(
@@ -216,8 +277,8 @@ class ActionsRunDetailViewModel(
     private fun downloadArtifact(action: ActionsRunDetailAction.DownloadArtifact) {
         if (_state.value.isDownloadingArtifact) return
         _state.update { it.copy(downloadingArtifactId = action.artifactId, artifactDownloadFailed = false) }
-        viewModelScope.launch {
-            repository.downloadArtifact(owner, name, action.artifactId, action.open).fold(
+        requests.launch {
+            repository.downloadArtifact(owner, name, action.artifactId, action.open).currentRepositoryResult().fold(
                 onSuccess = {
                     _state.update { it.copy(downloadingArtifactId = null, artifactDownloadFailed = false) }
                 },
@@ -228,11 +289,20 @@ class ActionsRunDetailViewModel(
         }
     }
 
-    private fun performRunAction(action: GithubWorkflowRunAction) {
-        if (!_state.value.canManageRun || _state.value.isPerformingAction) return
+    private fun performRunAction(action: GithubWorkflowRunAction, expectedAccountId: Long?, repeatConfirmed: Boolean) {
+        if (!sessionSource.matchesGithubAccount(accountId, expectedAccountId)) return
+        if (!_state.value.canManageRun || _state.value.isPerformingAction || !_state.value.journalReady) return
+        if (_state.value.unconfirmedAction && !repeatConfirmed) return
+        val targetRepository = if (sessionSource == null) repository else repository.forAccount(expectedAccountId)
+        val id = accountId
         _state.update { it.copy(isPerformingAction = true, actionError = false) }
-        viewModelScope.launch {
-            repository.performRunAction(owner, name, runId, action).fold(
+        requests.launch {
+            if (!sessionSource.matchesGithubAccount(accountId, expectedAccountId)) return@launch
+            val result = journal.runAction(scope(id), operation, repeatConfirmed, { isCurrent(id) }) {
+                targetRepository.performRunAction(owner, name, runId, action)
+            }.currentRepositoryResult()
+            if (!sessionSource.matchesGithubAccount(accountId, expectedAccountId)) return@launch
+            result.fold(
                 onSuccess = {
                     _state.update { it.copy(isPerformingAction = false, actionError = false) }
                     loadRun()
@@ -251,12 +321,14 @@ class ActionsRunDetailViewModel(
         private val name: String,
         private val runId: Long,
         private val repository: GithubActionsRepository,
-        private val detailsRepository: GithubRepositoryDetailsRepository
+        private val detailsRepository: GithubRepositoryDetailsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null,
+        private val journal: GithubActionJournal = InMemoryGithubActionJournal()
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(ActionsRunDetailViewModel::class.java))
-            return ActionsRunDetailViewModel(owner, name, runId, repository, detailsRepository) as T
+            return ActionsRunDetailViewModel(owner, name, runId, repository, detailsRepository, sessions, journal) as T
         }
     }
 }
@@ -271,7 +343,8 @@ data class ActionsJobDetailUiState(
     val isLoadingJob: Boolean = true,
     val isLoadingLog: Boolean = true,
     val jobError: Boolean = false,
-    val logError: Boolean = false
+    val logError: Boolean = false,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
 }
@@ -285,14 +358,32 @@ class ActionsJobDetailViewModel(
     private val owner: String,
     private val name: String,
     private val jobId: Long,
-    private val repository: GithubActionsRepository
+    private val repository: GithubActionsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[kotlinx.coroutines.Job]))
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+
     private val _state = MutableStateFlow(ActionsJobDetailUiState(owner, name, jobId))
     val state: StateFlow<ActionsJobDetailUiState> = _state.asStateFlow()
     private var jobJob: Job? = null
     private var logJob: Job? = null
 
+    init { sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } } }
+
     init {
+        loadJob()
+        loadLog()
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && accountId == account?.id) return
+        sessionInitialized = true
+        accountId = account?.id
+        requests.coroutineContext.cancelChildren()
+        _state.value = ActionsJobDetailUiState(owner, name, jobId, viewerAccountId = account?.id)
         loadJob()
         loadLog()
     }
@@ -307,8 +398,8 @@ class ActionsJobDetailViewModel(
     private fun loadJob() {
         jobJob?.cancel()
         _state.update { it.copy(isLoadingJob = true, jobError = false) }
-        jobJob = viewModelScope.launch {
-            repository.job(owner, name, jobId).fold(
+        jobJob = requests.launch {
+            repository.job(owner, name, jobId).currentRepositoryResult().fold(
                 onSuccess = { job ->
                     _state.update { it.copy(job = job, isLoadingJob = false, jobError = false) }
                 },
@@ -322,8 +413,8 @@ class ActionsJobDetailViewModel(
     private fun loadLog() {
         logJob?.cancel()
         _state.update { it.copy(isLoadingLog = true, logError = false) }
-        logJob = viewModelScope.launch {
-            repository.jobLog(owner, name, jobId).fold(
+        logJob = requests.launch {
+            repository.jobLog(owner, name, jobId).currentRepositoryResult().fold(
                 onSuccess = { log ->
                     _state.update { it.copy(log = log, isLoadingLog = false, logError = false) }
                 },
@@ -338,12 +429,13 @@ class ActionsJobDetailViewModel(
         private val owner: String,
         private val name: String,
         private val jobId: Long,
-        private val repository: GithubActionsRepository
+        private val repository: GithubActionsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(ActionsJobDetailViewModel::class.java))
-            return ActionsJobDetailViewModel(owner, name, jobId, repository) as T
+            return ActionsJobDetailViewModel(owner, name, jobId, repository, sessions) as T
         }
     }
 }

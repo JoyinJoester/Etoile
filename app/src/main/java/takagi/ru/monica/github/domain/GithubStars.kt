@@ -42,6 +42,9 @@ interface GithubStarsRepository {
  * locally because GitHub exposes no API for private starred collections.
  */
 interface GithubStarLabelStore {
+    /** Returns a stable account-bound store; switching accounts must never retarget an existing handle. */
+    fun forAccount(accountId: Long): GithubStarLabelStore = this
+
     fun labels(): List<GithubStarLabel>
     fun labelsFor(repositoryId: Long): List<GithubStarLabel>
     fun createLabel(name: String): Result<GithubStarLabel>

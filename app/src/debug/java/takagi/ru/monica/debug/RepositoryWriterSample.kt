@@ -71,8 +71,8 @@ internal fun RepositoryWriterSample() {
             override suspend fun webhooks(owner: String, name: String, page: Int, perPage: Int) =
                 Result.success(GithubPage<GithubRepositoryWebhook>(emptyList(), null))
             override suspend fun webhookDeliveries(
-                owner: String, name: String, id: Long, page: Int, perPage: Int
-            ): Result<GithubPage<GithubWebhookDelivery>> =
+                owner: String, name: String, id: Long, cursor: String?, perPage: Int
+            ): Result<GithubWebhookDeliveriesPage> =
                 Result.failure(UnsupportedOperationException("this sample never lists deliveries"))
             override suspend fun redeliverWebhook(owner: String, name: String, id: Long, deliveryId: Long): Result<Unit> =
                 Result.failure(UnsupportedOperationException("this sample never redelivers"))

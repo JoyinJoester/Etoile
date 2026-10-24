@@ -4,7 +4,11 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,28 +42,34 @@ sealed interface GithubBlockedUsersAction {
 }
 
 class GithubBlockedUsersViewModel(
-    private val repository: GithubPublicUserRepository
+    private val repository: GithubPublicUserRepository,
+    private val sessions: Flow<GithubSession>? = null
 ) : ViewModel() {
     private val _state = MutableStateFlow(GithubBlockedUsersUiState())
     val state: StateFlow<GithubBlockedUsersUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var failedReset = true
-    private var sessionLogin: String? = null
+    private var accountId: Long? = null
+    private var requestVersion = 0L
+    private var sessionLoading = false
+
+    init {
+        if (sessions != null) viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            sessions.collect(::onSessionChanged)
+        }
+    }
 
     fun onSessionChanged(session: GithubSession) {
-        when (session) {
-            GithubSession.Loading -> _state.update { it.copy(isLoading = true, isRefreshing = false) }
-            GithubSession.SignedOut, is GithubSession.Error -> {
-                loadJob?.cancel()
-                sessionLogin = null
-                _state.value = GithubBlockedUsersUiState()
-            }
-            is GithubSession.SignedIn -> {
-                if (sessionLogin?.equals(session.account.login, ignoreCase = true) == true) return
-                sessionLogin = session.account.login
-                load(reset = true, preserveExisting = false)
-            }
-        }
+        val id = (session as? GithubSession.SignedIn)?.account?.id
+        val loading = session is GithubSession.Loading
+        if (id == accountId && sessionLoading == loading) return
+        sessionLoading = loading
+        accountId = id
+        requestVersion++
+        loadJob?.cancel()
+        failedReset = true
+        _state.value = GithubBlockedUsersUiState(isLoading = session is GithubSession.Loading)
+        if (id != null) load(reset = true)
     }
 
     fun onAction(action: GithubBlockedUsersAction) {
@@ -77,10 +87,12 @@ class GithubBlockedUsersViewModel(
     }
 
     private fun load(reset: Boolean, preserveExisting: Boolean = false) {
+        if (accountId == null) return
         val current = _state.value
         if (!reset && !current.canLoadMore) return
         val page = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
+        val version = ++requestVersion
         _state.update {
             it.copy(
                 users = if (reset && !preserveExisting) emptyList() else it.users,
@@ -93,7 +105,10 @@ class GithubBlockedUsersViewModel(
             )
         }
         loadJob = viewModelScope.launch {
-            repository.blockedUsers(page).fold(
+            val result = repository.blockedUsers(page)
+            coroutineContext.ensureActive()
+            if (version != requestVersion || accountId == null) return@launch
+            result.fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         state.copy(
@@ -122,12 +137,13 @@ class GithubBlockedUsersViewModel(
     }
 
     class Factory(
-        private val repository: GithubPublicUserRepository
+        private val repository: GithubPublicUserRepository,
+        private val sessions: Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(GithubBlockedUsersViewModel::class.java))
-            return GithubBlockedUsersViewModel(repository) as T
+            return GithubBlockedUsersViewModel(repository, sessions) as T
         }
     }
 }

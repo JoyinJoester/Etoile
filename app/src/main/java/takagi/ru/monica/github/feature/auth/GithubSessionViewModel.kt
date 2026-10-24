@@ -5,6 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -13,6 +16,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import takagi.ru.monica.github.domain.AwaitGithubDeviceAuthorizationUseCase
 import takagi.ru.monica.github.domain.GithubAuthRepository
 import takagi.ru.monica.github.domain.GithubAccount
@@ -34,6 +40,7 @@ enum class GithubBrowserSignInError { REQUEST_FAILED, DENIED, INVALID_CALLBACK, 
 sealed interface GithubBrowserSignInUiState {
     data object Unavailable : GithubBrowserSignInUiState
     data object Idle : GithubBrowserSignInUiState
+    data object Preparing : GithubBrowserSignInUiState
     data class Opening(val authorizationUrl: String) : GithubBrowserSignInUiState
     data class Waiting(val authorizationUrl: String) : GithubBrowserSignInUiState
     data object Verifying : GithubBrowserSignInUiState
@@ -93,7 +100,8 @@ class GithubSessionViewModel(
     private val deviceAuthRepository: GithubDeviceAuthRepository,
     private val webAuthRepository: GithubWebAuthRepository = UnavailableGithubWebAuthRepository,
     private val awaitDeviceAuthorization: AwaitGithubDeviceAuthorizationUseCase =
-        AwaitGithubDeviceAuthorizationUseCase(deviceAuthRepository)
+        AwaitGithubDeviceAuthorizationUseCase(deviceAuthRepository),
+    private val browserIoDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : ViewModel() {
     private val _state = MutableStateFlow(
         GithubSessionUiState(
@@ -104,6 +112,9 @@ class GithubSessionViewModel(
     val state: StateFlow<GithubSessionUiState> = _state.asStateFlow()
     private var tokenSignInJob: Job? = null
     private var browserSignInJob: Job? = null
+    private var browserCleanupJob: Job? = null
+    private val browserStorageMutex = Mutex()
+    private var browserFlowVersion = 0L
     private var deviceSignInJob: Job? = null
     private var accountActionJob: Job? = null
     private var activeDeviceAuthorization: GithubDeviceAuthorization? = null
@@ -141,7 +152,13 @@ class GithubSessionViewModel(
     }
 
     private fun restore() {
-        viewModelScope.launch { repository.restore() }
+        viewModelScope.launch {
+            val result = authResult { repository.restore() }
+            currentCoroutineContext().ensureActive()
+            if (result.isFailure && repository.session.value is GithubSession.Loading) {
+                _state.update { it.copy(session = GithubSession.Error(recoverable = true)) }
+            }
+        }
     }
 
     private fun signIn() {
@@ -158,7 +175,7 @@ class GithubSessionViewModel(
             )
         }
         val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
-            val result = repository.signInWithToken(token)
+            val result = authResult { repository.signInWithToken(token) }
             currentCoroutineContext().ensureActive()
             result.fold(
                 onSuccess = { resetFormState(signInCompleted = true) },
@@ -188,28 +205,38 @@ class GithubSessionViewModel(
             deviceSignInJob?.isActive == true || browserSignInJob?.isActive == true
         ) return
         cancelDeviceFlow()
-        cancelBrowserFlow()
-        webAuthRepository.start().fold(
-            onSuccess = { authorization ->
-                ignoreBrowserCallbacks = false
-                _state.update {
-                    it.copy(
-                        signInError = null,
-                        deviceSignIn = idleDeviceSignInState(),
-                        browserSignIn = GithubBrowserSignInUiState.Opening(authorization.authorizationUrl)
-                    )
-                }
-            },
-            onFailure = {
-                _state.update {
-                    it.copy(
-                        browserSignIn = GithubBrowserSignInUiState.Failed(
-                            GithubBrowserSignInError.REQUEST_FAILED
-                        )
-                    )
+        val cleanup = cancelBrowserFlow()
+        val version = browserFlowVersion
+        _state.update { it.copy(signInError = null, deviceSignIn = idleDeviceSignInState(),
+            browserSignIn = GithubBrowserSignInUiState.Preparing) }
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            // A previous cancellation must finish before a new PKCE state can be written.
+            cleanup.join()
+            currentCoroutineContext().ensureActive()
+            if (version != browserFlowVersion) return@launch
+            val result = authResult {
+                withContext(browserIoDispatcher) {
+                    browserStorageMutex.withLock {
+                        currentCoroutineContext().ensureActive()
+                        webAuthRepository.start()
+                    }
                 }
             }
-        )
+            currentCoroutineContext().ensureActive()
+            if (version != browserFlowVersion) return@launch
+            result.fold(
+                onSuccess = { authorization ->
+                    ignoreBrowserCallbacks = false
+                    _state.update { it.copy(browserSignIn = GithubBrowserSignInUiState.Opening(authorization.authorizationUrl)) }
+                },
+                onFailure = {
+                    _state.update { it.copy(browserSignIn = GithubBrowserSignInUiState.Failed(GithubBrowserSignInError.REQUEST_FAILED)) }
+                }
+            )
+        }
+        browserSignInJob = job
+        job.invokeOnCompletion { if (browserSignInJob === job) browserSignInJob = null }
+        job.start()
     }
 
     private fun markBrowserSignInOpened() {
@@ -223,10 +250,12 @@ class GithubSessionViewModel(
             browserSignInJob?.isActive == true || deviceSignInJob?.isActive == true
         ) return
         cancelDeviceFlow()
+        val version = browserFlowVersion
         _state.update { it.copy(browserSignIn = GithubBrowserSignInUiState.Verifying) }
         val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
-            val exchangeResult = webAuthRepository.exchangeCallback(url)
+            val exchangeResult = authResult { withContext(browserIoDispatcher) { webAuthRepository.exchangeCallback(url) } }
             currentCoroutineContext().ensureActive()
+            if (version != browserFlowVersion) return@launch
             val token = exchangeResult.getOrElse { error ->
                 val reason = when (error) {
                     is GithubWebOAuthDeniedException -> GithubBrowserSignInError.DENIED
@@ -236,8 +265,9 @@ class GithubSessionViewModel(
                 _state.update { it.copy(browserSignIn = GithubBrowserSignInUiState.Failed(reason)) }
                 return@launch
             }
-            val signInResult = repository.signInWithOAuth(token)
+            val signInResult = authResult { repository.signInWithOAuth(token) }
             currentCoroutineContext().ensureActive()
+            if (version != browserFlowVersion) return@launch
             signInResult.fold(
                 onSuccess = { resetFormState(signInCompleted = true) },
                 onFailure = {
@@ -259,15 +289,33 @@ class GithubSessionViewModel(
     }
 
     private fun cancelBrowserSignIn() {
-        cancelBrowserFlow()
+        cancelBrowserFlow(reportBrowserError = true)
         _state.update { it.copy(browserSignIn = idleBrowserSignInState()) }
     }
 
-    private fun cancelBrowserFlow() {
+    private fun cancelBrowserFlow(reportBrowserError: Boolean = false): Job {
         ignoreBrowserCallbacks = true
+        val version = ++browserFlowVersion
         browserSignInJob?.cancel()
         browserSignInJob = null
-        webAuthRepository.cancel()
+        val previousCleanup = browserCleanupJob
+        val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
+            previousCleanup?.join()
+            val result = authResult {
+                withContext(browserIoDispatcher) {
+                    browserStorageMutex.withLock { webAuthRepository.cancel(); Result.success(Unit) }
+                }
+            }
+            currentCoroutineContext().ensureActive()
+            if (version == browserFlowVersion && result.isFailure) {
+                _state.update { it.copy(accountActionError = true,
+                    browserSignIn = if (reportBrowserError) GithubBrowserSignInUiState.Failed(GithubBrowserSignInError.REQUEST_FAILED) else it.browserSignIn) }
+            }
+        }
+        browserCleanupJob = job
+        job.invokeOnCompletion { if (browserCleanupJob === job) browserCleanupJob = null }
+        job.start()
+        return job
     }
 
     private fun startDeviceSignIn() {
@@ -289,7 +337,7 @@ class GithubSessionViewModel(
             )
         }
         val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
-            val startResult = deviceAuthRepository.start()
+            val startResult = authResult { deviceAuthRepository.start() }
             currentCoroutineContext().ensureActive()
             val authorization = startResult.getOrElse { error ->
                 showDeviceFailure(error)
@@ -305,14 +353,14 @@ class GithubSessionViewModel(
                     )
                 )
             }
-            val authorizationResult = awaitDeviceAuthorization(authorization)
+            val authorizationResult = authResult { awaitDeviceAuthorization(authorization) }
             currentCoroutineContext().ensureActive()
             val token = authorizationResult.getOrElse { error ->
                 showDeviceFailure(error)
                 return@launch
             }
             _state.update { it.copy(deviceSignIn = GithubDeviceSignInUiState.Verifying) }
-            val signInResult = repository.signInWithOAuth(token)
+            val signInResult = authResult { repository.signInWithOAuth(token) }
             currentCoroutineContext().ensureActive()
             signInResult.fold(
                 onSuccess = { resetFormState(signInCompleted = true) },
@@ -390,18 +438,13 @@ class GithubSessionViewModel(
         clearForm()
         _state.update { it.copy(isAccountActionRunning = true, accountActionError = false) }
         val job = viewModelScope.launch(start = CoroutineStart.LAZY) {
-            block().fold(
-                onSuccess = {
-                    _state.update {
-                        it.copy(isAccountActionRunning = false, accountActionError = false)
-                    }
-                },
-                onFailure = {
-                    _state.update {
-                        it.copy(isAccountActionRunning = false, accountActionError = true)
-                    }
-                }
-            )
+            try {
+                val result = authResult { block() }
+                currentCoroutineContext().ensureActive()
+                _state.update { it.copy(accountActionError = result.isFailure) }
+            } finally {
+                _state.update { it.copy(isAccountActionRunning = false) }
+            }
         }
         accountActionJob = job
         job.invokeOnCompletion {
@@ -422,6 +465,15 @@ class GithubSessionViewModel(
                 browserSignIn = idleBrowserSignInState()
             )
         }
+    }
+
+    /** Repository failures reach UI feedback while coroutine cancellation remains cancellation. */
+    private inline fun <T> authResult(block: () -> Result<T>): Result<T> = try {
+        block()
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: Exception) {
+        Result.failure(failure)
     }
 
     private fun idleDeviceSignInState(): GithubDeviceSignInUiState =

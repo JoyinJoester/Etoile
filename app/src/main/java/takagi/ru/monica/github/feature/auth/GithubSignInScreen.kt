@@ -103,7 +103,8 @@ fun GithubSignInScreen(
     onOpenUrl: (String) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    onOpenBrowser: ((String) -> Boolean)? = null
+    onOpenBrowser: ((String) -> Boolean)? = null,
+    onSignInWithGitLab: (() -> Unit)? = null
 ) {
     val browserFlowAvailable = state.browserSignIn !is GithubBrowserSignInUiState.Unavailable
     val interactiveFlowUnavailable = !browserFlowAvailable &&
@@ -188,6 +189,13 @@ fun GithubSignInScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 4.dp)
         ) {
+            onSignInWithGitLab?.let { openGitLab ->
+                OutlinedButton(
+                    onClick = openGitLab,
+                    enabled = !state.isSubmitting && !state.isAccountActionRunning,
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                ) { Text(stringResource(R.string.gitlab_sign_in_instead)) }
+            }
             if (interactiveFlowUnavailable) {
                 DeviceFlowUnavailableNotice()
                 Spacer(Modifier.height(12.dp))
@@ -303,6 +311,15 @@ private fun BrowserSignInCard(
         ) { targetState ->
             when (targetState) {
                 GithubBrowserSignInUiState.Idle -> BrowserSignInIdle(onStart, onStartInApp, enabled)
+                GithubBrowserSignInUiState.Preparing -> Column {
+                    DeviceSignInProgress(
+                        title = stringResource(R.string.github_browser_sign_in_opening),
+                        description = stringResource(R.string.github_browser_sign_in_opening_description)
+                    )
+                    TextButton(onClick = onCancel, modifier = Modifier.padding(start = 22.dp, bottom = 12.dp)) {
+                        Text(stringResource(R.string.github_cancel))
+                    }
+                }
                 is GithubBrowserSignInUiState.Opening -> DeviceSignInProgress(
                     title = stringResource(R.string.github_browser_sign_in_opening),
                     description = stringResource(R.string.github_browser_sign_in_opening_description)

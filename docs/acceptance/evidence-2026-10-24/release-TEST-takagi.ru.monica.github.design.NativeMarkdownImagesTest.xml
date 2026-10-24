@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="takagi.ru.monica.github.design.NativeMarkdownImagesTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:30:03.382Z" hostname="JOYIN" time="0.301">
+  <properties/>
+  <testcase name="blockedImageSchemeIsExplainedWithoutLaunchingRequest" classname="takagi.ru.monica.github.design.NativeMarkdownImagesTest" time="0.122"/>
+  <testcase name="slowImageShowsLoadingThenRendersDecodedPixels" classname="takagi.ru.monica.github.design.NativeMarkdownImagesTest" time="0.128"/>
+  <testcase name="imageFailureOffersRetryAndOnlyExplicitTapStartsAnotherRequest" classname="takagi.ru.monica.github.design.NativeMarkdownImagesTest" time="0.051"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

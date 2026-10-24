@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.feature.discussions
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.github.domain.GithubDiscussion
+import takagi.ru.monica.github.component.*
+import takagi.ru.monica.github.design.GithubAdaptiveLayout
 
 @Composable
 fun DiscussionsScreen(
@@ -28,13 +31,15 @@ fun DiscussionsScreen(
     onOpen: (GithubDiscussion) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Scaffold(
+    GithubDetailScaffold(
         modifier = modifier,
-        topBar = {
-            TopAppBar(title = { Text(stringResource(R.string.discussion_title)) }, navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.discussion_back)) } }, actions = {
+        title = stringResource(R.string.discussion_title),
+        backContentDescription = stringResource(R.string.discussion_back),
+        onBack = onBack,
+        contentMaxWidth = GithubAdaptiveLayout.wideContentMaxWidth,
+        actions = {
                 IconButton(onClick = onRefresh, enabled = !state.loading) { Icon(Icons.Default.Refresh, stringResource(R.string.discussion_refresh)) }
                 IconButton(onClick = onCreate, enabled = state.repositoryId != null) { Icon(Icons.Default.Add, stringResource(R.string.discussion_new)) }
-            })
         }
     ) { padding ->
         when {
@@ -43,7 +48,7 @@ fun DiscussionsScreen(
                 Text(stringResource(R.string.discussion_load_error), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp)); OutlinedButton(onClick = onRefresh) { Text(stringResource(R.string.discussion_retry)) }
             }
-            else -> LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            else -> LazyColumn(Modifier.fillMaxSize().padding(padding), contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)) {
                 if (state.items.isEmpty() && !state.loading) item {
                     Text(stringResource(R.string.discussion_empty), modifier = Modifier.padding(vertical = 24.dp))
                 }
@@ -53,8 +58,8 @@ fun DiscussionsScreen(
                 }
                 items(state.items, key = GithubDiscussion::id) { discussion ->
                     val summary = remember(discussion.body) { discussionSummary(discussion.body) }
-                    ElevatedCard(onClick = { onOpen(discussion) }, modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                        Column(Modifier.fillMaxWidth().githubCollectionSurface()
+                            .clickable { onOpen(discussion) }.githubCollectionPadding(vertical = 12.dp)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Text("#${discussion.number}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                                 Text(discussion.category.name, modifier = Modifier.weight(1f).padding(start = 12.dp), textAlign = androidx.compose.ui.text.style.TextAlign.End, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelMedium)
@@ -68,7 +73,7 @@ fun DiscussionsScreen(
                             Spacer(Modifier.height(8.dp))
                             Text(stringResource(R.string.discussion_comment_count, discussion.comments) + if (discussion.answered) " · " + stringResource(R.string.discussion_answered) else "", style = MaterialTheme.typography.labelMedium)
                         }
-                    }
+                    GithubCollectionDivider()
                 }
                 if (state.nextCursor != null) item { OutlinedButton(onClick = onLoadMore, enabled = !state.loading, modifier = Modifier.fillMaxWidth()) { Text(if (state.loading) stringResource(R.string.discussion_loading) else stringResource(R.string.discussion_more)) } }
             }
@@ -78,13 +83,13 @@ fun DiscussionsScreen(
 
 @Composable
 fun DiscussionComposer(state: DiscussionsUiState, onEdit: (String, String, String?) -> Unit, onSubmit: () -> Unit, onBack: () -> Unit, onRetryCategories: () -> Unit) {
-    Scaffold(topBar = {
-        TopAppBar(title = { Text(stringResource(R.string.discussion_new)) }, navigationIcon = {
-            IconButton(onClick = onBack, enabled = !state.submitting) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.discussion_back))
-            }
-        })
-    }) { padding ->
+    androidx.activity.compose.BackHandler { if (!state.submitting) onBack() }
+    GithubDetailScaffold(
+        title = stringResource(R.string.discussion_new),
+        backContentDescription = stringResource(R.string.discussion_back),
+        onBack = { if (!state.submitting) onBack() },
+        contentMaxWidth = GithubAdaptiveLayout.formMaxWidth
+    ) { padding ->
     Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedTextField(state.title, { onEdit(it, state.body, state.categoryId) }, label = { Text(stringResource(R.string.discussion_subject)) }, singleLine = true, enabled = !state.submitting, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(state.body, { onEdit(state.title, it, state.categoryId) }, label = { Text(stringResource(R.string.discussion_body)) }, minLines = 8, enabled = !state.submitting, modifier = Modifier.fillMaxWidth())

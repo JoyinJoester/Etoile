@@ -37,13 +37,16 @@ sealed interface MyConversationsAction {
 
 class MyConversationsViewModel(
     private val searchRepository: GithubGlobalSearchRepository,
-    private val kind: MyConversationsKind
+    private val kind: MyConversationsKind,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
     private val _state = MutableStateFlow(MyConversationsUiState())
     val state: StateFlow<MyConversationsUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var currentLogin: String? = null
     private var requestVersion = 0
+
+    init { sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } } }
 
     fun onSessionChanged(session: GithubSession) {
         when (session) {
@@ -130,12 +133,13 @@ class MyConversationsViewModel(
 
     class Factory(
         private val searchRepository: GithubGlobalSearchRepository,
-        private val kind: MyConversationsKind
+        private val kind: MyConversationsKind,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(MyConversationsViewModel::class.java))
-            return MyConversationsViewModel(searchRepository, kind) as T
+            return MyConversationsViewModel(searchRepository, kind, sessions) as T
         }
     }
 }

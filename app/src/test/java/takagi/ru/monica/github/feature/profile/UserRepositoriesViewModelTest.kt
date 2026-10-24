@@ -1,16 +1,23 @@
 package takagi.ru.monica.github.feature.profile
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import takagi.ru.monica.github.domain.GithubSession
+import takagi.ru.monica.github.domain.signedInGithubSession
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubRepositoryCreateDraft
@@ -36,8 +43,32 @@ class UserRepositoriesViewModelTest {
         assertEquals(listOf(1L, 2L), viewModel.state.value.items.map(GithubRepository::id))
     }
 
+    @Test
+    fun retainedAccountScreenRejectsLatePrivateRowsAndDoesNotLoadAnotherAccount() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<GithubPage<GithubRepository>>>()
+        val source = FakeRepository()
+        source.request = { withContext(NonCancellable) { gate.await() } }
+        val alice = signedInGithubSession("alice")
+        val sessions = MutableStateFlow<GithubSession>(alice)
+        val viewModel = UserRepositoriesViewModel(source, sessions, expectedAccountId = 1)
+        runCurrent()
+        sessions.value = GithubSession.SignedIn(alice.account.copy(id = 2))
+        runCurrent()
+        gate.complete(Result.success(GithubPage(listOf(repository(99)), null)))
+        advanceUntilIdle()
+        assertEquals(emptyList<GithubRepository>(), viewModel.state.value.items)
+        viewModel.onAction(UserRepositoriesAction.Refresh)
+        advanceUntilIdle()
+        assertEquals(emptyList<GithubRepository>(), viewModel.state.value.items)
+        source.request = null
+        sessions.value = alice
+        advanceUntilIdle()
+        assertEquals(listOf(1L), viewModel.state.value.items.map { it.id })
+    }
+
     private class FakeRepository : GithubUserRepositoriesRepository {
-        override suspend fun repositories(page: Int, perPage: Int) = Result.success(
+        var request: (suspend () -> Result<GithubPage<GithubRepository>>)? = null
+        override suspend fun repositories(page: Int, perPage: Int): Result<GithubPage<GithubRepository>> = request?.invoke() ?: Result.success(
             GithubPage(
                 items = listOf(repository(page.toLong())),
                 nextPage = if (page == 1) 2 else null

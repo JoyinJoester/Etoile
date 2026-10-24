@@ -7,12 +7,18 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import takagi.ru.monica.github.domain.GithubRepository
+import takagi.ru.monica.github.domain.GithubSession
 import takagi.ru.monica.github.domain.GithubRepositoryCreateDraft
 import takagi.ru.monica.github.domain.GithubUserRepositoriesRepository
 import takagi.ru.monica.github.feature.repository.RepositoryWriteFailure
@@ -26,13 +32,14 @@ data class CreateRepositoryUiState(
     val autoInit: Boolean = false,
     val isSubmitting: Boolean = false,
     val failure: RepositoryWriteFailure? = null,
-    val created: GithubRepository? = null
+    val created: GithubRepository? = null,
+    val accountAvailable: Boolean = true
 ) {
     val isNameUsable: Boolean get() = GithubRepositoryCreateDraft.isValidName(name)
 
     // A typed-but-unusable name deserves a hint while a blank one is only a disabled button.
     val showNameHint: Boolean get() = name.isNotBlank() && !isNameUsable
-    val canSubmit: Boolean get() = isNameUsable && !isSubmitting
+    val canSubmit: Boolean get() = accountAvailable && isNameUsable && !isSubmitting
 }
 
 sealed interface CreateRepositoryAction {
@@ -46,22 +53,48 @@ sealed interface CreateRepositoryAction {
 
 class CreateRepositoryViewModel(
     private val repository: GithubUserRepositoriesRepository,
-    private val savedState: SavedStateHandle = SavedStateHandle()
+    private val savedState: SavedStateHandle = SavedStateHandle(),
+    private val sessions: Flow<GithubSession>? = null,
+    private val expectedAccountId: Long? = null
 ) : ViewModel() {
-    private val _state = MutableStateFlow(CreateRepositoryUiState(
-        name = savedState.get<String>(NAME_KEY).orEmpty(),
-        description = savedState.get<String>(DESCRIPTION_KEY).orEmpty(),
-        isPrivate = savedState.get<Boolean>(PRIVATE_KEY) ?: false,
-        autoInit = savedState.get<Boolean>(AUTO_INIT_KEY) ?: false
-    ))
+    private var accountId: Long? = null
+    private var sessionReady = sessions == null
+    private var generation = 0L
+    private var writeJob: Job? = null
+    private fun key(key: String) = if (sessions == null) key else "${accountId}:$key"
+    private fun restoredDraft() = CreateRepositoryUiState(
+        name = savedState.get<String>(key(NAME_KEY)).orEmpty(),
+        description = savedState.get<String>(key(DESCRIPTION_KEY)).orEmpty(),
+        isPrivate = savedState.get<Boolean>(key(PRIVATE_KEY)) ?: false,
+        autoInit = savedState.get<Boolean>(key(AUTO_INIT_KEY)) ?: false,
+        accountAvailable = sessionReady
+    )
+    private val _state = MutableStateFlow(if (sessionReady) restoredDraft() else CreateRepositoryUiState(accountAvailable = false))
     val state: StateFlow<CreateRepositoryUiState> = _state.asStateFlow()
+
+    init {
+        if (sessions != null) viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            sessions.collect(::onSessionChanged)
+        }
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val id = (session as? GithubSession.SignedIn)?.account?.id
+        val ready = id != null && (expectedAccountId == null || id == expectedAccountId)
+        if (accountId == id && sessionReady == ready) return
+        generation++
+        writeJob?.cancel()
+        accountId = id
+        sessionReady = ready
+        _state.value = if (ready) restoredDraft() else CreateRepositoryUiState(accountAvailable = false)
+    }
 
     fun onAction(action: CreateRepositoryAction) {
         if (action == CreateRepositoryAction.ConsumeCreated) {
             _state.update { it.copy(created = null) }
             return
         }
-        if (_state.value.isSubmitting) return
+        if (!sessionReady || _state.value.isSubmitting) return
         when (action) {
             is CreateRepositoryAction.NameChanged -> edit(_state.value.copy(name = action.name))
             is CreateRepositoryAction.DescriptionChanged -> edit(_state.value.copy(description = action.description))
@@ -74,14 +107,16 @@ class CreateRepositoryViewModel(
 
     private fun edit(next: CreateRepositoryUiState) {
         _state.value = next.copy(failure = null)
-        savedState[NAME_KEY] = next.name
-        savedState[DESCRIPTION_KEY] = next.description
-        savedState[PRIVATE_KEY] = next.isPrivate
-        savedState[AUTO_INIT_KEY] = next.autoInit
+        savedState[key(NAME_KEY)] = next.name
+        savedState[key(DESCRIPTION_KEY)] = next.description
+        savedState[key(PRIVATE_KEY)] = next.isPrivate
+        savedState[key(AUTO_INIT_KEY)] = next.autoInit
     }
 
     private fun submit() {
         val current = _state.value
+        if (!current.canSubmit) return
+        val version = generation
         val draft = GithubRepositoryCreateDraft.fromInput(
             name = current.name,
             description = current.description,
@@ -89,10 +124,13 @@ class CreateRepositoryViewModel(
             autoInit = current.autoInit
         ).getOrNull() ?: return
         _state.update { it.copy(isSubmitting = true, failure = null) }
-        viewModelScope.launch {
-            repository.create(draft).fold(
+        writeJob = viewModelScope.launch {
+            val result = repository.create(draft)
+            coroutineContext.ensureActive()
+            if (version != generation || !sessionReady) return@launch
+            result.fold(
                 onSuccess = { created ->
-                    listOf(NAME_KEY, DESCRIPTION_KEY, PRIVATE_KEY, AUTO_INIT_KEY).forEach { savedState.remove<Any>(it) }
+                    listOf(NAME_KEY, DESCRIPTION_KEY, PRIVATE_KEY, AUTO_INIT_KEY).forEach { savedState.remove<Any>(key(it)) }
                     _state.update { it.copy(
                         name = "", description = "", isPrivate = false, autoInit = false,
                         isSubmitting = false, failure = null, created = created
@@ -107,18 +145,20 @@ class CreateRepositoryViewModel(
     }
 
     class Factory(
-        private val repository: GithubUserRepositoriesRepository
+        private val repository: GithubUserRepositoriesRepository,
+        private val sessions: Flow<GithubSession>? = null,
+        private val expectedAccountId: Long? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             require(modelClass.isAssignableFrom(CreateRepositoryViewModel::class.java))
-            return CreateRepositoryViewModel(repository, extras.createSavedStateHandle()) as T
+            return CreateRepositoryViewModel(repository, extras.createSavedStateHandle(), sessions, expectedAccountId) as T
         }
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(CreateRepositoryViewModel::class.java))
-            return CreateRepositoryViewModel(repository) as T
+            return CreateRepositoryViewModel(repository, sessions = sessions, expectedAccountId = expectedAccountId) as T
         }
     }
 

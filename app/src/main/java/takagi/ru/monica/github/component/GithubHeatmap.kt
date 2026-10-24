@@ -53,8 +53,20 @@ fun GithubContributionHeatmap(
 ) {
     val locale = ConfigurationCompat.getLocales(LocalConfiguration.current)[0] ?: Locale.ROOT
     val monthsByWeek = remember(calendar, locale) { calendar.monthLabelsByWeek(locale) }
+    // Index dates once, rather than repeatedly parsing up to seven dates for every cell on return.
+    val daysByWeekday = remember(calendar) {
+        calendar.weeks.map { week ->
+            buildMap {
+                week.days.forEach { day -> day.parsedDate()?.dayOfWeek?.value?.let { putIfAbsent(it, day) } }
+            }
+        }
+    }
     val monthStarts = remember(monthsByWeek) {
-        monthsByWeek.mapIndexedNotNull { index, label -> label?.let { index to it } }
+        val starts = monthsByWeek.mapIndexedNotNull { index, label -> label?.let { index to it } }
+        // A partial final month needs room for its name inside the grid, not extra blank weeks.
+        starts.mapIndexed { index, (week, label) ->
+            (if (index == starts.lastIndex) week.coerceAtMost((monthsByWeek.size - 3).coerceAtLeast(0)) else week) to label
+        }
     }
     val cellSize = HeatmapCellSize * LocalDensity.current.fontScale.coerceAtLeast(1f)
     val weekWidth = cellSize + HeatmapCellSpacing
@@ -63,19 +75,21 @@ fun GithubContributionHeatmap(
     Column(modifier = modifier) {
         // A single scroll container keeps month spans aligned with the week grid.
         // Month names get the width of a month, rather than one 12dp day cell.
-        Column(Modifier.horizontalScroll(scrollState)) {
+        // Keep the calendar chronological, starting at its newest (rightmost) edge.
+        // Reverse scrolling anchors value 0 to the end without a visible post-layout jump.
+        Column(Modifier.horizontalScroll(scrollState, reverseScrolling = true)) {
             Row {
                 monthStarts.firstOrNull()?.let { Spacer(Modifier.width(weekWidth * it.first)) }
                 monthStarts.forEachIndexed { index, (weekIndex, label) ->
                     val nextWeek = monthStarts.getOrNull(index + 1)?.first ?: calendar.weeks.size
-                    val weeksInLabel = (nextWeek - weekIndex).coerceAtLeast(if (index == monthStarts.lastIndex) 3 else 1)
+                    val weeksInLabel = (nextWeek - weekIndex).coerceAtLeast(1)
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         softWrap = false,
-                        modifier = Modifier.width(weekWidth * weeksInLabel)
+                        modifier = Modifier.width(weekWidth * weeksInLabel - if (index == monthStarts.lastIndex) HeatmapCellSpacing else 0.dp)
                     )
                 }
             }
@@ -84,12 +98,10 @@ fun GithubContributionHeatmap(
                     .padding(top = 3.dp),
                 horizontalArrangement = Arrangement.spacedBy(HeatmapCellSpacing)
             ) {
-                calendar.weeks.forEach { week ->
+                daysByWeekday.forEach { week ->
                     Column(verticalArrangement = Arrangement.spacedBy(HeatmapCellSpacing)) {
                         repeat(7) { weekdayIndex ->
-                            val day = week.days.firstOrNull {
-                                it.parsedDate()?.dayOfWeek?.value == weekdayIndexOf(weekdayIndex)
-                            }
+                            val day = week[weekdayIndexOf(weekdayIndex)]
                             if (day == null) {
                                 Box(modifier = Modifier.size(cellSize))
                             } else {

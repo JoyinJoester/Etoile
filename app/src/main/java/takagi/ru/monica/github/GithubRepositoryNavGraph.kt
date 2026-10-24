@@ -130,6 +130,8 @@ import takagi.ru.monica.github.feature.pullrequest.PullRequestDetailScreen
 import takagi.ru.monica.github.feature.pullrequest.PullRequestDetailViewModel
 import takagi.ru.monica.github.feature.pullrequest.PullRequestsScreen
 import takagi.ru.monica.github.feature.pullrequest.PullRequestsViewModel
+import takagi.ru.monica.github.feature.repository.RepositoryMoreScreen
+import takagi.ru.monica.github.navigation.GithubRepositoryMoreRoute
 import takagi.ru.monica.github.feature.repository.RepositoryDetailScreen
 import takagi.ru.monica.github.feature.repository.RepositoryDetailViewModel
 import takagi.ru.monica.github.feature.repository.RepositoryBranchesScreen
@@ -144,6 +146,9 @@ import takagi.ru.monica.github.feature.repository.InviteCollaboratorScreen
 import takagi.ru.monica.github.feature.repository.InviteCollaboratorViewModel
 import takagi.ru.monica.github.feature.repository.RepositoryWebhooksScreen
 import takagi.ru.monica.github.feature.repository.RepositoryWebhooksViewModel
+import takagi.ru.monica.github.feature.repository.RepositoryWebhookDeliveriesScreen
+import takagi.ru.monica.github.feature.repository.RepositoryWebhookDeliveriesViewModel
+import takagi.ru.monica.github.navigation.GithubWebhookDeliveriesRoute
 import takagi.ru.monica.github.feature.repository.RepositoryFileScreen
 import takagi.ru.monica.github.feature.repository.RepositoryFileViewModel
 import takagi.ru.monica.github.feature.repository.RepositoryFilesScreen
@@ -221,7 +226,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     owner = route.owner,
                     name = route.name,
                     repository = scope.dependencies.repositoryDetailsRepository,
-                    actionsRepository = scope.dependencies.repositoryActionsRepository
+                    actionsRepository = scope.dependencies.repositoryActionsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val detailViewModel: RepositoryDetailViewModel = viewModel(
@@ -229,9 +235,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val detailState by detailViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, detailViewModel) {
-                detailViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(detailState.viewerAccountId) {
             RepositoryDetailScreen(
                 state = detailState,
                 onAction = detailViewModel::onAction,
@@ -246,6 +250,77 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                         launchSingleTop = true
                     }
                 },
+
+                onOpenIssues = { details ->
+                    scope.navController.navigate(
+                        GithubRepositoryIssuesRoute(details.repository.fullName)
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenPullRequests = { details ->
+                    scope.navController.navigate(
+                        GithubRepositoryPullRequestsRoute(details.repository.fullName)
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+
+                onOpenReleases = { details ->
+                    scope.navController.navigate(
+                        GithubRepositoryReleasesRoute(details.repository.fullName)
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+
+                onOpenMore = {
+                    // Keep the exact parent route identity; API names may differ in case.
+                    scope.navController.navigate(GithubRepositoryMoreRoute(route.fullName)) {
+                        launchSingleTop = true
+                    }
+                },
+                isSignedIn = scope.sessionState.session is GithubSession.SignedIn,
+                onSignIn = { scope.navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
+                onOpenRepository = { repository ->
+                    scope.navController.navigate(GithubRepositoryRoute(repository.fullName)) {
+                        launchSingleTop = true
+                    }
+                },
+                onOpenExternal = { url ->
+                    if (url.equals("https://github.com/${route.fullName}/discussions", ignoreCase = true)) {
+                        scope.navController.navigate(takagi.ru.monica.github.navigation.GithubRepositoryDiscussionsRoute(route.fullName)) {
+                            launchSingleTop = true
+                        }
+                    } else scope.openUrl(url)
+                },
+                modifier = Modifier.fillMaxSize()
+            )
+            }
+        }
+        composable<GithubRepositoryMoreRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<GithubRepositoryMoreRoute>()
+            val parentEntry = remember(backStackEntry, route.fullName) {
+                scope.navController.getBackStackEntry(GithubRepositoryRoute(route.fullName))
+            }
+            val factory = remember(route.fullName, scope.dependencies) {
+                RepositoryDetailViewModel.Factory(
+                    owner = route.fullName.substringBefore('/'),
+                    name = route.fullName.substringAfter('/'),
+                    repository = scope.dependencies.repositoryDetailsRepository,
+                    actionsRepository = scope.dependencies.repositoryActionsRepository,
+                    sessions = scope.dependencies.authRepository.session
+                )
+            }
+            val detailViewModel: RepositoryDetailViewModel = viewModel(
+                viewModelStoreOwner = parentEntry, key = route.fullName, factory = factory
+            )
+            val detailState by detailViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(detailState.viewerAccountId) {
+            RepositoryMoreScreen(
+                state = detailState,
+                onAction = detailViewModel::onAction,
+                onBack = { scope.navController.popBackStack() },
                 onOpenBranches = { details ->
                     scope.navController.navigate(
                         GithubRepositoryBranchesRoute(
@@ -280,30 +355,9 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                         launchSingleTop = true
                     }
                 },
-                onOpenIssues = { details ->
-                    scope.navController.navigate(
-                        GithubRepositoryIssuesRoute(details.repository.fullName)
-                    ) {
-                        launchSingleTop = true
-                    }
-                },
-                onOpenPullRequests = { details ->
-                    scope.navController.navigate(
-                        GithubRepositoryPullRequestsRoute(details.repository.fullName)
-                    ) {
-                        launchSingleTop = true
-                    }
-                },
                 onOpenActions = { details ->
                     scope.navController.navigate(
                         GithubRepositoryActionsRoute(details.repository.fullName)
-                    ) {
-                        launchSingleTop = true
-                    }
-                },
-                onOpenReleases = { details ->
-                    scope.navController.navigate(
-                        GithubRepositoryReleasesRoute(details.repository.fullName)
                     ) {
                         launchSingleTop = true
                     }
@@ -318,22 +372,16 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                         launchSingleTop = true
                     }
                 },
-                isSignedIn = scope.sessionState.session is GithubSession.SignedIn,
-                onSignIn = { scope.navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
-                onOpenRepository = { repository ->
-                    scope.navController.navigate(GithubRepositoryRoute(repository.fullName)) {
+                onOpenDiscussions = { details ->
+                    scope.navController.navigate(takagi.ru.monica.github.navigation.GithubRepositoryDiscussionsRoute(details.repository.fullName)) {
                         launchSingleTop = true
                     }
                 },
-                onOpenExternal = { url ->
-                    if (url == "https://github.com/${route.fullName}/discussions") {
-                        scope.navController.navigate(takagi.ru.monica.github.navigation.GithubRepositoryDiscussionsRoute(route.fullName)) {
-                            launchSingleTop = true
-                        }
-                    } else scope.openUrl(url)
-                },
-                modifier = Modifier.fillMaxSize()
+                isSignedIn = scope.sessionState.session is GithubSession.SignedIn,
+                onSignIn = { scope.navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
+                onOpenExternal = scope.openUrl
             )
+            }
         }
         composable<GithubRepositoryBranchesRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryBranchesRoute>()
@@ -343,7 +391,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     name = route.name,
                     defaultBranch = route.defaultBranch,
                     repository = scope.dependencies.repositoryContentsRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val branchesViewModel: RepositoryBranchesViewModel = viewModel(
@@ -351,9 +400,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val branchesState by branchesViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, branchesViewModel) {
-                branchesViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(branchesState.viewerAccountId) {
             RepositoryBranchesScreen(
                 state = branchesState,
                 onAction = branchesViewModel::onAction,
@@ -383,6 +430,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubRepositoryCompareRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryCompareRoute>()
@@ -392,7 +440,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     name = route.name,
                     base = route.base,
                     head = route.head,
-                    repository = scope.dependencies.pullRequestsRepository
+                    repository = scope.dependencies.pullRequestsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val compareViewModel: RepositoryCompareViewModel = viewModel(
@@ -416,7 +465,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     name = route.name,
                     defaultBranch = route.defaultBranch,
                     repository = scope.dependencies.repositoryContentsRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val tagsViewModel: RepositoryTagsViewModel = viewModel(
@@ -424,9 +474,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val tagsState by tagsViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, tagsViewModel) {
-                tagsViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(tagsState.viewerAccountId) {
             RepositoryTagsScreen(
                 state = tagsState,
                 onAction = tagsViewModel::onAction,
@@ -445,6 +493,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubRepositoryCollaboratorsRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryCollaboratorsRoute>()
@@ -452,7 +501,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 RepositoryCollaboratorsViewModel.Factory(
                     owner = route.owner,
                     name = route.name,
-                    repository = scope.dependencies.repositoryDetailsRepository
+                    repository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val collaboratorsViewModel: RepositoryCollaboratorsViewModel = viewModel(
@@ -460,9 +510,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val collaboratorsState by collaboratorsViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, collaboratorsViewModel) {
-                collaboratorsViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(collaboratorsState.viewerAccountId) {
             RepositoryCollaboratorsScreen(
                 state = collaboratorsState,
                 onAction = collaboratorsViewModel::onAction,
@@ -481,6 +529,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 },
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubInviteCollaboratorRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubInviteCollaboratorRoute>()
@@ -488,7 +537,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 InviteCollaboratorViewModel.Factory(
                     owner = route.owner,
                     name = route.name,
-                    repository = scope.dependencies.repositoryDetailsRepository
+                    repository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val inviteViewModel: InviteCollaboratorViewModel = viewModel(
@@ -511,7 +561,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     owner = route.owner,
                     name = route.name,
                     repository = scope.dependencies.repositoryDetailsRepository,
-                    viewerCanAdmin = route.viewerCanAdmin
+                    viewerCanAdmin = false,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val webhooksViewModel: RepositoryWebhooksViewModel = viewModel(
@@ -519,13 +570,44 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val webhooksState by webhooksViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(webhooksState.viewerAccountId) {
             RepositoryWebhooksScreen(
                 state = webhooksState,
                 onAction = webhooksViewModel::onAction,
                 onBack = { scope.navController.popBackStack() },
                 onOpenExternal = scope.openUrl,
+                onOpenDeliveries = { webhookId ->
+                    scope.navController.navigate(GithubWebhookDeliveriesRoute(route.fullName, webhookId)) {
+                        launchSingleTop = true
+                    }
+                },
                 modifier = Modifier.fillMaxSize()
             )
+            }
+        }
+        composable<GithubWebhookDeliveriesRoute> { backStackEntry ->
+            val route = backStackEntry.toRoute<GithubWebhookDeliveriesRoute>()
+            val factory = remember(route.fullName, route.webhookId, scope.dependencies) {
+                RepositoryWebhookDeliveriesViewModel.Factory(
+                    route.owner, route.name, route.webhookId, scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
+                )
+            }
+            val deliveriesViewModel: RepositoryWebhookDeliveriesViewModel = viewModel(
+                key = "webhook-deliveries:${route.fullName}:${route.webhookId}",
+                factory = factory
+            )
+            val deliveriesState by deliveriesViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(deliveriesState.viewerId) {
+            RepositoryWebhookDeliveriesScreen(
+                state = deliveriesState,
+                onAction = deliveriesViewModel::onAction,
+                onBack = { scope.navController.popBackStack() },
+                onOpenExternal = scope.openUrl,
+                onSignIn = { scope.navController.navigate(GithubSignInRoute) { launchSingleTop = true } },
+                modifier = Modifier.fillMaxSize()
+            )
+            }
         }
         composable<GithubRepositoryFilesRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryFilesRoute>()
@@ -536,7 +618,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     ref = route.ref,
                     path = route.path,
                     repository = scope.dependencies.repositoryContentsRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val filesViewModel: RepositoryFilesViewModel = viewModel(
@@ -544,9 +627,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val filesState by filesViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, filesViewModel) {
-                filesViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(filesState.viewerAccountId) {
             RepositoryFilesScreen(
                 state = filesState,
                 onAction = filesViewModel::onAction,
@@ -580,6 +661,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubRepositoryFileRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryFileRoute>()
@@ -590,7 +672,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     ref = route.ref,
                     path = route.path,
                     repository = scope.dependencies.repositoryContentsRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val fileViewModel: RepositoryFileViewModel = viewModel(
@@ -598,9 +681,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val fileState by fileViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, fileViewModel) {
-                fileViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(fileState.viewerAccountId) {
             RepositoryFileScreen(
                 state = fileState,
                 onAction = fileViewModel::onAction,
@@ -608,6 +689,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
 
         composable<GithubRepositoryReleasesRoute> { backStackEntry ->
@@ -616,7 +698,10 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 ReleasesViewModel.Factory(
                     owner = route.owner,
                     name = route.name,
-                    repository = scope.dependencies.releasesRepository
+                    repository = scope.dependencies.releasesRepository,
+                    sessions = scope.dependencies.authRepository.session,
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    journal = scope.dependencies.actionJournal
                 )
             }
             val releasesViewModel: ReleasesViewModel = viewModel(
@@ -624,6 +709,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val releasesState by releasesViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(releasesState.viewerAccountId) {
             ReleasesScreen(
                 state = releasesState,
                 onAction = releasesViewModel::onAction,
@@ -641,6 +727,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubReleaseRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubReleaseRoute>()
@@ -648,8 +735,11 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 fullName = route.fullName,
                 owner = route.owner,
                 name = route.name,
+                journal = scope.dependencies.actionJournal,
                 reference = ReleaseReference.Id(route.releaseId),
                 repository = scope.dependencies.releasesRepository,
+                sessions = scope.dependencies.authRepository.session,
+                detailsRepository = scope.dependencies.repositoryDetailsRepository,
                 onBack = { scope.navController.popBackStack() },
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
@@ -661,8 +751,11 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 fullName = route.fullName,
                 owner = route.owner,
                 name = route.name,
+                journal = scope.dependencies.actionJournal,
                 reference = ReleaseReference.Tag(route.tagName),
                 repository = scope.dependencies.releasesRepository,
+                sessions = scope.dependencies.authRepository.session,
+                detailsRepository = scope.dependencies.repositoryDetailsRepository,
                 onBack = { scope.navController.popBackStack() },
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
@@ -675,7 +768,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     owner = route.owner,
                     name = route.name,
                     ref = route.ref,
-                    repository = scope.dependencies.commitsRepository
+                    repository = scope.dependencies.commitsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val commitsViewModel: CommitsViewModel = viewModel(
@@ -683,6 +777,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val commitsState by commitsViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(commitsState.viewerAccountId) {
             CommitsScreen(
                 state = commitsState,
                 onAction = commitsViewModel::onAction,
@@ -695,6 +790,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubCommitRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubCommitRoute>()
@@ -703,7 +799,8 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                     owner = route.owner,
                     name = route.name,
                     sha = route.sha,
-                    repository = scope.dependencies.commitsRepository
+                    repository = scope.dependencies.commitsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val commitViewModel: CommitDetailViewModel = viewModel(
@@ -711,6 +808,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val commitState by commitViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(commitState.viewerAccountId) {
             CommitDetailScreen(
                 state = commitState,
                 onAction = commitViewModel::onAction,
@@ -718,6 +816,7 @@ internal fun NavGraphBuilder.githubRepositoryGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
 }
 
@@ -728,6 +827,9 @@ internal fun GithubReleaseDetailDestination(
     name: String,
     reference: ReleaseReference,
     repository: GithubReleasesRepository,
+    journal: takagi.ru.monica.github.domain.GithubActionJournal = takagi.ru.monica.github.data.InMemoryGithubActionJournal(),
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null,
+    detailsRepository: takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository? = null,
     onBack: () -> Unit,
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -736,19 +838,20 @@ internal fun GithubReleaseDetailDestination(
         is ReleaseReference.Id -> "id:${reference.value}"
         is ReleaseReference.Tag -> "tag:${reference.value}"
     }
-    val factory = remember(fullName, reference, repository) {
+    val factory = remember(fullName, reference, repository, sessions, detailsRepository, journal) {
         ReleaseDetailViewModel.Factory(
             owner = owner,
             name = name,
             reference = reference,
-            repository = repository
-        )
+            repository = repository,
+            sessions = sessions, detailsRepository = detailsRepository, journal = journal)
     }
     val releaseViewModel: ReleaseDetailViewModel = viewModel(
         key = "release:$fullName:$referenceKey",
         factory = factory
     )
     val releaseState by releaseViewModel.state.collectAsStateWithLifecycle()
+    androidx.compose.runtime.key(releaseState.viewerAccountId) {
     ReleaseDetailScreen(
         state = releaseState,
         onAction = releaseViewModel::onAction,
@@ -756,4 +859,5 @@ internal fun GithubReleaseDetailDestination(
         onOpenExternal = onOpenExternal,
         modifier = modifier
     )
+    }
 }

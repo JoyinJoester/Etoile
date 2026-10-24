@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -80,7 +82,14 @@ data class StarredUiState(
             item.labels.any { it.name.contains(query, ignoreCase = true) }
     }
 
-    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isLoadingMore
+    val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isLoadingMore && !isRefreshing && !requiresAuthentication
+
+    /** Local filters may hide a whole page, so the empty viewport must also allow continuation. */
+    internal fun nextAutomaticPage(lastVisibleIndex: Int, totalItems: Int): Int? =
+        nextPage?.takeIf {
+            canLoadMore && !error && totalItems > 0 && lastVisibleIndex >= 0 &&
+                lastVisibleIndex >= totalItems - 6
+        }
 
     val selectionCount: Int get() = selectedRepositories.size
 
@@ -112,6 +121,7 @@ sealed interface StarredAction {
     data object Retry : StarredAction
     data object PullToRefresh : StarredAction
     data object LoadMore : StarredAction
+    data object LoadMoreAutomatically : StarredAction
     data class SelectionToggled(val repositoryId: Long) : StarredAction
     data object SelectionCleared : StarredAction
     data object SelectAllVisibleToggled : StarredAction
@@ -127,22 +137,42 @@ class StarredViewModel(
     private val _state = MutableStateFlow(StarredUiState())
     val state: StateFlow<StarredUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
+    private var loadVersion = 0L
+    private var sessionAccountId: Long? = null
+    private var accountLabelStore: GithubStarLabelStore? = null
 
     fun onSessionChanged(session: GithubSession) {
+        loadVersion++
+        loadJob?.cancel()
         when (session) {
-            GithubSession.Loading -> _state.update { it.copy(isLoading = true, error = false) }
+            GithubSession.Loading -> {
+                sessionAccountId = null
+                accountLabelStore = null
+                _state.value = StarredUiState(isLoading = true)
+            }
             GithubSession.SignedOut -> {
-                loadJob?.cancel()
+                sessionAccountId = null
+                accountLabelStore = null
                 _state.value = StarredUiState(requiresAuthentication = true)
             }
-            is GithubSession.Error -> _state.update {
-                it.copy(isLoading = false, requiresAuthentication = false, error = true)
+            is GithubSession.Error -> {
+                sessionAccountId = null
+                accountLabelStore = null
+                _state.value = StarredUiState(error = true)
             }
-            is GithubSession.SignedIn -> refresh()
+            is GithubSession.SignedIn -> {
+                val changedAccount = sessionAccountId != session.account.id
+                sessionAccountId = session.account.id
+                accountLabelStore = labelStore.forAccount(session.account.id)
+                if (changedAccount) _state.value = StarredUiState(requiresAuthentication = false)
+                else _state.update { it.copy(requiresAuthentication = false) }
+                refresh()
+            }
         }
     }
 
     fun onAction(action: StarredAction) {
+        if (sessionAccountId == null) return
         when (action) {
             is StarredAction.QueryChanged -> _state.update { it.copy(query = action.query) }
             is StarredAction.FilterSelected -> _state.update { it.copy(selectedFilter = action.filter) }
@@ -170,6 +200,7 @@ class StarredViewModel(
             }
             StarredAction.PullToRefresh -> load(reset = true, refreshing = true)
             StarredAction.LoadMore -> load(reset = false)
+            StarredAction.LoadMoreAutomatically -> if (!_state.value.error) load(reset = false)
             is StarredAction.SelectionToggled -> toggleSelection(action.repositoryId)
             StarredAction.SelectionCleared -> _state.update {
                 it.copy(
@@ -191,6 +222,7 @@ class StarredViewModel(
 
     /** Leaving selection mode when the last row is deselected keeps the bar honest. */
     private fun toggleSelection(repositoryId: Long) {
+        if (_state.value.repositories.none { it.repository.id == repositoryId }) return
         _state.update { state ->
             val selected = if (repositoryId in state.selectedRepositories) {
                 state.selectedRepositories - repositoryId
@@ -222,9 +254,11 @@ class StarredViewModel(
     }
 
     private fun applyBatchLabel(labelId: Long, assigned: Boolean) {
-        val targets = _state.value.selectedRepositories
+        val targets = _state.value.selectedRepositories.intersect(
+            _state.value.repositories.mapTo(hashSetOf()) { it.repository.id }
+        )
         if (targets.isEmpty()) return
-        val updated = labelStore.assignLabel(targets, labelId, assigned)
+        val updated = accountLabelStore!!.assignLabel(targets, labelId, assigned)
         _state.update { state ->
             state.copy(
                 repositories = state.repositories.map { item ->
@@ -245,14 +279,16 @@ class StarredViewModel(
      */
     private fun load(reset: Boolean, refreshing: Boolean = false) {
         val current = _state.value
+        if (current.requiresAuthentication) return
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
         loadJob?.cancel()
+        val version = ++loadVersion
         _state.update {
             it.copy(
                 repositories = if (reset && !refreshing) emptyList() else it.repositories,
                 nextPage = if (reset) null else it.nextPage,
-                labels = labelStore.labels(),
+                labels = accountLabelStore!!.labels(),
                 isLoading = reset && !refreshing,
                 isLoadingMore = !reset,
                 isRefreshing = refreshing,
@@ -262,22 +298,27 @@ class StarredViewModel(
             )
         }
         loadJob = viewModelScope.launch {
-            repository.starredRepositories(requestedPage).fold(
+            val result = repository.starredRepositories(requestedPage)
+            currentCoroutineContext().ensureActive()
+            if (version != loadVersion) return@launch
+            result.fold(
                 onSuccess = { page ->
                     val labeledPage = GithubPage(
                         items = page.items.map { repository ->
-                            GithubLabeledStar(repository, labelStore.labelsFor(repository.id))
+                            GithubLabeledStar(repository, accountLabelStore!!.labelsFor(repository.id))
                         },
                         nextPage = page.nextPage
                     )
                     _state.update { state ->
+                        val repositories = labeledPage.mergeItems(state.repositories, reset, { it.repository.id })
+                        val selected = state.selectedRepositories.intersect(repositories.map { it.repository.id }.toSet())
                         state.copy(
-                            repositories = labeledPage.mergeItems(
-                                state.repositories,
-                                reset,
-                                { it.repository.id }
-                            ),
-                            labels = labelStore.labels(),
+                            repositories = repositories,
+                            selectedRepositories = selected,
+                            selectionMode = selected.isNotEmpty(),
+                            batchLabelVisible = state.batchLabelVisible && selected.isNotEmpty(),
+                            editingRepositoryId = state.editingRepositoryId?.takeIf { id -> repositories.any { it.repository.id == id } },
+                            labels = accountLabelStore!!.labels(),
                             nextPage = page.nextPage,
                             isLoading = false,
                             isLoadingMore = false,
@@ -303,7 +344,7 @@ class StarredViewModel(
     }
 
     private fun toggleLabel(repositoryId: Long, labelId: Long) {
-        val assigned = labelStore.toggleAssignment(repositoryId, labelId)
+        val assigned = accountLabelStore!!.toggleAssignment(repositoryId, labelId)
         _state.update { state ->
             state.copy(
                 repositories = state.repositories.map { item ->
@@ -314,29 +355,29 @@ class StarredViewModel(
     }
 
     private fun createLabel(name: String) {
-        labelStore.createLabel(name).fold(
-            onSuccess = { _state.update { it.copy(labels = labelStore.labels(), labelError = null) } },
+        accountLabelStore!!.createLabel(name).fold(
+            onSuccess = { _state.update { it.copy(labels = accountLabelStore!!.labels(), labelError = null) } },
             onFailure = { failure -> reportLabelFailure(failure) }
         )
     }
 
     private fun renameLabel(labelId: Long, name: String) {
-        labelStore.renameLabel(labelId, name).fold(
+        accountLabelStore!!.renameLabel(labelId, name).fold(
             onSuccess = { reloadLabels() },
             onFailure = { failure -> reportLabelFailure(failure, labelId) }
         )
     }
 
     private fun deleteLabel(labelId: Long) {
-        labelStore.deleteLabel(labelId)
-        val labels = labelStore.labels()
+        accountLabelStore!!.deleteLabel(labelId)
+        val labels = accountLabelStore!!.labels()
         _state.update { state ->
             val filter = state.selectedFilter
             state.copy(
                 labels = labels,
                 labelError = null,
                 repositories = state.repositories.map { item ->
-                    item.copy(labels = labelStore.labelsFor(item.repository.id))
+                    item.copy(labels = accountLabelStore!!.labelsFor(item.repository.id))
                 },
                 selectedFilter = if (filter is GithubStarFilter.Label && filter.labelId == labelId) {
                     GithubStarFilter.All
@@ -349,13 +390,13 @@ class StarredViewModel(
 
     /** Re-reads labels and refreshes the copies cached on each row. */
     private fun reloadLabels() {
-        val labels = labelStore.labels()
+        val labels = accountLabelStore!!.labels()
         _state.update { state ->
             state.copy(
                 labels = labels,
                 labelError = null,
                 repositories = state.repositories.map { item ->
-                    item.copy(labels = labelStore.labelsFor(item.repository.id))
+                    item.copy(labels = accountLabelStore!!.labelsFor(item.repository.id))
                 }
             )
         }

@@ -1,5 +1,7 @@
 package takagi.ru.monica.github.feature.actions
 
+import takagi.ru.monica.github.component.githubConfirmedAction
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -61,8 +63,27 @@ internal fun ActionsRunSummaryCard(
     onAction: ((GithubWorkflowRunAction) -> Unit)? = null,
     canManage: Boolean = false,
     isPerformingAction: Boolean = false,
-    actionError: Boolean = false
+    actionError: Boolean = false,
+    viewerAccountId: Long? = null,
+    unconfirmed: Boolean = false
 ) {
+    val confirmRerun = githubConfirmedAction(
+        title = stringResource(R.string.github_actions_rerun),
+        message = stringResource(if (unconfirmed) R.string.github_actions_repeat_warning else R.string.github_confirm_run_rerun),
+        subject = "${run.name} #${run.runNumber}",
+        enabled = canManage && !isPerformingAction && onAction != null && run.status == takagi.ru.monica.github.domain.GithubActionsStatus.COMPLETED,
+        onConfirm = { onAction?.invoke(GithubWorkflowRunAction.RERUN) },
+        confirmationKey = Triple(viewerAccountId, run.id, unconfirmed)
+    )
+    val confirmCancel = githubConfirmedAction(
+        title = stringResource(R.string.github_actions_cancel),
+        message = stringResource(if (unconfirmed) R.string.github_actions_repeat_warning else R.string.github_confirm_run_cancel),
+        subject = "${run.name} #${run.runNumber}",
+        enabled = canManage && !isPerformingAction && onAction != null && run.status != takagi.ru.monica.github.domain.GithubActionsStatus.COMPLETED,
+        onConfirm = { onAction?.invoke(GithubWorkflowRunAction.CANCEL) },
+        confirmationKey = Triple(viewerAccountId, run.id, unconfirmed)
+    )
+
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = GithubExpressiveShapes.prominent,
@@ -116,7 +137,7 @@ internal fun ActionsRunSummaryCard(
                 }
                 if (run.status == takagi.ru.monica.github.domain.GithubActionsStatus.COMPLETED) {
                     Button(
-                        onClick = { onAction(GithubWorkflowRunAction.RERUN) },
+                        onClick = confirmRerun,
                         enabled = canManage && !isPerformingAction,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 14.dp),
                         shape = GithubExpressiveShapes.control
@@ -126,7 +147,7 @@ internal fun ActionsRunSummaryCard(
                     }
                 } else {
                     OutlinedButton(
-                        onClick = { onAction(GithubWorkflowRunAction.CANCEL) },
+                        onClick = confirmCancel,
                         enabled = canManage && !isPerformingAction,
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = 14.dp),
                         shape = GithubExpressiveShapes.control

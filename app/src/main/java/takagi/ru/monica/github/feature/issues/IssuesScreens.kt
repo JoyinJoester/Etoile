@@ -1,5 +1,7 @@
 package takagi.ru.monica.github.feature.issues
 
+import takagi.ru.monica.github.component.githubConfirmedAction
+
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.component.githubFullSpanItem
 import takagi.ru.monica.github.component.GithubAdaptiveGrid
@@ -48,6 +50,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -95,6 +100,7 @@ import takagi.ru.monica.github.domain.GithubIssueLabel
 import takagi.ru.monica.github.domain.GithubIssueMilestone
 import takagi.ru.monica.github.domain.GithubUserSummary
 import takagi.ru.monica.github.navigation.GithubWebUrls
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -214,22 +220,22 @@ fun IssueDetailScreen(
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var labelsOpen by remember { mutableStateOf(false) }
-    var selectedLabels by remember { mutableStateOf(emptySet<String>()) }
-    var labelSaveRequested by remember { mutableStateOf(false) }
-    var assigneesOpen by remember { mutableStateOf(false) }
-    var selectedAssignees by remember { mutableStateOf(emptySet<String>()) }
-    var assigneeSaveRequested by remember { mutableStateOf(false) }
-    var milestonesOpen by remember { mutableStateOf(false) }
-    var selectedMilestone by remember { mutableStateOf<Int?>(null) }
-    var milestoneSaveRequested by remember { mutableStateOf(false) }
-    var managementOpen by remember { mutableStateOf(false) }
-    var contentEditorOpen by remember { mutableStateOf(false) }
-    var commentEditorOpen by remember { mutableStateOf(false) }
-    var commentSubmitRequested by remember { mutableStateOf(false) }
-    var editTitle by remember { mutableStateOf("") }
-    var editBody by remember { mutableStateOf("") }
-    var contentSaveRequested by remember { mutableStateOf(false) }
+    var labelsOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedLabels by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(emptySet<String>()) }
+    var labelSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var assigneesOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedAssignees by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(emptySet<String>()) }
+    var assigneeSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var milestonesOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedMilestone by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf<Int?>(null) }
+    var milestoneSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var managementOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var contentEditorOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var commentEditorOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var commentSubmitRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var editTitle by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf("") }
+    var editBody by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf("") }
+    var contentSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
     LaunchedEffect(state.isUpdatingLabels, state.labelsUpdateError, labelSaveRequested) {
         if (labelSaveRequested && !state.isUpdatingLabels) {
             if (!state.labelsUpdateError) labelsOpen = false
@@ -497,6 +503,7 @@ fun IssueDetailScreen(
     if (managementOpen && state.issue != null) {
         IssueManagementSheet(
             issue = state.issue,
+            isBusy = state.isUpdatingState || state.isUpdatingLock,
             canEditContent = state.canEditContent,
             canTriage = state.canTriage,
             canChangeState = state.canChangeState,
@@ -565,6 +572,7 @@ fun IssueDetailScreen(
 @Composable
 private fun IssueManagementSheet(
     issue: GithubIssue,
+    isBusy: Boolean,
     canEditContent: Boolean,
     canTriage: Boolean,
     canChangeState: Boolean,
@@ -577,6 +585,21 @@ private fun IssueManagementSheet(
     onToggleLock: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val confirmState = githubConfirmedAction(
+        title = stringResource(if (issue.state == GithubIssueState.OPEN) R.string.github_close_issue else R.string.github_reopen_issue),
+        message = stringResource(R.string.github_confirm_state_message),
+        subject = "#${issue.number} ${issue.title}",
+        enabled = canChangeState && !isBusy,
+        onConfirm = onToggleState
+    )
+    val confirmLock = githubConfirmedAction(
+        title = stringResource(if (issue.isLocked) R.string.github_confirm_unlock_title else R.string.github_confirm_lock_title),
+        message = stringResource(R.string.github_confirm_lock_message),
+        subject = "#${issue.number} ${issue.title}",
+        enabled = canLock && !isBusy,
+        onConfirm = onToggleLock
+    )
+
     GithubModalBottomSheet(onDismissRequest = onDismiss) {
         GithubSheetHeader(
             title = stringResource(R.string.github_manage_issue),
@@ -615,7 +638,7 @@ private fun IssueManagementSheet(
                     else R.string.github_reopen_issue
                 ),
                 canChangeState,
-                onToggleState
+                confirmState
             )
             IssueManagementButton(
                 if (issue.isLocked) Icons.Default.LockOpen else Icons.Default.Lock,
@@ -623,7 +646,7 @@ private fun IssueManagementSheet(
                     if (issue.isLocked) R.string.github_unlock_issue else R.string.github_lock_issue
                 ),
                 canLock,
-                onToggleLock
+                confirmLock
             )
             if (!canTriage) {
                 Text(
@@ -669,8 +692,8 @@ private fun IssueRow(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.fillMaxWidth().heightIn(min = 56.dp)
-            .clickable(role = Role.Button, onClick = onClick).padding(vertical = 10.dp)
+        modifier = modifier.fillMaxWidth().githubCollectionSurface().heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClick = onClick).githubCollectionPadding()
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Icon(
@@ -729,9 +752,8 @@ private fun IssueRow(
         if (issue.labels.isNotEmpty()) {
             GithubLabelRow(issue.labels, modifier = Modifier.padding(start = 32.dp, top = 10.dp))
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 10.dp, start = 32.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+        GithubCollectionDivider(
+            modifier = Modifier.padding(top = 10.dp, start = 32.dp)
         )
     }
 }
@@ -836,7 +858,7 @@ private fun IssueDescription(issue: GithubIssue, fullName: String, onOpenExterna
             onOpenExternalLink = { target ->
                 onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, "HEAD", "", target))
             },
-            renderImages = false,
+            imageContext = MarkdownImageContext(fullName),
             maxElements = 300
         )
     }

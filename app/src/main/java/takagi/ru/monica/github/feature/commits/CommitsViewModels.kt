@@ -1,5 +1,10 @@
 package takagi.ru.monica.github.feature.commits
 
+import takagi.ru.monica.github.feature.repository.currentRepositoryResult
+import takagi.ru.monica.github.domain.GithubSession
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -25,7 +30,8 @@ data class CommitsUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val error: Boolean = false
+    val error: Boolean = false,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val canLoadMore: Boolean get() = nextPage != null && !isLoading && !isRefreshing && !isLoadingMore
@@ -41,14 +47,31 @@ class CommitsViewModel(
     private val owner: String,
     private val name: String,
     private val ref: String,
-    private val repository: GithubCommitsRepository
+    private val repository: GithubCommitsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[kotlinx.coroutines.Job]))
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+
     private val _state = MutableStateFlow(CommitsUiState(owner = owner, name = name, ref = ref))
     val state: StateFlow<CommitsUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var failedReset = true
 
+    init { sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } } }
+
     init {
+        load(reset = true)
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && accountId == account?.id) return
+        sessionInitialized = true
+        accountId = account?.id
+        requests.coroutineContext.cancelChildren()
+        _state.value = CommitsUiState(owner, name, ref, viewerAccountId = account?.id)
         load(reset = true)
     }
 
@@ -86,13 +109,13 @@ class CommitsViewModel(
                 items = if (reset && !preserveExisting) emptyList() else it.items
             )
         }
-        loadJob = viewModelScope.launch {
+        loadJob = requests.launch {
             val result = if (forceRefresh) {
                 repository.refreshCommits(owner, name, ref, requestedPage)
             } else {
                 repository.commits(owner, name, ref, requestedPage)
             }
-            result.fold(
+            result.currentRepositoryResult().fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         state.copy(
@@ -119,12 +142,13 @@ class CommitsViewModel(
         private val owner: String,
         private val name: String,
         private val ref: String,
-        private val repository: GithubCommitsRepository
+        private val repository: GithubCommitsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(CommitsViewModel::class.java))
-            return CommitsViewModel(owner, name, ref, repository) as T
+            return CommitsViewModel(owner, name, ref, repository, sessions) as T
         }
     }
 }
@@ -136,7 +160,8 @@ data class CommitDetailUiState(
     val sha: String,
     val details: GithubCommitDetails? = null,
     val isLoading: Boolean = true,
-    val error: Boolean = false
+    val error: Boolean = false,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
 }
@@ -149,13 +174,30 @@ class CommitDetailViewModel(
     private val owner: String,
     private val name: String,
     private val sha: String,
-    private val repository: GithubCommitsRepository
+    private val repository: GithubCommitsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[kotlinx.coroutines.Job]))
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+
     private val _state = MutableStateFlow(CommitDetailUiState(owner, name, sha))
     val state: StateFlow<CommitDetailUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
 
+    init { sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } } }
+
     init {
+        load()
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && accountId == account?.id) return
+        sessionInitialized = true
+        accountId = account?.id
+        requests.coroutineContext.cancelChildren()
+        _state.value = CommitDetailUiState(owner, name, sha, viewerAccountId = account?.id)
         load()
     }
 
@@ -168,8 +210,8 @@ class CommitDetailViewModel(
     private fun load() {
         loadJob?.cancel()
         _state.update { it.copy(isLoading = true, error = false) }
-        loadJob = viewModelScope.launch {
-            repository.commit(owner, name, sha).fold(
+        loadJob = requests.launch {
+            repository.commit(owner, name, sha).currentRepositoryResult().fold(
                 onSuccess = { details ->
                     _state.update { it.copy(details = details, isLoading = false, error = false) }
                 },
@@ -184,12 +226,13 @@ class CommitDetailViewModel(
         private val owner: String,
         private val name: String,
         private val sha: String,
-        private val repository: GithubCommitsRepository
+        private val repository: GithubCommitsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(CommitDetailViewModel::class.java))
-            return CommitDetailViewModel(owner, name, sha, repository) as T
+            return CommitDetailViewModel(owner, name, sha, repository, sessions) as T
         }
     }
 }

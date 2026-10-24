@@ -1,5 +1,10 @@
 package takagi.ru.monica.github.feature.issues
 
+import takagi.ru.monica.github.feature.repository.currentRepositoryResult
+import takagi.ru.monica.github.domain.GithubSession
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -49,7 +54,8 @@ data class CreateIssueUiState(
     val isSubmitting: Boolean = false,
     val validationError: Boolean = false,
     val submitError: Boolean = false,
-    val createdIssue: GithubIssue? = null
+    val createdIssue: GithubIssue? = null,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val submissionBody: String get() = selectedTemplate?.takeIf { it.isForm }?.renderBody(answers) ?: body
@@ -88,29 +94,61 @@ class CreateIssueViewModel(
     private val repository: GithubIssuesRepository,
     private val templatesRepository: GithubIssueTemplatesRepository,
     private val savedState: SavedStateHandle = SavedStateHandle(),
-    initialTemplateLanguage: GithubIssueTemplateLanguage = GithubIssueTemplateLanguage.ENGLISH
+    initialTemplateLanguage: GithubIssueTemplateLanguage = GithubIssueTemplateLanguage.ENGLISH,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
-    private val savedTemplate = savedState.get<String>(TEMPLATE_KEY)?.let {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
+    private val sessionsEnabled = sessions != null
+    private var accountId: Long? = null
+    private var sessionInitialized = false
+    private fun savedKey(key: String) = if (sessionsEnabled) "$key:$accountId" else key
+    private val savedTemplate = savedState.get<String>(savedKey(TEMPLATE_KEY))?.let {
         runCatching { Json.decodeFromString<GithubIssueTemplate>(it) }.getOrNull()
     }
-    private val savedAnswers = savedState.get<String>(ANSWERS_KEY)?.let {
+    private val savedAnswers = savedState.get<String>(savedKey(ANSWERS_KEY))?.let {
         runCatching { Json.decodeFromString<Map<String, GithubIssueFormAnswer>>(it) }.getOrNull()
     }.orEmpty()
-    private val hasSavedChoice = savedState.get<Boolean>(CHOICE_KEY)
-        ?: (savedState.get<String>(TITLE_KEY).orEmpty().isNotEmpty() || savedState.get<String>(BODY_KEY).orEmpty().isNotEmpty())
+    private val hasSavedChoice = savedState.get<Boolean>(savedKey(CHOICE_KEY))
+        ?: (savedState.get<String>(savedKey(TITLE_KEY)).orEmpty().isNotEmpty() || savedState.get<String>(savedKey(BODY_KEY)).orEmpty().isNotEmpty())
     private val _state = MutableStateFlow(CreateIssueUiState(
         owner = owner, name = name,
         builtInLanguage = GithubIssueTemplateLanguage.entries.firstOrNull { it.name == savedState.get<String>(LANGUAGE_KEY) }
             ?: initialTemplateLanguage,
-        title = savedState.get<String>(TITLE_KEY).orEmpty(),
-        body = savedState.get<String>(BODY_KEY).orEmpty(),
+        title = savedState.get<String>(savedKey(TITLE_KEY)).orEmpty(),
+        body = savedState.get<String>(savedKey(BODY_KEY)).orEmpty(),
         selectedTemplate = savedTemplate, answers = savedAnswers,
         hasChosenTemplate = hasSavedChoice, isChoosingTemplate = !hasSavedChoice
     ))
     val state: StateFlow<CreateIssueUiState> = _state.asStateFlow()
     private var templateJob: Job? = null
 
-    init { loadTemplates() }
+    init {
+        if (sessions == null) loadTemplates()
+        else viewModelScope.launch { sessions.collect { onSessionChanged(it) } }
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val next = (session as? GithubSession.SignedIn)?.account?.id
+        if (sessionInitialized && accountId == next) return
+        sessionInitialized = true
+        requests.coroutineContext.cancelChildren()
+        accountId = next
+        val template = savedState.get<String>(savedKey(TEMPLATE_KEY))?.let {
+            runCatching { Json.decodeFromString<GithubIssueTemplate>(it) }.getOrNull()
+        }
+        val answers = savedState.get<String>(savedKey(ANSWERS_KEY))?.let {
+            runCatching { Json.decodeFromString<Map<String, GithubIssueFormAnswer>>(it) }.getOrNull()
+        }.orEmpty()
+        val chosen = savedState.get<Boolean>(savedKey(CHOICE_KEY)) ?: false
+        _state.value = CreateIssueUiState(owner = owner, name = name,
+            builtInLanguage = _state.value.builtInLanguage,
+            title = savedState.get<String>(savedKey(TITLE_KEY)).orEmpty(),
+            body = savedState.get<String>(savedKey(BODY_KEY)).orEmpty(),
+            selectedTemplate = template, answers = answers,
+            hasChosenTemplate = chosen, isChoosingTemplate = !chosen,
+            viewerAccountId = next)
+        if (next != null) loadTemplates()
+    }
 
     fun onAction(action: CreateIssueAction) {
         if (action == CreateIssueAction.ConsumeCreatedIssue) {
@@ -153,7 +191,7 @@ class CreateIssueViewModel(
     private fun loadTemplates() {
         if (templateJob?.isActive == true) return
         _state.update { it.copy(isLoadingTemplates = true, templateLoadError = false) }
-        templateJob = viewModelScope.launch {
+        templateJob = requests.launch {
             val result = templatesRepository.templates(owner, name)
             if (!isActive) return@launch
             result.fold(
@@ -224,14 +262,15 @@ class CreateIssueViewModel(
 
     private fun edit(next: CreateIssueUiState) {
         _state.value = next.copy(validationError = false, submitError = false, bodyLengthError = false)
-        savedState[TITLE_KEY] = next.title
-        savedState[BODY_KEY] = next.body
-        savedState[CHOICE_KEY] = next.hasChosenTemplate
-        savedState[TEMPLATE_KEY] = next.selectedTemplate?.let { Json.encodeToString(it) }
-        savedState[ANSWERS_KEY] = Json.encodeToString(next.answers)
+        savedState[savedKey(TITLE_KEY)] = next.title
+        savedState[savedKey(BODY_KEY)] = next.body
+        savedState[savedKey(CHOICE_KEY)] = next.hasChosenTemplate
+        savedState[savedKey(TEMPLATE_KEY)] = next.selectedTemplate?.let { Json.encodeToString(it) }
+        savedState[savedKey(ANSWERS_KEY)] = Json.encodeToString(next.answers)
     }
 
     private fun submit() {
+        if (sessionsEnabled && accountId == null) return
         val current = _state.value
         if (!current.canPublish) return
         val invalidFields = current.selectedTemplate?.invalidFields(current.answers).orEmpty()
@@ -248,10 +287,10 @@ class CreateIssueViewModel(
             return
         }
         _state.update { it.copy(isSubmitting = true, validationError = false, submitError = false) }
-        viewModelScope.launch {
-            repository.createIssue(owner, name, draft).fold(
+        requests.launch {
+            repository.createIssue(owner, name, draft).currentRepositoryResult().fold(
                 onSuccess = { issue ->
-                    listOf(TITLE_KEY, BODY_KEY, CHOICE_KEY, TEMPLATE_KEY, ANSWERS_KEY).forEach { savedState.remove<Any>(it) }
+                    listOf(TITLE_KEY, BODY_KEY, CHOICE_KEY, TEMPLATE_KEY, ANSWERS_KEY).forEach { savedState.remove<Any>(savedKey(it)) }
                     _state.update { it.copy(
                         title = "", body = "", selectedTemplate = null, answers = emptyMap(),
                         hasChosenTemplate = false, isSubmitting = false, createdIssue = issue, submitError = false
@@ -267,18 +306,19 @@ class CreateIssueViewModel(
         private val name: String,
         private val repository: GithubIssuesRepository,
         private val templatesRepository: GithubIssueTemplatesRepository,
-        private val initialTemplateLanguage: GithubIssueTemplateLanguage = GithubIssueTemplateLanguage.ENGLISH
+        private val initialTemplateLanguage: GithubIssueTemplateLanguage = GithubIssueTemplateLanguage.ENGLISH,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
             require(modelClass.isAssignableFrom(CreateIssueViewModel::class.java))
-            return CreateIssueViewModel(owner, name, repository, templatesRepository, extras.createSavedStateHandle(), initialTemplateLanguage) as T
+            return CreateIssueViewModel(owner, name, repository, templatesRepository, extras.createSavedStateHandle(), initialTemplateLanguage, sessions) as T
         }
 
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(CreateIssueViewModel::class.java))
-            return CreateIssueViewModel(owner, name, repository, templatesRepository, initialTemplateLanguage = initialTemplateLanguage) as T
+            return CreateIssueViewModel(owner, name, repository, templatesRepository, initialTemplateLanguage = initialTemplateLanguage, sessions = sessions) as T
         }
     }
 

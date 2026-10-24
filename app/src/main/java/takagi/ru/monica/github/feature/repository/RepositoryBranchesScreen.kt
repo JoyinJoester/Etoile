@@ -1,11 +1,17 @@
 package takagi.ru.monica.github.feature.repository
 
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
+
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.component.githubFullSpanItem
 import takagi.ru.monica.github.component.GithubAdaptiveGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -69,12 +75,12 @@ fun RepositoryBranchesScreen(
     onSignIn: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var createVisible by rememberSaveable { mutableStateOf(false) }
-    var branchName by rememberSaveable { mutableStateOf("") }
-    var sourceBranch by rememberSaveable(state.defaultBranch) { mutableStateOf(state.defaultBranch) }
-    var deleteCandidate by rememberSaveable { mutableStateOf<String?>(null) }
-    var renameCandidate by rememberSaveable { mutableStateOf<String?>(null) }
-    var renameName by rememberSaveable { mutableStateOf("") }
+    var createVisible by remember(state.fullName, state.viewerAccountId) { mutableStateOf(false) }
+    var branchName by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
+    var sourceBranch by rememberSaveable(state.fullName, state.viewerAccountId, state.defaultBranch) { mutableStateOf(state.defaultBranch) }
+    var deleteCandidate by remember(state.fullName, state.viewerAccountId) { mutableStateOf<String?>(null) }
+    var renameCandidate by remember(state.fullName, state.viewerAccountId) { mutableStateOf<String?>(null) }
+    var renameName by rememberSaveable(state.fullName, state.viewerAccountId) { mutableStateOf("") }
     val creating = state.pendingWrite is RepositoryBranchWrite.Create
     val deleting = state.pendingWrite is RepositoryBranchWrite.Delete
     val renaming = state.pendingWrite is RepositoryBranchWrite.Rename
@@ -293,7 +299,8 @@ private fun RepositoryBranchRow(
     onRename: (() -> Unit)?
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).heightIn(min = 56.dp).padding(vertical = 14.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().githubCollectionSurface()
+        .clickable(role = Role.Button, onClick = onClick).heightIn(min = 56.dp).githubCollectionPadding(vertical = 14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.CallSplit,
@@ -319,19 +326,29 @@ private fun RepositoryBranchRow(
                     if (onDelete != null) DropdownMenuItem(text = { Text(stringResource(R.string.github_delete_branch)) }, onClick = { menuExpanded = false; onDelete() })
                 }
             }
+        }
+        androidx.compose.foundation.layout.FlowRow(
+            modifier = Modifier.padding(start = 36.dp, top = 5.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = branch.sha.take(12),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             if (branch.isProtected) {
                 Icon(
                     imageVector = Icons.Default.Lock,
                     contentDescription = stringResource(R.string.github_protected_branch),
                     tint = MaterialTheme.colorScheme.tertiary,
-                    modifier = Modifier.padding(start = 8.dp)
+                    modifier = Modifier.size(18.dp)
                 )
             }
             if (isDefault) {
                 Surface(
                     shape = GithubExpressiveShapes.control,
                     color = MaterialTheme.colorScheme.primaryContainer,
-                    modifier = Modifier.padding(start = 8.dp)
                 ) {
                     Text(
                         text = stringResource(R.string.github_default),
@@ -342,15 +359,6 @@ private fun RepositoryBranchRow(
                 }
             }
         }
-        Text(
-            text = branch.sha.take(12),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 36.dp, top = 5.dp)
-        )
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 14.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
-        )
     }
+    GithubCollectionDivider()
 }

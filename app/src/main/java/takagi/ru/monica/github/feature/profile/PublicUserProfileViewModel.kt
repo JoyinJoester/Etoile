@@ -4,7 +4,11 @@ import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,7 +48,8 @@ data class PublicUserProfileUiState(
     val followingAccessError: Boolean = false,
     val isBlocked: Boolean? = null,
     val isUpdatingBlocked: Boolean = false,
-    val blockedFailure: RepositoryWriteFailure? = null
+    val blockedFailure: RepositoryWriteFailure? = null,
+    val viewerAccountId: Long? = null
 ) {
     val canLoadMore: Boolean get() = nextPage != null && !isLoadingRepositories && !isLoadingMore
 }
@@ -59,13 +64,15 @@ sealed interface PublicUserProfileAction {
     data object ToggleFollowing : PublicUserProfileAction
     data object RetryBlocked : PublicUserProfileAction
     data object ToggleBlocked : PublicUserProfileAction
+    data class ConfirmBlock(val viewerAccountId: Long, val targetUserId: Long) : PublicUserProfileAction
 }
 
 class PublicUserProfileViewModel(
     private val login: String,
     private val repository: GithubPublicUserRepository,
     private val contributionsRepository: GithubContributionsRepository? = null,
-    private val repositoryDetailsRepository: takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository? = null
+    private val repositoryDetailsRepository: takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository? = null,
+    private val sessions: Flow<GithubSession>? = null
 ) : ViewModel() {
     private val _state = MutableStateFlow(PublicUserProfileUiState(login))
     val state: StateFlow<PublicUserProfileUiState> = _state.asStateFlow()
@@ -77,14 +84,21 @@ class PublicUserProfileViewModel(
     private var blockedJob: Job? = null
     private var blockWriteJob: Job? = null
     private var sessionLogin: String? = null
+    private var viewerAccountId: Long? = null
+    private var sessionInitialized = false
+    private var requestsAllowed = true
 
     init {
-        loadUser()
-        loadRepositories(reset = true)
-
+        if (sessions == null) {
+            loadUser()
+            loadRepositories(reset = true)
+        } else viewModelScope.launch(start = CoroutineStart.UNDISPATCHED) {
+            sessions.collect(::onSessionChanged)
+        }
     }
 
     fun onAction(action: PublicUserProfileAction) {
+        if (!requestsAllowed) return
         when (action) {
             PublicUserProfileAction.RetryUser -> loadUser()
             PublicUserProfileAction.RetryRepositories -> loadRepositories(reset = _state.value.repositories.isEmpty())
@@ -94,32 +108,32 @@ class PublicUserProfileViewModel(
             PublicUserProfileAction.RetryFollowing -> loadFollowing()
             PublicUserProfileAction.ToggleFollowing -> toggleFollowing()
             PublicUserProfileAction.RetryBlocked -> loadBlocked()
-            PublicUserProfileAction.ToggleBlocked -> toggleBlocked()
+            PublicUserProfileAction.ToggleBlocked -> if (_state.value.isBlocked == true) toggleBlocked()
+            is PublicUserProfileAction.ConfirmBlock -> {
+                if (action.viewerAccountId == viewerAccountId && action.targetUserId == _state.value.user?.id &&
+                    _state.value.isBlocked == false) toggleBlocked()
+            }
         }
     }
 
     fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login?.equals(sessionLogin, ignoreCase = true) == true) return
-        sessionLogin = login
-        followingJob?.cancel()
-        blockedJob?.cancel()
-        blockWriteJob?.cancel()
-        if (login == null || login.equals(this.login, ignoreCase = true)) {
-            _state.update {
-                it.copy(
-                    isFollowing = null,
-                    isLoadingFollowing = false,
-                    isUpdatingFollowing = false,
-                    followingError = false, followingAccessError = false,
-                    isBlocked = null,
-                    isUpdatingBlocked = false,
-                    blockedFailure = null
-                )
-            }
-        } else {
-            loadFollowing()
-            loadBlocked()
+        val account = (session as? GithubSession.SignedIn)?.account
+        val allowed = session is GithubSession.SignedIn || session is GithubSession.SignedOut
+        if (sessionInitialized && viewerAccountId == account?.id && requestsAllowed == allowed) {
+            sessionLogin = account?.login
+            return
+        }
+        sessionInitialized = true
+        viewerAccountId = account?.id
+        sessionLogin = account?.login
+        requestsAllowed = allowed
+        listOf(userJob, repositoriesJob, calendarJob, readmeJob, followingJob, blockedJob, blockWriteJob).forEach { it?.cancel() }
+        _state.value = PublicUserProfileUiState(login, viewerAccountId = account?.id,
+            isLoadingUser = allowed, isLoadingRepositories = allowed,
+            isLoadingCalendar = allowed, isLoadingReadme = allowed)
+        if (allowed) {
+            loadUser()
+            loadRepositories(reset = true)
         }
     }
 
@@ -129,7 +143,9 @@ class PublicUserProfileViewModel(
         calendarJob?.cancel()
         _state.update { it.copy(isLoadingCalendar = true, calendarError = false) }
         calendarJob = viewModelScope.launch {
-            contributions.getContributionCalendar(login).fold(
+            val result = contributions.getContributionCalendar(login)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { calendar ->
                     _state.update {
                         it.copy(calendar = calendar, isLoadingCalendar = false, calendarError = false)
@@ -149,7 +165,9 @@ class PublicUserProfileViewModel(
         readmeJob?.cancel()
         _state.update { it.copy(isLoadingReadme = true) }
         readmeJob = viewModelScope.launch {
-            details.readme(login, login).fold(
+            val result = details.readme(login, login)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { readme ->
                     _state.update {
                         it.copy(readme = readme?.takeIf(String::isNotBlank), isLoadingReadme = false)
@@ -166,7 +184,9 @@ class PublicUserProfileViewModel(
         userJob?.cancel()
         _state.update { it.copy(isLoadingUser = true, userError = false) }
         userJob = viewModelScope.launch {
-            repository.user(login).fold(
+            val result = repository.user(login)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { user ->
                     _state.update { it.copy(user = user, isLoadingUser = false, userError = false,
                         isLoadingCalendar = false, isLoadingReadme = false) }
@@ -192,7 +212,9 @@ class PublicUserProfileViewModel(
             )
         }
         repositoriesJob = viewModelScope.launch {
-            repository.repositories(login, page).fold(
+            val result = repository.repositories(login, page)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         state.copy(
@@ -210,12 +232,15 @@ class PublicUserProfileViewModel(
     }
 
     private fun loadFollowing() {
+        if (!requestsAllowed || _state.value.isUpdatingFollowing) return
         if (_state.value.user == null || _state.value.user?.isOrganization == true) return
         if (sessionLogin == null || sessionLogin?.equals(login, ignoreCase = true) == true) return
         followingJob?.cancel()
         _state.update { it.copy(isLoadingFollowing = true, followingError = false, followingAccessError = false) }
         followingJob = viewModelScope.launch {
-            repository.viewerFollows(login).fold(
+            val result = repository.viewerFollows(login)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { following ->
                     _state.update {
                         it.copy(
@@ -245,7 +270,9 @@ class PublicUserProfileViewModel(
         _state.update { it.copy(isUpdatingFollowing = true, followingError = false, followingAccessError = false) }
         followingJob?.cancel()
         followingJob = viewModelScope.launch {
-            repository.setFollowing(login, target).fold(
+            val result = repository.setFollowing(login, target)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { following ->
                     _state.update { state ->
                         val followerDelta = when {
@@ -273,6 +300,7 @@ class PublicUserProfileViewModel(
     }
 
     private fun loadBlocked() {
+        if (!requestsAllowed || _state.value.isUpdatingBlocked) return
         // Read the state for organizations too: a block created elsewhere still needs its way out,
         // while the offer to block a new account stays limited to user profiles in the screen.
         if (_state.value.user == null) return
@@ -280,7 +308,9 @@ class PublicUserProfileViewModel(
         blockedJob?.cancel()
         _state.update { it.copy(blockedFailure = null) }
         blockedJob = viewModelScope.launch {
-            repository.viewerBlocks(login).fold(
+            val result = repository.viewerBlocks(login)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = { blocked ->
                     _state.update {
                         it.copy(isBlocked = blocked, blockedFailure = null)
@@ -309,7 +339,9 @@ class PublicUserProfileViewModel(
         blockedJob?.cancel()
         blockWriteJob?.cancel()
         blockWriteJob = viewModelScope.launch {
-            repository.setBlocked(login, target).fold(
+            val result = repository.setBlocked(login, target)
+            coroutineContext.ensureActive()
+            result.fold(
                 onSuccess = {
                     _state.update { it.copy(isUpdatingBlocked = false) }
                     refreshViewerRelationships()
@@ -336,12 +368,13 @@ class PublicUserProfileViewModel(
         private val login: String,
         private val repository: GithubPublicUserRepository,
         private val contributionsRepository: GithubContributionsRepository? = null,
-        private val repositoryDetailsRepository: takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository? = null
+        private val repositoryDetailsRepository: takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository? = null,
+        private val sessions: Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(PublicUserProfileViewModel::class.java))
-            return PublicUserProfileViewModel(login, repository, contributionsRepository, repositoryDetailsRepository) as T
+            return PublicUserProfileViewModel(login, repository, contributionsRepository, repositoryDetailsRepository, sessions) as T
         }
     }
 }

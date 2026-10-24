@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import takagi.ru.monica.github.domain.GithubBranch
 import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubGitRef
@@ -57,7 +60,8 @@ data class RepositoryBranchesUiState(
     val pendingWrite: RepositoryBranchWrite? = null,
     val writeOutcome: RepositoryBranchWriteOutcome? = null,
     val viewerLogin: String? = null,
-    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN
+    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val filteredItems: List<GithubBranch>
@@ -75,25 +79,37 @@ class RepositoryBranchesViewModel(
     private val name: String,
     defaultBranch: String,
     private val repository: GithubRepositoryContentsRepository,
-    private val detailsRepository: GithubRepositoryDetailsRepository
+    private val detailsRepository: GithubRepositoryDetailsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
     private val _state = MutableStateFlow(RepositoryBranchesUiState(owner, name, defaultBranch))
     val state: StateFlow<RepositoryBranchesUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var writeJob: Job? = null
     private var viewerRoleJob: Job? = null
     private var sessionLogin: String? = null
+    private var sessionAccountId: Long? = null
+    private var sessionInitialized = false
 
     init {
         load(reset = true)
     }
 
+    init {
+        sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } }
+    }
+
     fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login == sessionLogin) return
-        sessionLogin = login
-        _state.update { it.copy(viewerLogin = login) }
-        loadViewerRole(signedIn = login != null)
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && account?.id == sessionAccountId && account?.login == sessionLogin) return
+        sessionInitialized = true
+        sessionAccountId = account?.id
+        sessionLogin = account?.login
+        requests.coroutineContext.cancelChildren()
+        _state.value = RepositoryBranchesUiState(owner, name, _state.value.defaultBranch, viewerAccountId = sessionAccountId, viewerLogin = sessionLogin)
+        loadViewerRole(signedIn = account != null)
+        load(reset = true)
     }
 
     private fun loadViewerRole(signedIn: Boolean) {
@@ -102,9 +118,9 @@ class RepositoryBranchesViewModel(
             _state.update { it.copy(viewerRole = GithubCollaboratorRole.UNKNOWN) }
             return
         }
-        viewerRoleJob = viewModelScope.launch {
+        viewerRoleJob = requests.launch {
             val role = detailsRepository.details(owner, name)
-                .getOrNull()
+                .currentRepositoryResult().getOrNull()
                 ?.viewerRole
                 ?: GithubCollaboratorRole.UNKNOWN
             _state.update { it.copy(viewerRole = role) }
@@ -140,7 +156,7 @@ class RepositoryBranchesViewModel(
         submit(write) {
             // The source branch may not be in the loaded pages and a cached SHA is not
             // the current tip, so resolve it as late as the commit itself.
-            repository.resolveRef(owner, name, source).fold(
+            repository.resolveRef(owner, name, source).currentRepositoryResult().fold(
                 onSuccess = { repository.createBranch(owner, name, target, it) },
                 onFailure = { Result.failure(it) }
             )
@@ -195,8 +211,8 @@ class RepositoryBranchesViewModel(
 
     private fun submit(write: RepositoryBranchWrite, operation: suspend () -> Result<*>) {
         writeJob?.cancel()
-        writeJob = viewModelScope.launch {
-            operation().fold(
+        writeJob = requests.launch {
+            operation().currentRepositoryResult().fold(
                 onSuccess = {
                     finish(write)
                     load(reset = true)
@@ -219,8 +235,8 @@ class RepositoryBranchesViewModel(
                 error = false
             )
         }
-        loadJob = viewModelScope.launch {
-            repository.branches(owner, name, page = page).fold(
+        loadJob = requests.launch {
+            repository.branches(owner, name, page = page).currentRepositoryResult().fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         state.copy(
@@ -244,12 +260,13 @@ class RepositoryBranchesViewModel(
         private val name: String,
         private val defaultBranch: String,
         private val repository: GithubRepositoryContentsRepository,
-        private val detailsRepository: GithubRepositoryDetailsRepository
+        private val detailsRepository: GithubRepositoryDetailsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryBranchesViewModel::class.java))
-            return RepositoryBranchesViewModel(owner, name, defaultBranch, repository, detailsRepository) as T
+            return RepositoryBranchesViewModel(owner, name, defaultBranch, repository, detailsRepository, sessions) as T
         }
     }
 }

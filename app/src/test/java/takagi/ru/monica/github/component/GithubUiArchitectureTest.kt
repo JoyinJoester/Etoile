@@ -145,7 +145,7 @@ class GithubUiArchitectureTest {
 
         assertNotNull("Unable to locate the GitHub source directory", githubDirectory)
 
-        return githubDirectory!!
+        val githubSources = githubDirectory!!
             .walkTopDown()
             .filter { it.isFile && it.extension == "kt" }
             .filter { source ->
@@ -155,6 +155,9 @@ class GithubUiArchitectureTest {
                     relative.startsWith("feature/") ||
                     relative.startsWith("settings/")
             }
+        val gitLabFeatures = File(githubDirectory.parentFile, "gitlab/feature")
+        assertTrue("Unable to locate the GitLab feature source directory", gitLabFeatures.isDirectory)
+        return githubSources + gitLabFeatures.walkTopDown().filter { it.isFile && it.extension == "kt" }
     }
 
     private fun iconButtonArguments(source: String): Sequence<String> = sequence {

@@ -1,5 +1,7 @@
 package takagi.ru.monica.github.feature.pullrequest
 
+import takagi.ru.monica.github.component.githubConfirmedAction
+
 import takagi.ru.monica.github.component.githubFullSpanItem
 import takagi.ru.monica.github.component.GithubAdaptiveGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -28,10 +30,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +63,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import takagi.ru.monica.R
+import takagi.ru.monica.github.domain.GithubReviewCommentReplyDraft
 import takagi.ru.monica.github.component.GithubCenteredProgress
 import takagi.ru.monica.github.component.GithubListLoadingState
 import takagi.ru.monica.github.component.GithubSkeletonRow
@@ -226,27 +232,28 @@ fun PullRequestDetailScreen(
 ) {
     val sections = PullRequestSection.entries
     val sectionStateHolder = rememberSaveableStateHolder()
-    var contentEditorOpen by remember { mutableStateOf(false) }
-    var commentEditorOpen by remember { mutableStateOf(false) }
-    var commentSubmitRequested by remember { mutableStateOf(false) }
-    var managementOpen by remember { mutableStateOf(false) }
-    var labelsOpen by remember { mutableStateOf(false) }
-    var selectedLabels by remember { mutableStateOf(emptySet<String>()) }
-    var labelSaveRequested by remember { mutableStateOf(false) }
-    var assigneesOpen by remember { mutableStateOf(false) }
-    var selectedAssignees by remember { mutableStateOf(emptySet<String>()) }
-    var assigneeSaveRequested by remember { mutableStateOf(false) }
-    var milestonesOpen by remember { mutableStateOf(false) }
-    var selectedMilestone by remember { mutableStateOf<Int?>(null) }
-    var milestoneSaveRequested by remember { mutableStateOf(false) }
-    var reviewersOpen by remember { mutableStateOf(false) }
-    var selectedReviewers by remember { mutableStateOf(emptySet<String>()) }
-    var reviewerSaveRequested by remember { mutableStateOf(false) }
-    var editTitle by remember { mutableStateOf("") }
-    var editBody by remember { mutableStateOf("") }
-    var contentSaveRequested by remember { mutableStateOf(false) }
-    var stateActionRequested by remember { mutableStateOf(false) }
-    var lockActionRequested by remember { mutableStateOf(false) }
+    var contentEditorOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var commentEditorOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var commentSubmitRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var managementOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var mergeOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var labelsOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedLabels by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(emptySet<String>()) }
+    var labelSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var assigneesOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedAssignees by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(emptySet<String>()) }
+    var assigneeSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var milestonesOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedMilestone by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf<Int?>(null) }
+    var milestoneSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var reviewersOpen by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var selectedReviewers by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(emptySet<String>()) }
+    var reviewerSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var editTitle by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf("") }
+    var editBody by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf("") }
+    var contentSaveRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var stateActionRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
+    var lockActionRequested by remember(state.fullName, state.number, state.viewerAccountId) { mutableStateOf(false) }
     LaunchedEffect(state.isUpdatingContent, state.contentUpdateError, contentSaveRequested) {
         if (contentSaveRequested && !state.isUpdatingContent) {
             if (!state.contentUpdateError && !state.contentValidationError) contentEditorOpen = false
@@ -301,6 +308,50 @@ fun PullRequestDetailScreen(
         }
     }
     val fontScale = LocalDensity.current.fontScale.coerceAtLeast(1f)
+    if (pullRequestReviewWorkspaceOverlay(state, onAction, onSignIn)) return
+    if (state.reviewReply.isEditorOpen) {
+        val target = state.reviewComments.firstOrNull { it.id == state.reviewReply.threadId }
+            ?: state.reviewComments.firstOrNull { it.threadId == state.reviewReply.threadId }
+        GithubCommentEditorScreen(
+            title = stringResource(R.string.github_review_reply_title),
+            subtitle = stringResource(R.string.github_review_reply_subject, state.fullName, state.number, state.reviewReply.threadId ?: 0),
+            value = state.reviewReply.body,
+            maxLength = GithubReviewCommentReplyDraft.MAX_BODY_LENGTH,
+            canWrite = state.viewerLogin != null,
+            isValidationError = state.reviewReply.validationError,
+            isSubmitError = state.reviewReply.submitError,
+            isSubmitting = state.reviewReply.isSubmitting,
+            onValueChange = { onAction(PullRequestDetailAction.ReviewReplyChanged(it)) },
+            onSubmit = { onAction(PullRequestDetailAction.SubmitReviewReply) },
+            onSignIn = onSignIn,
+            onBack = { onAction(PullRequestDetailAction.CloseReviewReply) },
+            disabledMessage = when {
+                state.pullRequest?.isLocked == true -> stringResource(R.string.github_locked_comment_disabled)
+                !state.hasReplyTarget -> stringResource(R.string.github_review_reply_target_unavailable)
+                else -> null
+            },
+            context = {
+                target?.let {
+                    Text(it.path, style = MaterialTheme.typography.labelMedium)
+                    Text(it.body.take(500), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(vertical = 8.dp))
+                }
+            }
+        )
+        return
+    }
+    state.reviewReply.pendingThreadId?.let { threadId ->
+        AlertDialog(
+            onDismissRequest = { onAction(PullRequestDetailAction.CancelReplaceReviewReply) },
+            title = { Text(stringResource(R.string.github_review_reply_replace_title)) },
+            text = { Text(stringResource(R.string.github_review_reply_replace_message, threadId)) },
+            confirmButton = { TextButton(onClick = { onAction(PullRequestDetailAction.ConfirmReplaceReviewReply) }) {
+                Text(stringResource(R.string.github_review_reply_discard), color = MaterialTheme.colorScheme.error)
+            } },
+            dismissButton = { TextButton(onClick = { onAction(PullRequestDetailAction.CancelReplaceReviewReply) }) {
+                Text(stringResource(R.string.github_cancel))
+            } }
+        )
+    }
     if (commentEditorOpen) {
         GithubCommentEditorScreen(
             value = state.commentDraft,
@@ -406,6 +457,25 @@ fun PullRequestDetailScreen(
         }
     }
     val managedPullRequest = state.pullRequest
+    if (mergeOpen && managedPullRequest != null) {
+        GithubModalBottomSheet(onDismissRequest = { if (!state.isMerging) mergeOpen = false }) {
+            Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp)) {
+                PullRequestActionsCard(
+                    pullRequest = managedPullRequest,
+                    isSignedIn = isSignedIn,
+                    canMerge = state.canMerge,
+                    isMerging = state.isMerging,
+                    mergeError = state.mergeError,
+                    mergeValidationError = state.mergeValidationError,
+                    mergeSucceeded = state.mergeResult?.merged == true,
+                    onMerge = { method, title, message ->
+                        onAction(PullRequestDetailAction.Merge(method, title, message))
+                    },
+                    onSignIn = onSignIn
+                )
+            }
+        }
+    }
     if (managementOpen && managedPullRequest != null) {
         PullRequestManagementSheet(
             pullRequest = managedPullRequest,
@@ -415,6 +485,11 @@ fun PullRequestDetailScreen(
             canTriage = state.canTriage,
             canChangeState = state.canChangeState,
             canLock = state.canLock,
+            canMerge = state.canMerge,
+            onOpenMerge = {
+                managementOpen = false
+                mergeOpen = true
+            },
             onEditContent = {
                 managementOpen = false
                 editTitle = managedPullRequest.title
@@ -767,8 +842,12 @@ private fun PullRequestFilesContent(
         if (state.isLoadingFiles && state.files.isEmpty()) {
             item(key = "files-loading") { GithubCenteredProgress() }
         }
+        item(key = "review-workspace") { PullRequestReviewWorkspaceEntry(state, onAction) }
         items(state.files, key = GithubPullRequestFile::filename) { file ->
-            PullRequestDiffCard(file = file, onOpenExternal = onOpenExternal)
+            PullRequestDiffCard(file = file, onOpenExternal = onOpenExternal,
+                onLineComment = if (state.canReplyToReview && state.pullRequest?.state == GithubPullRequestState.OPEN && !state.reviewWorkspace.isSending) {
+                    { line, side -> onAction(PullRequestDetailAction.ReviewWorkspace(PullRequestReviewWorkspaceAction.OpenLine(file.filename, line, side))) }
+                } else null)
         }
         item(key = "files-status") {
             GithubPagedListStatus(
@@ -830,17 +909,39 @@ private fun PullRequestActivityContent(
         }
         item(key = "review-comments-title") {
             GithubSectionHeader(title = stringResource(R.string.github_review_comments))
+            if (state.reviewReply.sent) {
+                GithubMessageState(title = stringResource(R.string.github_review_reply_sent))
+            }
+            if (state.reviewReply.threadId != null) {
+                TextButton(onClick = { onAction(PullRequestDetailAction.ResumeReviewReply) }) {
+                    Text(stringResource(R.string.github_review_reply_resume))
+                }
+            }
         }
         if (state.isLoadingReviewComments && state.reviewComments.isEmpty()) {
             item(key = "review-comments-loading") { GithubCenteredProgress() }
         }
-        items(state.reviewComments, key = { "review-comment:${it.id}" }) { comment ->
-            PullRequestReviewCommentCard(
-                comment = comment,
-                fullName = state.fullName,
-                ref = pullRequest.head.sha,
-                onOpenExternal = onOpenExternal
-            )
+        items(state.reviewThreads, key = { "review-thread:${it.id}" }) { thread ->
+            Column {
+                PullRequestReviewThreadControls(state, thread.id, onAction)
+                if (!thread.hasRoot) {
+                    Text(stringResource(R.string.github_review_thread_partial), style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(bottom = 8.dp))
+                }
+                thread.comments.forEach { comment ->
+                    key(comment.id) {
+                        PullRequestReviewCommentCard(
+                            comment = comment,
+                            fullName = state.fullName,
+                            ref = pullRequest.head.sha,
+                            onOpenExternal = onOpenExternal,
+                            canReply = state.canReplyToReview && !state.reviewReply.isSubmitting,
+                            onReply = { onAction(PullRequestDetailAction.OpenReviewReply(comment.id)) },
+                            modifier = Modifier.padding(start = if (comment.inReplyToId != null) 12.dp else 0.dp)
+                        )
+                    }
+                }
+            }
         }
         item(key = "review-comments-status") {
             GithubPagedListStatus(
@@ -857,16 +958,22 @@ private fun PullRequestActivityContent(
             )
         }
         item(key = "review-composer") {
-            PullRequestReviewComposer(
-                body = state.reviewBody,
-                canWrite = isSignedIn,
-                isValidationError = state.reviewValidationError,
-                isSubmitError = state.reviewSubmitError,
-                isSubmitting = state.isSubmittingReview,
-                onBodyChanged = { onAction(PullRequestDetailAction.ReviewBodyChanged(it)) },
-                onSubmit = { onAction(PullRequestDetailAction.SubmitReview(it)) },
-                onSignIn = onSignIn
-            )
+            PullRequestReviewWorkspaceEntry(state, onAction)
+            if (isSignedIn) {
+                val workspace = state.reviewWorkspace
+                if (workspace.loadingThreads) LinearProgressIndicator(Modifier.fillMaxWidth())
+                TextButton(onClick = { onAction(PullRequestDetailAction.ReviewWorkspace(
+                    PullRequestReviewWorkspaceAction.LoadThreads(reset = true))) }, enabled = !workspace.loadingThreads) {
+                    Text(stringResource(R.string.github_review_threads_retry))
+                }
+                if (workspace.nextCursor != null && !workspace.threadsError) {
+                    TextButton(onClick = { onAction(PullRequestDetailAction.ReviewWorkspace(
+                        PullRequestReviewWorkspaceAction.LoadThreads(reset = false))) }, enabled = !workspace.loadingThreads) {
+                        Text(stringResource(R.string.github_review_threads_more))
+                    }
+                }
+                if (workspace.threadsError) Text(stringResource(R.string.github_review_thread_error), color = MaterialTheme.colorScheme.error)
+            } else TextButton(onClick = onSignIn) { Text(stringResource(R.string.github_sign_in)) }
         }
 
         item(key = "conversation-title") {
@@ -904,27 +1011,6 @@ private fun PullRequestActivityContent(
                 compact = true
             )
         }
-        item(key = "pull-request-actions") {
-            PullRequestActionsCard(
-                pullRequest = pullRequest,
-                isSignedIn = isSignedIn,
-                canMerge = state.canMerge,
-                isMerging = state.isMerging,
-                mergeError = state.mergeError,
-                mergeValidationError = state.mergeValidationError,
-                mergeSucceeded = state.mergeResult?.merged == true,
-                onMerge = { method, title, message ->
-                    onAction(
-                        PullRequestDetailAction.Merge(
-                            method = method,
-                            commitTitle = title,
-                            commitMessage = message
-                        )
-                    )
-                },
-                onSignIn = onSignIn
-            )
-        }
     }
 }
 
@@ -937,6 +1023,8 @@ private fun PullRequestManagementSheet(
     canTriage: Boolean,
     canChangeState: Boolean,
     canLock: Boolean,
+    canMerge: Boolean,
+    onOpenMerge: () -> Unit,
     onEditContent: () -> Unit,
     onEditLabels: () -> Unit,
     onEditAssignees: () -> Unit,
@@ -946,6 +1034,21 @@ private fun PullRequestManagementSheet(
     onToggleLock: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val confirmState = githubConfirmedAction(
+        title = stringResource(if (pullRequest.state == GithubPullRequestState.OPEN) R.string.github_close_pr else R.string.github_reopen_pr),
+        message = stringResource(R.string.github_confirm_state_message),
+        subject = "#${pullRequest.number} ${pullRequest.title}",
+        enabled = canChangeState && !isBusy,
+        onConfirm = onToggleState
+    )
+    val confirmLock = githubConfirmedAction(
+        title = stringResource(if (pullRequest.isLocked) R.string.github_confirm_unlock_title else R.string.github_confirm_lock_title),
+        message = stringResource(R.string.github_confirm_lock_message),
+        subject = "#${pullRequest.number} ${pullRequest.title}",
+        enabled = canLock && !isBusy,
+        onConfirm = onToggleLock
+    )
+
     GithubModalBottomSheet(onDismissRequest = onDismiss) {
         GithubSheetHeader(
             title = stringResource(R.string.github_manage_pr),
@@ -953,6 +1056,14 @@ private fun PullRequestManagementSheet(
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
         )
         Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp)) {
+            if (canMerge && pullRequest.state == GithubPullRequestState.OPEN && !pullRequest.isMerged) {
+                PullRequestManagementButton(
+                    icon = Icons.AutoMirrored.Filled.CallSplit,
+                    label = stringResource(R.string.github_merge_pull_request),
+                    enabled = !isBusy,
+                    onClick = onOpenMerge
+                )
+            }
             PullRequestManagementButton(
                 icon = Icons.Default.Edit,
                 label = stringResource(R.string.github_edit_pr_content),
@@ -994,7 +1105,7 @@ private fun PullRequestManagementSheet(
                         }
                     ),
                     enabled = canChangeState && !isBusy,
-                    onClick = onToggleState
+                    onClick = confirmState
                 )
             }
             PullRequestManagementButton(
@@ -1003,7 +1114,7 @@ private fun PullRequestManagementSheet(
                     if (pullRequest.isLocked) R.string.github_unlock_pr else R.string.github_lock_pr
                 ),
                 enabled = canLock && !isBusy,
-                onClick = onToggleLock
+                onClick = confirmLock
             )
             if (isBusy) {
                 CircularProgressIndicator(

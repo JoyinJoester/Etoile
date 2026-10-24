@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubRepositoryActionsRepository
 import takagi.ru.monica.github.domain.GithubRepositoryDetails
+import takagi.ru.monica.github.domain.GithubGitRef
 import takagi.ru.monica.github.domain.GithubRepositoryFeature
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
@@ -50,7 +51,8 @@ data class RepositoryDetailUiState(
     val topicsFailure: RepositoryWriteFailure? = null,
     val isUpdatingSettings: Boolean = false,
     val settingsFailure: RepositoryWriteFailure? = null,
-    val viewerLogin: String? = null
+    val viewerLogin: String? = null,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
 
@@ -82,18 +84,19 @@ sealed interface RepositoryDetailAction {
     data object Fork : RepositoryDetailAction
     data object RetryBranchProtection : RepositoryDetailAction
     data class UpdateTopics(val topics: List<String>) : RepositoryDetailAction
-    data class SetVisibility(val isPrivate: Boolean) : RepositoryDetailAction
-    data class SetArchived(val isArchived: Boolean) : RepositoryDetailAction
+    data class SetVisibility(val isPrivate: Boolean, val confirmation: String = "") : RepositoryDetailAction
+    data class SetArchived(val isArchived: Boolean, val confirmation: String = "") : RepositoryDetailAction
     data class SetFeature(val feature: GithubRepositoryFeature, val enabled: Boolean) : RepositoryDetailAction
     data class UpdateDescription(val description: String) : RepositoryDetailAction
-    data class SetDefaultBranch(val branch: String) : RepositoryDetailAction
+    data class SetDefaultBranch(val branch: String, val confirmation: String = "") : RepositoryDetailAction
 }
 
 class RepositoryDetailViewModel(
     private val owner: String,
     private val name: String,
     private val repository: GithubRepositoryDetailsRepository,
-    private val actionsRepository: GithubRepositoryActionsRepository
+    private val actionsRepository: GithubRepositoryActionsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
     private val _state = MutableStateFlow(RepositoryDetailUiState(owner = owner, name = name))
     val state: StateFlow<RepositoryDetailUiState> = _state.asStateFlow()
@@ -109,6 +112,8 @@ class RepositoryDetailViewModel(
     private var sessionLogin: String? = null
     private var sessionAccountId: Long? = null
     private var sessionRevision = 0L
+
+    init { sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } } }
 
     init {
         loadDetails()
@@ -130,10 +135,10 @@ class RepositoryDetailViewModel(
             RepositoryDetailAction.RetryBranchProtection -> loadBranchProtection()
             is RepositoryDetailAction.UpdateTopics -> updateTopics(action.topics)
             is RepositoryDetailAction.SetVisibility -> updateSettings(
-                GithubRepositorySettingsEdit(isPrivate = action.isPrivate)
+                GithubRepositorySettingsEdit(isPrivate = action.isPrivate), action.confirmation
             )
             is RepositoryDetailAction.SetArchived -> updateSettings(
-                GithubRepositorySettingsEdit(isArchived = action.isArchived)
+                GithubRepositorySettingsEdit(isArchived = action.isArchived), action.confirmation
             )
             is RepositoryDetailAction.SetFeature -> updateSettings(
                 when (action.feature) {
@@ -147,7 +152,7 @@ class RepositoryDetailViewModel(
                 GithubRepositorySettingsEdit(description = action.description.trim())
             )
             is RepositoryDetailAction.SetDefaultBranch -> updateSettings(
-                GithubRepositorySettingsEdit(defaultBranch = action.branch.trim())
+                GithubRepositorySettingsEdit(defaultBranch = action.branch.trim()), action.confirmation
             )
         }
     }
@@ -179,7 +184,8 @@ class RepositoryDetailViewModel(
                 name = name,
                 details = retainedDetails,
                 readme = current.readme.takeIf { retainedDetails != null },
-                viewerLogin = login
+                viewerLogin = login,
+                viewerAccountId = account?.id
             )
         }
         loadDetails(refreshing = _state.value.details != null)
@@ -400,10 +406,17 @@ class RepositoryDetailViewModel(
         }
     }
 
-    private fun updateSettings(edit: GithubRepositorySettingsEdit) {
+    private fun updateSettings(edit: GithubRepositorySettingsEdit, confirmation: String? = null) {
         val current = _state.value
         val details = current.details ?: return
-        if (!current.canManageSettings || current.isUpdatingSettings) return
+        if (!current.canManageSettings || current.isUpdatingSettings || current.isLoadingDetails || current.isRefreshing) return
+        val requiresName = edit.isPrivate != null || edit.isArchived != null || edit.defaultBranch != null
+        if (requiresName && confirmation != current.fullName) return
+        if (details.isArchived && edit.isArchived != false) return
+        if (edit.defaultBranch != null && !GithubGitRef.isValidBranchName(edit.defaultBranch)) {
+            _state.update { it.copy(settingsFailure = RepositoryWriteFailure.InvalidInput) }
+            return
+        }
         if (isConfirmedBy(edit, details)) return
         val revision = sessionRevision
         _state.update { it.copy(isUpdatingSettings = true, settingsFailure = null) }
@@ -456,12 +469,13 @@ class RepositoryDetailViewModel(
         private val owner: String,
         private val name: String,
         private val repository: GithubRepositoryDetailsRepository,
-        private val actionsRepository: GithubRepositoryActionsRepository
+        private val actionsRepository: GithubRepositoryActionsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryDetailViewModel::class.java))
-            return RepositoryDetailViewModel(owner, name, repository, actionsRepository) as T
+            return RepositoryDetailViewModel(owner, name, repository, actionsRepository, sessions) as T
         }
     }
 }

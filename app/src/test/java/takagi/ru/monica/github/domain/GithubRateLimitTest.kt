@@ -5,6 +5,24 @@ import org.junit.Test
 
 class GithubRateLimitTest {
     @Test
+    fun smallSearchBucketDoesNotWarnWhileMostRequestsRemain() {
+        for (remaining in listOf(10, 9, 6)) {
+            assertEquals("Healthy search quota: $remaining/10", emptyList<GithubRateLimitSnapshot>(),
+                visibleRateLimits(mapOf("search" to snapshot("search", 10, remaining))))
+        }
+    }
+
+    @Test
+    fun smallSearchBucketWarnsAtHalfAndSingleRequestBucketOnlyWhenEmpty() {
+        assertEquals(listOf("search"), resources(visibleRateLimits(
+            mapOf("search" to snapshot("search", 10, 5)))))
+        assertEquals(emptyList<GithubRateLimitSnapshot>(), visibleRateLimits(
+            mapOf("search" to snapshot("search", 1, 1))))
+        assertEquals(listOf("search"), resources(visibleRateLimits(
+            mapOf("search" to snapshot("search", 1, 0)))))
+    }
+
+    @Test
     fun healthyBucketsProduceNoWarning() {
         val snapshots = mapOf(
             "core" to snapshot("core", limit = 5000, remaining = 4000),

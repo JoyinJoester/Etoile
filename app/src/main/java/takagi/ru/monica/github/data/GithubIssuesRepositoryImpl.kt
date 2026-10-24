@@ -187,7 +187,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues").toString())
                 .post(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -211,7 +211,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues", number.toString()).toString())
                 .patch(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -233,7 +233,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues", number.toString(), "comments").toString())
                 .post(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -251,7 +251,7 @@ class GithubIssuesRepositoryImpl(
             require(commentId > 0)
             val request = requests.builder(endpoint(owner, name, "issues", "comments", commentId.toString()).toString())
                 .patch(json.encodeToString(CreateCommentRequest(draft.body)).toRequestBody(JSON_MEDIA_TYPE)).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(GithubIssueCommentDto.serializer(), response.body?.string().orEmpty()).toDomain()
@@ -265,7 +265,7 @@ class GithubIssuesRepositoryImpl(
             require(commentId > 0)
             val request = requests.builder(endpoint(owner, name, "issues", "comments", commentId.toString()).toString())
                 .delete().build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (response.code != 204) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter { Unit }
             }
@@ -307,7 +307,7 @@ class GithubIssuesRepositoryImpl(
                         .build()
                         .toString()
                 ).delete().build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         GithubReactionToggle(content, active = false, reactionId = viewerReaction.id)
@@ -317,7 +317,7 @@ class GithubIssuesRepositoryImpl(
                 val body = json.encodeToString(CreateReactionRequest(content.apiValue))
                     .toRequestBody(JSON_MEDIA_TYPE)
                 val request = requests.builder(reactionsUrl.toString()).post(body).build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         val created = json.decodeFromString(
@@ -343,7 +343,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues", number.toString()).toString())
                 .patch(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -370,7 +370,7 @@ class GithubIssuesRepositoryImpl(
             } else {
                 requests.builder(url).delete().build()
             }
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
             }
             cacheStore.clear()
@@ -420,7 +420,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues", number.toString(), "labels").toString())
                 .put(payload.toRequestBody("application/json; charset=utf-8".toMediaType()))
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
             }
             cacheStore.clear()
@@ -470,7 +470,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues", number.toString()).toString())
                 .patch(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -526,7 +526,7 @@ class GithubIssuesRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "issues", number.toString()).toString())
                 .patch(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(

@@ -2,12 +2,15 @@ package takagi.ru.monica.github.feature.inbox
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -302,6 +305,131 @@ class InboxViewModelTest {
         assertTrue(viewModel.state.value.items.any { it.id == "1" })
         assertTrue("1" in viewModel.state.value.triageErrorIds)
         assertFalse("1" in viewModel.state.value.triageBusyIds)
+    }
+
+    @Test fun cancelledOldAccountLoadCannotReplaceNewAccountOrSignedOutState() = runTest(dispatcher) {
+        val delayed = CompletableDeferred<Result<GithubPage<GithubNotification>>>()
+        var requests = 0
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun notifications(page: Int, perPage: Int, includeRead: Boolean): Result<GithubPage<GithubNotification>> {
+                requests++
+                return if (requests == 1) withContext(NonCancellable) { delayed.await() }
+                else Result.success(GithubPage(listOf(notifications[1]), null))
+            }
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); runCurrent()
+        vm.onSessionChanged(GithubSession.SignedIn(account().copy(id = 2, login = "other"))); runCurrent()
+        delayed.complete(Result.success(GithubPage(listOf(notifications[0]), 2))); advanceUntilIdle()
+        assertEquals(listOf("2"), vm.state.value.items.map { it.id })
+        vm.onSessionChanged(GithubSession.SignedOut)
+        vm.onAction(InboxAction.Refresh); vm.onAction(InboxAction.SelectFilter(InboxFilter.READ)); advanceUntilIdle()
+        assertEquals(2, requests)
+        assertTrue(vm.state.value.requiresAuthentication)
+        assertTrue(vm.state.value.items.isEmpty())
+    }
+
+    @Test fun lateOldAccountTriageCannotDeleteTheNewAccountsMatchingThread() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun markDone(id: String) = withContext(NonCancellable) { pending.await() }
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(InboxAction.MarkDone("1")); runCurrent()
+        vm.onSessionChanged(GithubSession.SignedIn(account().copy(id = 2))); runCurrent()
+        pending.complete(Result.success(Unit)); advanceUntilIdle()
+        assertEquals(listOf("1"), vm.state.value.items.map { it.id })
+        assertTrue(vm.state.value.triageBusyIds.isEmpty())
+        assertTrue(vm.state.value.triageErrorIds.isEmpty())
+    }
+
+    @Test fun failedIndividualReadCannotUndoALaterSuccessfulBulkRead() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        val repository = object : GithubNotificationsRepository by RecordingNotificationsRepository() {
+            override suspend fun markRead(id: String) = pending.await()
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(InboxAction.OpenNotification("1")); runCurrent()
+        vm.onAction(InboxAction.MarkAllRead); runCurrent()
+        pending.complete(Result.failure(IllegalStateException("old request failed"))); advanceUntilIdle()
+        assertTrue(vm.state.value.unreadIds.isEmpty())
+    }
+
+    @Test fun refreshDoesNotResurrectPendingReadsAndFailureUsesLatestServerState() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        var serverRead = false
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun notifications(page: Int, perPage: Int, includeRead: Boolean) =
+                Result.success(GithubPage(listOf(notifications.first().copy(unread = !serverRead)), null))
+            override suspend fun markRead(id: String) = pending.await()
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(InboxAction.OpenNotification("1")); runCurrent()
+        vm.onAction(InboxAction.Refresh); runCurrent()
+        assertTrue(vm.state.value.unreadIds.isEmpty())
+        serverRead = true
+        vm.onAction(InboxAction.Refresh); runCurrent()
+        pending.complete(Result.failure(IllegalStateException("read failed"))); advanceUntilIdle()
+        assertTrue(vm.state.value.unreadIds.isEmpty())
+    }
+
+    @Test fun failedEarlierBulkReadCannotUndoLaterBulkSuccessAfterPagination() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        var calls = 0
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun markAllRead(): Result<Unit> =
+                if (++calls == 1) pending.await() else Result.success(Unit)
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(InboxAction.MarkAllRead); runCurrent()
+        vm.onAction(InboxAction.LoadMore); runCurrent()
+        assertEquals(setOf("2"), vm.state.value.unreadIds)
+        vm.onAction(InboxAction.MarkAllRead); runCurrent()
+        pending.complete(Result.failure(IllegalStateException("earlier bulk failed"))); advanceUntilIdle()
+        assertTrue(vm.state.value.unreadIds.isEmpty())
+        assertEquals(2, calls)
+    }
+
+    @Test fun oldReadSuccessCannotOverwriteNewActivityReadSuccess() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        var calls = 0
+        var update = notifications.first()
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun notifications(page: Int, perPage: Int, includeRead: Boolean) =
+                Result.success(GithubPage(listOf(update), null))
+            override suspend fun markRead(id: String): Result<Unit> =
+                if (++calls == 1) pending.await() else Result.success(Unit)
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(InboxAction.OpenNotification("1")); runCurrent()
+        update = update.copy(updatedAt = "2026-10-21")
+        vm.onAction(InboxAction.Refresh); runCurrent()
+        assertEquals(setOf("1"), vm.state.value.unreadIds)
+        vm.onAction(InboxAction.OpenNotification("1")); runCurrent()
+        pending.complete(Result.success(Unit)); advanceUntilIdle()
+        vm.onAction(InboxAction.Refresh); advanceUntilIdle()
+        assertTrue(vm.state.value.unreadIds.isEmpty())
+    }
+
+    @Test fun completedThreadStaysRemovedAcrossStaleRefreshButNewActivityReturns() = runTest(dispatcher) {
+        var update = notifications.first()
+        val repository = object : GithubNotificationsRepository by FakeNotificationsRepository() {
+            override suspend fun notifications(page: Int, perPage: Int, includeRead: Boolean) =
+                Result.success(GithubPage(listOf(update), null))
+        }
+        val vm = InboxViewModel(repository)
+        vm.onSessionChanged(GithubSession.SignedIn(account())); advanceUntilIdle()
+        vm.onAction(InboxAction.MarkDone("1")); advanceUntilIdle()
+        vm.onAction(InboxAction.Refresh); advanceUntilIdle()
+        assertTrue(vm.state.value.items.isEmpty())
+        update = update.copy(updatedAt = "2026-10-21")
+        vm.onAction(InboxAction.Refresh); advanceUntilIdle()
+        assertEquals(setOf("1"), vm.state.value.unreadIds)
     }
 
     private suspend fun TestScope.loadedViewModel(): InboxViewModel {

@@ -54,7 +54,8 @@ fun GithubAccountsScreen(
     onAction: (GithubSessionAction) -> Unit,
     onAddAccount: () -> Unit,
     onBack: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    additionalAccountsContent: @Composable () -> Unit = {}
 ) {
     var removalCandidateId by rememberSaveable { mutableStateOf<Long?>(null) }
     val activeAccountId = (state.session as? GithubSession.SignedIn)?.account?.id
@@ -139,6 +140,7 @@ fun GithubAccountsScreen(
                 }
             }
 
+            additionalAccountsContent()
             Button(
                 onClick = onAddAccount,
                 enabled = !state.isAccountActionRunning,
@@ -220,7 +222,7 @@ private fun GithubAccountRow(
                 shape = GithubExpressiveShapes.control
             )
             Spacer(Modifier.width(12.dp))
-            Column(modifier = Modifier.weight(1f)) {
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
                 Text(
                     text = account.name ?: account.login,
                     style = MaterialTheme.typography.titleSmall,

@@ -37,16 +37,22 @@ interface GithubPendingOAuthStore {
     fun clear()
 }
 
-class GithubEncryptedPendingOAuthStore(context: Context, namespace: String = "oauth") : GithubPendingOAuthStore {
-    private val preferences = EncryptedSharedPreferences.create(
-        context.applicationContext,
-        PREFERENCES_NAME + "_" + namespace,
-        MasterKey.Builder(context.applicationContext)
-            .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
-            .build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+class GithubEncryptedPendingOAuthStore(
+    context: Context,
+    namespace: String = "oauth",
+    private val preferencesFactory: (() -> android.content.SharedPreferences)? = null
+) : GithubPendingOAuthStore {
+    private val preferences by lazy {
+        preferencesFactory?.invoke() ?: EncryptedSharedPreferences.create(
+            context.applicationContext,
+            PREFERENCES_NAME + "_" + namespace,
+            MasterKey.Builder(context.applicationContext)
+                .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
+                .build(),
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+            )
+    }
 
     override fun read(): GithubPendingOAuth? {
         val state = preferences.getString(KEY_STATE, null) ?: return null
@@ -56,15 +62,15 @@ class GithubEncryptedPendingOAuthStore(context: Context, namespace: String = "oa
     }
 
     override fun write(value: GithubPendingOAuth) {
-        preferences.edit()
+        check(preferences.edit()
             .putString(KEY_STATE, value.state)
             .putString(KEY_VERIFIER, value.codeVerifier)
             .putLong(KEY_CREATED_AT, value.createdAtEpochMillis)
-            .commit()
+            .commit()) { "Unable to persist GitHub authorization" }
     }
 
     override fun clear() {
-        preferences.edit().clear().commit()
+        check(preferences.edit().clear().commit()) { "Unable to clear GitHub authorization" }
     }
 
     private companion object {
@@ -89,6 +95,7 @@ class GithubWebOAuthRepository(
     private val randomBytes: (Int) -> ByteArray = { size -> ByteArray(size).also(SecureRandom()::nextBytes) },
     private val exchangeCode: (suspend (String, String) -> Result<GithubDeviceAccessToken>)? = null
 ) : GithubWebAuthRepository {
+    private val pendingLock = Any()
     private val normalizedClientId = clientId.trim()
     private val normalizedClientSecret = clientSecret.trim()
     private val normalizedCallbackUri = callbackUri.trim()
@@ -112,7 +119,7 @@ class GithubWebOAuthRepository(
             candidate.fragment == null
     }
 
-    override fun start(): Result<GithubWebAuthorization> = runCatching {
+    override fun start(): Result<GithubWebAuthorization> = runCatching { synchronized(pendingLock) {
         if (!isConfigured) throw GithubWebOAuthNotConfiguredException()
         val state = randomToken(32)
         val verifier = randomToken(48)
@@ -128,34 +135,32 @@ class GithubWebOAuthRepository(
             .build()
             .toString()
         GithubWebAuthorization(url)
-    }
+    } }
 
     override suspend fun exchangeCallback(url: String): Result<GithubDeviceAccessToken> =
         withContext(Dispatchers.IO) {
             githubRunCatching {
                 if (!isConfigured || !isCallbackUrl(url)) throw GithubWebOAuthInvalidCallbackException()
-                val callbackUrl = URI(url)
-                val parameters = callbackUrl.rawQuery.orEmpty().split('&')
-                    .filter(String::isNotBlank)
-                    .associate { part ->
-                        val pieces = part.split('=', limit = 2)
-                        java.net.URLDecoder.decode(pieces[0], Charsets.UTF_8.name()) to
-                            java.net.URLDecoder.decode(pieces.getOrElse(1) { "" }, Charsets.UTF_8.name())
+                val parameters = callbackParameters(url)
+                val (pending, code) = synchronized(pendingLock) {
+                    val pending = pendingStore.read() ?: throw GithubWebOAuthInvalidCallbackException()
+                    val returnedState = parameters["state"] ?: throw GithubWebOAuthInvalidCallbackException()
+                    // A late callback for an older flow must not erase the new flow's PKCE state.
+                    if (!constantTimeEquals(returnedState, pending.state)) throw GithubWebOAuthInvalidCallbackException()
+                    val age = nowEpochMillis() - pending.createdAtEpochMillis
+                    if (age !in 0..PENDING_MAX_AGE_MILLIS) {
+                        pendingStore.clear()
+                        throw GithubWebOAuthInvalidCallbackException()
                     }
-                val pending = pendingStore.read() ?: throw GithubWebOAuthInvalidCallbackException()
-                val age = nowEpochMillis() - pending.createdAtEpochMillis
-                val returnedState = parameters["state"] ?: throw GithubWebOAuthInvalidCallbackException()
-                if (age !in 0..PENDING_MAX_AGE_MILLIS || !constantTimeEquals(returnedState, pending.state)) {
+                    if (parameters["error"] == "access_denied") {
+                        pendingStore.clear()
+                        throw GithubWebOAuthDeniedException()
+                    }
+                    val code = parameters["code"]?.takeIf { it.length in 8..255 && it.none(Char::isWhitespace) }
+                        ?: throw GithubWebOAuthInvalidCallbackException()
                     pendingStore.clear()
-                    throw GithubWebOAuthInvalidCallbackException()
+                    pending to code
                 }
-                if (parameters["error"] == "access_denied") {
-                    pendingStore.clear()
-                    throw GithubWebOAuthDeniedException()
-                }
-                val code = parameters["code"]?.takeIf { it.length in 8..255 && it.none(Char::isWhitespace) }
-                    ?: throw GithubWebOAuthInvalidCallbackException()
-                pendingStore.clear()
 
                 exchangeCode?.let { return@githubRunCatching it(code, pending.codeVerifier).getOrThrow() }
 
@@ -179,7 +184,23 @@ class GithubWebOAuthRepository(
             }
         }
 
-    override fun cancel() = pendingStore.clear()
+    override fun cancel() = synchronized(pendingLock) { pendingStore.clear() }
+
+    private fun callbackParameters(url: String): Map<String, String> = try {
+        val parameters = linkedMapOf<String, String>()
+        URI(url).rawQuery.orEmpty().split('&').filter(String::isNotBlank).forEach { part ->
+            val pieces = part.split('=', limit = 2)
+            val name = java.net.URLDecoder.decode(pieces[0], Charsets.UTF_8.name())
+            val value = java.net.URLDecoder.decode(pieces.getOrElse(1) { "" }, Charsets.UTF_8.name())
+            if (parameters.containsKey(name)) throw GithubWebOAuthInvalidCallbackException()
+            parameters[name] = value
+        }
+        // Reject ambiguity before reading or consuming any valid pending authorization.
+        if ("code" in parameters && "error" in parameters) throw GithubWebOAuthInvalidCallbackException()
+        parameters
+    } catch (invalid: Exception) {
+        throw GithubWebOAuthInvalidCallbackException()
+    }
 
     private fun randomToken(size: Int): String = base64Url(randomBytes(size))
 

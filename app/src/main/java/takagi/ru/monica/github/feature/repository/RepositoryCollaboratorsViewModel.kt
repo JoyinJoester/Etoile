@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import takagi.ru.monica.github.domain.GithubCollaborator
 import takagi.ru.monica.github.domain.GithubCollaboratorChange
 import takagi.ru.monica.github.domain.GithubCollaboratorInvite
@@ -46,7 +49,8 @@ data class RepositoryCollaboratorsUiState(
     val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN,
     val isWriting: Boolean = false,
     val failure: RepositoryWriteFailure? = null,
-    val outcome: RepositoryCollaboratorFeedback? = null
+    val outcome: RepositoryCollaboratorFeedback? = null,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val filteredItems: List<GithubCollaborator>
@@ -77,36 +81,39 @@ sealed interface RepositoryCollaboratorsAction {
 class RepositoryCollaboratorsViewModel(
     private val owner: String,
     private val name: String,
-    private val repository: GithubRepositoryDetailsRepository
+    private val repository: GithubRepositoryDetailsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
     private val _state = MutableStateFlow(RepositoryCollaboratorsUiState(owner, name))
     val state: StateFlow<RepositoryCollaboratorsUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var writeJob: Job? = null
     private var viewerRoleJob: Job? = null
     private var sessionLogin: String? = null
+    private var sessionAccountId: Long? = null
+    private var sessionInitialized = false
     private var failedReset = true
 
     init {
         load(reset = true)
     }
 
+    init {
+        sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } }
+    }
+
     fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login == sessionLogin) return
-        sessionLogin = login
-        // A different account inherits nothing from the last one, not even a role still loading.
-        writeJob?.cancel()
-        _state.update {
-            it.copy(
-                viewerLogin = login,
-                viewerRole = GithubCollaboratorRole.UNKNOWN,
-                isWriting = false,
-                failure = null,
-                outcome = null
-            )
-        }
-        loadViewerRole(signedIn = login != null)
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && account?.id == sessionAccountId && account?.login == sessionLogin) return
+        sessionInitialized = true
+        sessionAccountId = account?.id
+        sessionLogin = account?.login
+        requests.coroutineContext.cancelChildren()
+        failedReset = true
+        _state.value = RepositoryCollaboratorsUiState(owner, name, viewerAccountId = sessionAccountId, viewerLogin = sessionLogin)
+        loadViewerRole(signedIn = account != null)
+        load(reset = true)
     }
 
     private fun loadViewerRole(signedIn: Boolean) {
@@ -115,9 +122,9 @@ class RepositoryCollaboratorsViewModel(
             _state.update { it.copy(viewerRole = GithubCollaboratorRole.UNKNOWN) }
             return
         }
-        viewerRoleJob = viewModelScope.launch {
+        viewerRoleJob = requests.launch {
             val role = repository.details(owner, name)
-                .getOrNull()
+                .currentRepositoryResult().getOrNull()
                 ?.viewerRole
                 ?: GithubCollaboratorRole.UNKNOWN
             _state.update { it.copy(viewerRole = role) }
@@ -170,8 +177,8 @@ class RepositoryCollaboratorsViewModel(
         describe: (T) -> RepositoryCollaboratorOutcome
     ) {
         _state.update { it.copy(isWriting = true, failure = null, outcome = null) }
-        writeJob = viewModelScope.launch {
-            call().fold(
+        writeJob = requests.launch {
+            call().currentRepositoryResult().fold(
                 onSuccess = { value ->
                     _state.update {
                         it.copy(
@@ -208,8 +215,8 @@ class RepositoryCollaboratorsViewModel(
                 error = false
             )
         }
-        loadJob = viewModelScope.launch {
-            repository.collaborators(owner, name, page = page).fold(
+        loadJob = requests.launch {
+            repository.collaborators(owner, name, page = page).currentRepositoryResult().fold(
                 onSuccess = { result ->
                     _state.update { state ->
                         state.copy(
@@ -233,12 +240,13 @@ class RepositoryCollaboratorsViewModel(
     class Factory(
         private val owner: String,
         private val name: String,
-        private val repository: GithubRepositoryDetailsRepository
+        private val repository: GithubRepositoryDetailsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryCollaboratorsViewModel::class.java))
-            return RepositoryCollaboratorsViewModel(owner, name, repository) as T
+            return RepositoryCollaboratorsViewModel(owner, name, repository, sessions) as T
         }
     }
 }

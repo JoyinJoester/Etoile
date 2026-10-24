@@ -75,6 +75,7 @@ class GithubWebOAuthRepositoryTest {
     fun mismatchedStateAndForgedDenialAreRejectedWithoutNetworkRequest() = runTest {
         val repository = repository()
         repository.start().getOrThrow()
+        val original = pendingStore.value
 
         val invalid = repository.exchangeCallback(
             "etoile://oauth?error=access_denied&state=attacker-state"
@@ -82,7 +83,7 @@ class GithubWebOAuthRepositoryTest {
 
         assertTrue(invalid is GithubWebOAuthInvalidCallbackException)
         assertEquals(0, server.requestCount)
-        assertNull(pendingStore.value)
+        assertEquals(original, pendingStore.value)
     }
 
     @Test
@@ -164,7 +165,55 @@ class GithubWebOAuthRepositoryTest {
         assertEquals(0, server.requestCount)
     }
 
-    private fun repository(clientSecret: String = CLIENT_SECRET) = GithubWebOAuthRepository(
+    @Test fun lateOldCallbackCannotEraseTheNewAuthorizationsVerifier() = runTest {
+        var nonce = 0
+        val repository = repository(randomBytes = { size -> ByteArray(size) { (++nonce).toByte() } })
+        val oldState = repository.start().getOrThrow().authorizationUrl.toHttpUrl().queryParameter("state")
+        val newState = repository.start().getOrThrow().authorizationUrl.toHttpUrl().queryParameter("state")
+        val pending = pendingStore.value
+        assertTrue(oldState != newState)
+        assertTrue(repository.exchangeCallback("etoile://oauth?code=old-code-123&state=$oldState").isFailure)
+        assertEquals(pending, pendingStore.value)
+        server.enqueue(MockResponse().setBody(
+            """{"access_token":"gho_123456789012345678901234567890","token_type":"bearer"}"""))
+        assertTrue(repository.exchangeCallback("etoile://oauth?code=new-code-123&state=$newState").isSuccess)
+        assertTrue(server.takeRequest().body.readUtf8().contains("code_verifier=${pending!!.codeVerifier}"))
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun ambiguousOrMalformedCallbackQueriesCannotConsumePendingAuthorization() = runTest {
+        val repository = repository()
+        val state = repository.start().getOrThrow().authorizationUrl.toHttpUrl().queryParameter("state")!!
+        val pending = pendingStore.value
+        val queries = listOf(
+            "state=wrong&state=$state&code=temporary-code-123",
+            "state=$state&%73tate=$state&code=temporary-code-123",
+            "state=$state&code=temporary-code-123&code=other-code-123",
+            "state=$state&code=temporary-code-123&%63ode=other-code-123",
+            "state=$state&error=access_denied&error=access_denied",
+            "state=$state&error=access_denied&%65rror=access_denied",
+            "state=$state&code=temporary-code-123&error=access_denied",
+            "state=$state&code=temporary-code-123&%65rror=access_denied",
+            "state=$state&code=temporary-code-%ZZ",
+            "state=$state&code=temporary-code-%"
+        )
+        queries.forEach { query ->
+            val result = repository.exchangeCallback("etoile://oauth?$query")
+            assertTrue(result.exceptionOrNull() is GithubWebOAuthInvalidCallbackException)
+            assertEquals(pending, pendingStore.value)
+            assertEquals(0, server.requestCount)
+        }
+        server.enqueue(MockResponse().setBody(
+            """{"access_token":"gho_123456789012345678901234567890","token_type":"bearer"}"""))
+        assertTrue(repository.exchangeCallback("etoile://oauth?state=$state&code=temporary-code-123").isSuccess)
+        assertNull(pendingStore.value)
+        assertEquals(1, server.requestCount)
+    }
+
+    private fun repository(
+        clientSecret: String = CLIENT_SECRET,
+        randomBytes: (Int) -> ByteArray = { size -> ByteArray(size) { index -> (index + 1).toByte() } }
+    ) = GithubWebOAuthRepository(
         client = OkHttpClient(),
         clientId = "client-id-1234567890",
         clientSecret = clientSecret,
@@ -173,7 +222,7 @@ class GithubWebOAuthRepositoryTest {
         authorizationUrl = server.url("/login/oauth/authorize").toString(),
         accessTokenUrl = server.url("/login/oauth/access_token").toString(),
         nowEpochMillis = { 1_000L },
-        randomBytes = { size -> ByteArray(size) { index -> (index + 1).toByte() } }
+        randomBytes = randomBytes
     )
 
     private class FakePendingStore : GithubPendingOAuthStore {

@@ -60,7 +60,7 @@ class GithubPublicUserRepositoryImpl(
                 } else {
                     builder.delete().build()
                 }
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter { following }
                 }
@@ -186,7 +186,7 @@ class GithubPublicUserRepositoryImpl(
             githubRunCatching {
                 val builder = requests.builder(blockEndpoint(login))
                 val request = if (blocked) builder.put(EMPTY_BODY).build() else builder.delete().build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter { Unit }
                 }

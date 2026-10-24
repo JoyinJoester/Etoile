@@ -217,11 +217,12 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
                 if (account == null) scope.navController.popBackStack()
             }
             if (account != null) {
-                val factory = remember(scope.dependencies) {
-                    UserRepositoriesViewModel.Factory(scope.dependencies.userRepositoriesRepository)
+                val factory = remember(scope.dependencies, account.id) {
+                    UserRepositoriesViewModel.Factory(scope.dependencies.userRepositoriesRepository,
+                        sessions = scope.dependencies.authRepository.session, expectedAccountId = account.id)
                 }
                 val repositoriesViewModel: UserRepositoriesViewModel = viewModel(
-                    key = "user-repositories:${account.login}",
+                    key = "user-repositories:${account.id}",
                     factory = factory
                 )
                 val repositoriesState by repositoriesViewModel.state.collectAsStateWithLifecycle()
@@ -249,11 +250,12 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
                 if (account == null) scope.navController.popBackStack()
             }
             if (account != null) {
-                val factory = remember(scope.dependencies) {
-                    CreateRepositoryViewModel.Factory(scope.dependencies.userRepositoriesRepository)
+                val factory = remember(scope.dependencies, account.id) {
+                    CreateRepositoryViewModel.Factory(scope.dependencies.userRepositoriesRepository,
+                        sessions = scope.dependencies.authRepository.session, expectedAccountId = account.id)
                 }
                 val createViewModel: CreateRepositoryViewModel = viewModel(
-                    key = "create-repository:${account.login}",
+                    key = "create-repository:${account.id}",
                     factory = factory
                 )
                 val createState by createViewModel.state.collectAsStateWithLifecycle()
@@ -280,11 +282,12 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
                 if (account == null) scope.navController.popBackStack()
             }
             if (account != null) {
-                val factory = remember(scope.dependencies) {
-                    OrganizationsViewModel.Factory(scope.dependencies.organizationsRepository)
+                val factory = remember(scope.dependencies, account.id) {
+                    OrganizationsViewModel.Factory(scope.dependencies.organizationsRepository,
+                        sessions = scope.dependencies.authRepository.session, expectedAccountId = account.id)
                 }
                 val organizationsViewModel: OrganizationsViewModel = viewModel(
-                    key = "organizations",
+                    key = "organizations:${account.id}",
                     factory = factory
                 )
                 val organizationsState by organizationsViewModel.state.collectAsStateWithLifecycle()
@@ -308,16 +311,14 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
             val route = backStackEntry.toRoute<GithubMyConversationsRoute>()
             val kind = route.conversationsKind
             val factory = remember(kind, scope.dependencies) {
-                MyConversationsViewModel.Factory(scope.dependencies.repositorySearchRepository, kind)
+                MyConversationsViewModel.Factory(scope.dependencies.repositorySearchRepository, kind,
+                    sessions = scope.dependencies.authRepository.session)
             }
             val myConversationsViewModel: MyConversationsViewModel = viewModel(
                 key = "my-conversations:$kind",
                 factory = factory
             )
             val myConversationsState by myConversationsViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, myConversationsViewModel) {
-                myConversationsViewModel.onSessionChanged(scope.sessionState.session)
-            }
             MyConversationsScreen(
                 kind = kind,
                 state = myConversationsState,
@@ -349,7 +350,8 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
                     login = route.login,
                     repository = scope.dependencies.publicUserRepository,
                     contributionsRepository = scope.dependencies.contributionsRepository,
-                    repositoryDetailsRepository = scope.dependencies.repositoryDetailsRepository
+                    repositoryDetailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val profileViewModel: PublicUserProfileViewModel = viewModel(
@@ -357,9 +359,6 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val profileState by profileViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, profileViewModel) {
-                profileViewModel.onSessionChanged(scope.sessionState.session)
-            }
             PublicUserProfileScreen(
                 state = profileState,
                 onAction = profileViewModel::onAction,
@@ -419,16 +418,14 @@ internal fun NavGraphBuilder.githubAccountGraph(scope: GithubNavScope) {
         }
         composable<GithubBlockedUsersRoute> {
             val factory = remember(scope.dependencies) {
-                GithubBlockedUsersViewModel.Factory(scope.dependencies.publicUserRepository)
+                GithubBlockedUsersViewModel.Factory(scope.dependencies.publicUserRepository,
+                    sessions = scope.dependencies.authRepository.session)
             }
             val blockedUsersViewModel: GithubBlockedUsersViewModel = viewModel(
                 key = "blocked-users",
                 factory = factory
             )
             val blockedUsersState by blockedUsersViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, blockedUsersViewModel) {
-                blockedUsersViewModel.onSessionChanged(scope.sessionState.session)
-            }
             GithubBlockedUsersScreen(
                 state = blockedUsersState,
                 onAction = blockedUsersViewModel::onAction,

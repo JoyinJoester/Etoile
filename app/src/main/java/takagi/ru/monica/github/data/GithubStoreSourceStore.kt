@@ -1,22 +1,35 @@
 package takagi.ru.monica.github.data
 
 import android.content.Context
+import android.content.SharedPreferences
 
 /** 商店自定义来源的本地持久化(owner/name 集合)。 */
-class GithubStoreSourceStore(context: Context) {
-    private val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+class GithubStoreSourceStore private constructor(private val prefs: SharedPreferences, private val sourcesKey: String) {
+    constructor(context: Context) : this(context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE), KEY_SOURCES)
 
-    fun sources(): List<String> =
-        prefs.getStringSet(KEY_SOURCES, emptySet())?.sorted().orEmpty()
-
-    fun add(fullName: String): Boolean {
-        val updated = sources() + fullName
-        return prefs.edit().putStringSet(KEY_SOURCES, updated.toSet()).commit()
+    fun forAccount(accountId: Long?): GithubStoreSourceStore = synchronized(prefs) {
+        val key = if (accountId == null) "public_sources" else "account:$accountId:sources"
+        if (accountId != null && !prefs.contains("legacy_sources_owner")) {
+            val legacy = prefs.getStringSet(KEY_SOURCES, emptySet()).orEmpty()
+            // Old versions stored no owner. Claim once; never copy private names
+            // into every account or expose them while signed out.
+            check(prefs.edit().putStringSet(key, prefs.getStringSet(key, emptySet()).orEmpty() + legacy)
+                .putLong("legacy_sources_owner", accountId).remove(KEY_SOURCES).commit())
+        }
+        GithubStoreSourceStore(prefs, key)
     }
 
-    fun remove(fullName: String): Boolean {
+    fun sources(): List<String> =
+        prefs.getStringSet(sourcesKey, emptySet())?.sorted().orEmpty()
+
+    fun add(fullName: String): Boolean = synchronized(prefs) {
+        val updated = sources() + fullName
+        prefs.edit().putStringSet(sourcesKey, updated.toSet()).commit()
+    }
+
+    fun remove(fullName: String): Boolean = synchronized(prefs) {
         val updated = sources() - fullName
-        return prefs.edit().putStringSet(KEY_SOURCES, updated.toSet()).commit()
+        prefs.edit().putStringSet(sourcesKey, updated.toSet()).commit()
     }
 
     fun enabledFdroidSources(): Set<String> = prefs.getStringSet("fdroid_enabled", null)?.toSet()

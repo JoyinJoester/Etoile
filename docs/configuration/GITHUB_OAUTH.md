@@ -1,11 +1,12 @@
 # GitHub OAuth 配置
 
-Etoile 支持两种登录方式：
+Etoile 支持浏览器授权、Device Flow 和个人访问令牌登录：
 
-1. 配置 Client ID 与 Client Secret 时，使用 OAuth Web Flow。可选系统浏览器（Custom Tabs）或应用内 WebView；用户完成授权后通过 `etoile://oauth` 自动返回应用，无需设备代码。
-2. 仅配置 Client ID 时，回退到 GitHub OAuth Device Flow，也提供上述两种登录入口。外置登录先显示可点击复制的代码页面，再由用户打开浏览器；仍需在 GitHub 输入设备代码。
+1. Release 浏览器登录需配置已部署的 GitHub App 授权服务（见下文），客户端固定不嵌入 Client Secret。Debug 另外兼容个人 OAuth App 的 Client ID 与 Secret 配置。可选系统浏览器（Custom Tabs）或应用内 WebView；授权后通过 `etoile://oauth` 返回应用，无需设备代码。
+2. 无可用浏览器授权配置时，回退到 GitHub OAuth Device Flow。外置登录先显示可点击复制的代码页面，再由用户打开浏览器；仍需在 GitHub 输入设备代码。Device Flow 只需公开 Client ID。
+3. 也可填写个人访问令牌，权限由令牌本身决定。
 
-## 浏览器 OAuth（个人构建）
+## 浏览器 OAuth（仅 Debug 的个人兼容模式）
 
 1. 在 GitHub Developer Settings 创建 OAuth App。
 2. 将 Authorization callback URL 设置为：
@@ -32,13 +33,13 @@ Web Flow 使用随机 `state` 与 PKCE S256。短期校验数据存储在 Androi
 
 ### 风险说明
 
-Android APK 无法安全保存 Client Secret。即使它来自环境变量或 `local.properties`，最终仍会进入 APK，可能被反编译提取。自定义 URI Scheme 也无法像 HTTPS App Links 一样验证应用归属。选择内嵌 WebView 时，登录页面由应用直接承载；选择系统浏览器可使用其支持的 Passkey 和密码管理器。
+Android APK 无法安全保存 Client Secret。此 Debug 兼容模式即使从环境变量或 `local.properties` 读取 Secret，仍会把它编入 APK，可能被提取。Release 忽略这些 Secret 配置并固定生成空值；构建检查拒绝非空 Release Secret。自定义 URI Scheme 无法像 HTTPS App Links 一样验证应用归属。选择内嵌 WebView 时，登录页面由应用直接承载；选择系统浏览器可使用其支持的 Passkey 和密码管理器。
 
-因此该模式只适合个人构建、自用安装或明确接受风险的分发。正式公开发行应使用 HTTPS 回调和服务端 Token 交换。
+该兼容模式限个人 Debug 使用。正式浏览器登录需服务端交换令牌；当前回调仍为带 state/PKCE 校验的自定义 Scheme，尚未实现已验证 HTTPS App Links。公开发行还需单独实测授权配置。
 
 ## Device Flow 兜底
 
-只提供 Client ID、不提供 Client Secret 时，Etoile 使用 Device Flow。OAuth App 必须在设置中启用 Device Flow。
+无可用浏览器授权配置时，Etoile 使用 Device Flow。Release 未配置授权服务时，即使本机设置了 Secret 也使用 Device Flow。OAuth App 必须在设置中启用 Device Flow。
 
 未显式配置 Client ID 时，当前构建使用 GitHub CLI 的公开 Client ID 作为 Device Flow 兼容兜底；它不会启用 Web Flow。
 
@@ -46,7 +47,7 @@ Android APK 无法安全保存 Client Secret。即使它来自环境变量或 `l
 
 - OAuth access token 必须先通过 GitHub `/user` 验证，成功后才写入加密令牌存储。
 - Token、Client Secret、OAuth code、state 与 PKCE verifier 不写入日志。
-- 默认请求 `repo notifications read:user`，用于私有仓库、通知和用户资料功能。
+- OAuth App 默认请求 `repo notifications read:user user:follow`，用于仓库、通知、资料与关注功能；GitHub App 权限由应用注册配置决定。
 
 ## 轻量浏览器登录与代码通知
 
@@ -56,9 +57,11 @@ Android APK 无法安全保存 Client Secret。即使它来自环境变量或 `l
 - Device Flow 的代码页面可点击复制。仅在已有通知权限、应用及频道通知均开启时发布代码通知，不主动申请权限。点击通知通过临时 Activity 复制代码；锁屏公开版本不显示代码。完成、取消或过期会清除通知。
 - 无设备代码的 Web Flow 不显示代码页或代码通知。GitHub 的网页 Token 交换仍要求 Client Secret；没有自己的 OAuth App 配置时，不能借用公开 Client ID 跳过这一步。
 
-官方依据：[GitHub OAuth 授权与 Token 参数](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)。当前实现保留个人构建配置方式；尚未部署服务端 Token 交换。
+官方依据：[GitHub OAuth 授权与 Token 参数](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps)。仓库提供授权服务代码；服务部署和真实授权尚需验收。
 
-## 本轮验收（2026-09-17，调试构建 15）
+## 历史验收（2026-09-17，调试构建 15）
+
+以下为历史记录，不代表当前源码或正式版验收；本轮未生成或安装 APK。当前状态见 [客户端验收](../acceptance/CLIENT_ACCEPTANCE.md)。
 
 430 项单元测试、7 项原生交互检查通过；Lint 0 错误、113 条警告。另验证了真实 Chrome Custom Tabs 启动，未登录真实 GitHub 账户、未提交设备代码，也未实际使用个人 Passkey。
 
@@ -73,7 +76,7 @@ arm64 调试 APK 为 6,818,396 字节，相比构建 14 增加 22,355 字节。N
 
 - Redirect URI：`etoile://oauth`，关闭 wildcard matching。
 - 建议开启 Enable Device Flow，保留设备验证码授权作为备用。
-- 当前实现尚未保存或使用 refresh token，注册时关闭 Expire user access tokens。
+- 当前实现支持加密保存、按授权来源刷新和轮换 refresh token。过期 GitHub App 令牌需部署支持刷新的授权服务；普通 OAuth App 若不返回 refresh token，失效后仍需重新授权。
 - 两种 OAuth 授权流程均请求 `user:follow`。旧凭据不会随 APK 更新获得权限，需要退出并重新授权；个人令牌需自行具备关注写权限。
 - 组织资料页使用“在 GitHub 管理关注”入口，应用不对组织调用个人关注接口，也不展示个人贡献日历。
 
@@ -87,6 +90,6 @@ githubAppClientId=Iv23litmCSITWQoOAjio
 githubAuthServiceUrl=https://你的授权服务域名/
 ```
 
-服务代码与部署说明见 `server/github-auth/README.md`。地址必须为 HTTPS、以 `/` 结束，不可含账号密码、查询参数或片段。不填写地址时保持旧 OAuth 网页登录；填写后浏览器登录使用 GitHub App，设备代码入口仍保留旧 OAuth 兼容登录。App Secret 不被这两个配置项读取，也不打包到客户端。
+服务代码与部署说明见 `server/github-auth/README.md`。地址必须为 HTTPS、以 `/` 结束，不可含账号密码、查询参数或片段。填写后浏览器登录使用 GitHub App，设备代码入口保留 OAuth App Device Flow；不填写时 Release 使用 Device Flow，Debug 可使用上述个人 OAuth 网页配置。App Secret 仅配置在服务端，不被这两个客户端配置项读取，也不打包到客户端。
 
 GitHub App 回调单独保存待验证 state/PKCE 信息，避免旧登录回调跨配置复用；刷新按加密凭据里的授权来源选择服务。服务端必须配置与客户端一致的 Client ID，并保持令牌过期选项开启。目前未提供公网服务地址，不能声称真实授权已验证。

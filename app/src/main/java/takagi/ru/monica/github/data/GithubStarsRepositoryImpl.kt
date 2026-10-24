@@ -78,10 +78,17 @@ private data class StoredStarLabel(val id: Long, val name: String)
  */
 class GithubPreferencesStarLabelStore(
     context: Context,
-    private val json: Json = Json { ignoreUnknownKeys = true }
+    private val json: Json = Json { ignoreUnknownKeys = true },
+    private val accountId: Long? = null
 ) : GithubStarLabelStore {
-    private val preferences = context.applicationContext
-        .getSharedPreferences("etoile_github_star_categories", Context.MODE_PRIVATE)
+    private val applicationContext = context.applicationContext
+    private val preferences = applicationContext.getSharedPreferences(
+        if (accountId == null) "etoile_github_star_categories" else "etoile_github_star_categories_account_$accountId",
+        Context.MODE_PRIVATE
+    )
+
+    override fun forAccount(accountId: Long): GithubStarLabelStore =
+        if (this.accountId == accountId) this else GithubPreferencesStarLabelStore(applicationContext, json, accountId)
 
     override fun labels(): List<GithubStarLabel> = read().labels.map { it.toDomain() }
 
@@ -176,11 +183,28 @@ class GithubPreferencesStarLabelStore(
     }
 
     private fun read(): StarLabelsSnapshot {
+        migrateAccountSnapshot()
         preferences.getString(SNAPSHOT_KEY, null)?.let { stored ->
             return runCatching { json.decodeFromString(StarLabelsSnapshot.serializer(), stored) }
                 .getOrDefault(StarLabelsSnapshot())
         }
         return migrateLegacyCategories().also(::write)
+    }
+
+    /** Claim unscoped data once so an upgrade preserves it without copying it into every account. */
+    private fun migrateAccountSnapshot() {
+        val id = accountId ?: return
+        synchronized(ACCOUNT_MIGRATION_LOCK) {
+            if (preferences.contains(SNAPSHOT_KEY)) return
+            val legacy = applicationContext.getSharedPreferences("etoile_github_star_categories", Context.MODE_PRIVATE)
+            if (!legacy.contains("account_owner")) {
+                legacy.edit().putLong("account_owner", id).commit()
+            }
+            val snapshot = if (legacy.getLong("account_owner", -1) == id) {
+                GithubPreferencesStarLabelStore(applicationContext, json).read()
+            } else StarLabelsSnapshot()
+            write(snapshot)
+        }
     }
 
     /**
@@ -212,7 +236,6 @@ class GithubPreferencesStarLabelStore(
 
     private fun write(snapshot: StarLabelsSnapshot) {
         preferences.edit()
-            .clear()
             .putString(SNAPSHOT_KEY, json.encodeToString(StarLabelsSnapshot.serializer(), snapshot))
             .apply()
     }
@@ -220,6 +243,7 @@ class GithubPreferencesStarLabelStore(
     private fun StoredStarLabel.toDomain() = GithubStarLabel(id, name)
 
     private companion object {
+        val ACCOUNT_MIGRATION_LOCK = Any()
         const val SNAPSHOT_KEY = "labels_v2"
         val LEGACY_IGNORED_CATEGORIES = setOf("ALL", "UNCATEGORIZED")
         val LEGACY_LABEL_NAMES = mapOf(

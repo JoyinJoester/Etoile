@@ -1,5 +1,9 @@
 package takagi.ru.monica.github.feature.repository
 
+import takagi.ru.monica.github.domain.GithubSession
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.CoroutineScope
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -28,7 +32,8 @@ data class RepositoryCompareUiState(
     val isLoading: Boolean = true,
     // A comparison is a read, but GitHub refuses it with the same statuses the write
     // paths already classify, so naming those reasons does not need a second taxonomy.
-    val failure: RepositoryWriteFailure? = null
+    val failure: RepositoryWriteFailure? = null,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val refRange: String get() = "$base...$head"
@@ -40,13 +45,28 @@ class RepositoryCompareViewModel(
     private val name: String,
     private val base: String,
     private val head: String,
-    private val repository: GithubPullRequestsRepository
+    private val repository: GithubPullRequestsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
+    private var accountId: Long? = null
+    private var sessionInitialized = false
     private val _state = MutableStateFlow(RepositoryCompareUiState(owner, name, base, head))
     val state: StateFlow<RepositoryCompareUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
 
     init {
+        if (sessions == null) load()
+        else viewModelScope.launch { sessions.collect { onSessionChanged(it) } }
+    }
+
+    fun onSessionChanged(session: GithubSession) {
+        val next = (session as? GithubSession.SignedIn)?.account?.id
+        if (sessionInitialized && accountId == next) return
+        sessionInitialized = true
+        accountId = next
+        requests.coroutineContext.cancelChildren()
+        _state.value = RepositoryCompareUiState(owner, name, base, head, viewerAccountId = next)
         load()
     }
 
@@ -59,10 +79,10 @@ class RepositoryCompareViewModel(
     private fun load() {
         loadJob?.cancel()
         _state.update { it.copy(isLoading = true, failure = null) }
-        loadJob = viewModelScope.launch {
+        loadJob = requests.launch {
             // The create-PR preview asks for one commit, while this page wants the file
             // list, so it requests a full page: GitHub still caps a comparison at 300 files.
-            repository.compare(owner, name, base, head, perPage = FILES_PER_PAGE).fold(
+            repository.compare(owner, name, base, head, perPage = FILES_PER_PAGE).currentRepositoryResult().fold(
                 onSuccess = { comparison ->
                     _state.update { it.copy(comparison = comparison, isLoading = false, failure = null) }
                 },
@@ -84,12 +104,13 @@ class RepositoryCompareViewModel(
         private val name: String,
         private val base: String,
         private val head: String,
-        private val repository: GithubPullRequestsRepository
+        private val repository: GithubPullRequestsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryCompareViewModel::class.java))
-            return RepositoryCompareViewModel(owner, name, base, head, repository) as T
+            return RepositoryCompareViewModel(owner, name, base, head, repository, sessions) as T
         }
     }
 }

@@ -1,5 +1,12 @@
 package takagi.ru.monica.github.feature.commits
 
+import takagi.ru.monica.github.domain.GithubSession
+import takagi.ru.monica.github.domain.GithubAccount
+import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.Continuation
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -86,6 +93,30 @@ class CommitsViewModelTest {
         assertEquals(SHA_PREFIX + "9", repository.detailShas.single())
         assertEquals(9, viewModel.state.value.details?.additions)
         assertFalse(viewModel.state.value.isLoading)
+    }
+
+    @Test
+    fun offscreenAccountSwitchCancelsPrivateCommitDetailEvenWhenOldReadIgnoresCancellation() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val base = FakeCommitsRepository()
+        lateinit var completion: Continuation<Result<GithubCommitDetails>>
+        val repository = object : GithubCommitsRepository by base {
+            override suspend fun commit(owner: String, name: String, sha: String): Result<GithubCommitDetails> =
+                if ((sessions.value as? GithubSession.SignedIn)?.account?.id == 1L) suspendCoroutine { completion = it }
+                else Result.failure(IllegalStateException("private commit denied"))
+        }
+        val vm = CommitDetailViewModel("o", "r", "abc", repository, sessions)
+        runCurrent()
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        runCurrent()
+        completion.resume(base.commit("o", "r", "abc"))
+        runCurrent()
+        assertEquals(2L, vm.state.value.viewerAccountId)
+        assertEquals(null, vm.state.value.details)
+        sessions.value = GithubSession.SignedOut
+        runCurrent()
+        assertEquals(null, vm.state.value.details)
     }
 
     private class FakeCommitsRepository : GithubCommitsRepository {

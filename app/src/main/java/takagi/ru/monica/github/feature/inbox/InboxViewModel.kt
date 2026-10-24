@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -73,59 +75,51 @@ class InboxViewModel(
     val state: StateFlow<InboxUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private val triageJobs = mutableMapOf<String, Job>()
-    private var sessionLogin: String? = null
+    private var sessionAccountId: Long? = null
     private var sessionRevision = 0L
+    private var loadVersion = 0L
+    private var nextReadOperation = 0L
+    private var serverUnreadIds: Set<String> = emptySet()
+    private val pendingReads = mutableMapOf<Long, Map<String, String>>()
+    private val confirmedReads = mutableSetOf<Pair<String, String>>()
+    private val completedThreads = mutableMapOf<String, String>()
+    private val readJobs = mutableMapOf<Long, Job>()
 
     fun onSessionChanged(session: GithubSession) {
         sessionRevision++
+        loadVersion++
         loadJob?.cancel()
+        cancelTriageJobs()
+        readJobs.values.toList().forEach { it.cancel() }
+        readJobs.clear()
+        pendingReads.clear()
+        confirmedReads.clear()
+        completedThreads.clear()
+        serverUnreadIds = emptySet()
+        sessionAccountId = null
         when (session) {
             GithubSession.Loading -> {
-                cancelTriageJobs()
-                sessionLogin = null
-                _state.update {
-                    it.copy(
-                        isLoading = true,
-                        isRefreshing = false,
-                        error = false,
-                        refreshError = false,
-                        actionError = false,
-                        triageBusyIds = emptySet()
-                    )
-                }
+                _state.value = InboxUiState(isLoading = true)
             }
             GithubSession.SignedOut -> {
                 loadJob?.cancel()
                 cancelTriageJobs()
-                sessionLogin = null
                 _state.value = InboxUiState(requiresAuthentication = true)
             }
             is GithubSession.Error -> {
                 cancelTriageJobs()
-                sessionLogin = null
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        isRefreshing = false,
-                        error = true,
-                        refreshError = false,
-                        actionError = false,
-                        triageBusyIds = emptySet(),
-                        requiresAuthentication = false
-                    )
-                }
+                _state.value = InboxUiState(error = true)
             }
             is GithubSession.SignedIn -> {
-                if (sessionLogin != null && sessionLogin != session.account.login) {
-                    cancelTriageJobs()
-                }
-                sessionLogin = session.account.login
+                sessionAccountId = session.account.id
+                _state.value = InboxUiState(requiresAuthentication = false)
                 refresh(preserveExisting = false)
             }
         }
     }
 
     fun onAction(action: InboxAction) {
+        if (sessionAccountId == null) return
         when (action) {
             is InboxAction.SelectFilter -> {
                 val reloadRequired = _state.value.selectedFilter.includeRead != action.filter.includeRead
@@ -149,10 +143,14 @@ class InboxViewModel(
 
     private fun load(reset: Boolean, preserveExisting: Boolean = false) {
         val current = _state.value
+        if (sessionAccountId == null) return
         if (!reset && !current.canLoadMore) return
         val requestedPage = if (reset) 1 else current.nextPage ?: return
         val includeRead = current.selectedFilter.includeRead
         loadJob?.cancel()
+        val revision = sessionRevision
+        val version = ++loadVersion
+        if (reset && !preserveExisting) serverUnreadIds = emptySet()
         _state.update {
             it.copy(
                 items = if (reset && !preserveExisting) emptyList() else it.items,
@@ -168,15 +166,22 @@ class InboxViewModel(
             )
         }
         loadJob = viewModelScope.launch {
-            repository.notifications(page = requestedPage, includeRead = includeRead).fold(
+            val result = repository.notifications(page = requestedPage, includeRead = includeRead)
+            currentCoroutineContext().ensureActive()
+            if (revision != sessionRevision || version != loadVersion) return@launch
+            result.fold(
                 onSuccess = { page ->
                     _state.update { state ->
                         val pageUnreadIds = page.items
                             .filter(GithubNotification::unread)
                             .mapTo(linkedSetOf(), GithubNotification::id)
+                        val pageIds = page.items.mapTo(hashSetOf(), GithubNotification::id)
+                        serverUnreadIds = if (reset) pageUnreadIds else (serverUnreadIds - pageIds) + pageUnreadIds
+                        val items = page.mergeItems(state.items, reset, GithubNotification::id)
+                            .filterNot { completedThreads[it.id] == it.updatedAt }
                         state.copy(
-                            items = page.mergeItems(state.items, reset, GithubNotification::id),
-                            unreadIds = if (reset) pageUnreadIds else state.unreadIds + pageUnreadIds,
+                            items = items,
+                            unreadIds = unreadIdsFor(items),
                             nextPage = page.nextPage,
                             isLoading = false,
                             isRefreshing = false,
@@ -203,52 +208,54 @@ class InboxViewModel(
 
     private fun markRead(id: String) {
         if (id !in _state.value.unreadIds) return
-        val revision = sessionRevision
-        _state.update { it.copy(unreadIds = it.unreadIds - id) }
-        viewModelScope.launch {
-            repository.markRead(id).fold(
-                onSuccess = {
-                    if (revision == sessionRevision) _state.update { it.copy(actionError = false) }
-                },
-                onFailure = {
-                    if (revision != sessionRevision) return@fold
-                    _state.update { state ->
-                        state.copy(
-                            unreadIds = if (state.items.any { it.id == id }) state.unreadIds + id else state.unreadIds,
-                            actionError = true
-                        )
-                    }
-                }
-            )
-        }
+        val item = _state.value.items.firstOrNull { it.id == id } ?: return
+        read(mapOf(id to item.updatedAt)) { repository.markRead(id) }
     }
 
     private fun markAllRead() {
+        if (_state.value.unreadIds.isEmpty()) return
+        // Include pending individual reads: a failed earlier request cannot undo this bulk success.
+        val targets = _state.value.items.filter { it.id in serverUnreadIds }
+            .associate { it.id to it.updatedAt }
+        read(targets) { repository.markAllRead() }
+    }
+
+    /** Keep the server snapshot separate from pending mutations so refresh/rollback cannot undo each other. */
+    private fun unreadIdsFor(items: List<GithubNotification>): Set<String> = items.asSequence()
+        .filter { item ->
+            item.id in serverUnreadIds && (item.id to item.updatedAt) !in confirmedReads &&
+                pendingReads.values.none { it[item.id] == item.updatedAt }
+        }
+        .map(GithubNotification::id).toSet()
+
+    private fun read(targets: Map<String, String>, request: suspend () -> Result<Unit>) {
         val revision = sessionRevision
-        val previous = _state.value.unreadIds
-        if (previous.isEmpty()) return
-        _state.update { it.copy(unreadIds = emptySet()) }
-        viewModelScope.launch {
-            repository.markAllRead().fold(
-                onSuccess = {
-                    if (revision == sessionRevision) _state.update { it.copy(actionError = false) }
-                },
-                onFailure = {
-                    if (revision != sessionRevision) return@fold
-                    _state.update { state ->
-                        state.copy(
-                            unreadIds = state.unreadIds + previous.intersect(state.items.map { it.id }.toSet()),
-                            actionError = true
-                        )
-                    }
+        val operation = ++nextReadOperation
+        pendingReads[operation] = targets
+        _state.update { it.copy(unreadIds = unreadIdsFor(it.items)) }
+        readJobs[operation] = viewModelScope.launch {
+            try {
+                currentCoroutineContext().ensureActive()
+                if (revision != sessionRevision) return@launch
+                val result = request()
+                currentCoroutineContext().ensureActive()
+                if (revision != sessionRevision) return@launch
+                pendingReads.remove(operation)
+                if (result.isSuccess) confirmedReads.addAll(targets.map { it.key to it.value })
+                _state.update {
+                    it.copy(unreadIds = unreadIdsFor(it.items), actionError = result.isFailure)
                 }
-            )
+            } finally {
+                if (revision == sessionRevision) readJobs.remove(operation)
+            }
         }
     }
 
     private fun triage(id: String, request: suspend () -> Result<Unit>) {
         val current = _state.value
         if (current.items.none { it.id == id } || id in current.triageBusyIds) return
+        val revision = sessionRevision
+        val updatedAt = current.items.first { it.id == id }.updatedAt
         _state.update {
             it.copy(
                 triageBusyIds = it.triageBusyIds + id,
@@ -257,12 +264,19 @@ class InboxViewModel(
         }
         val job = viewModelScope.launch {
             try {
-                request().fold(
+                currentCoroutineContext().ensureActive()
+                if (revision != sessionRevision) return@launch
+                val result = request()
+                currentCoroutineContext().ensureActive()
+                if (revision != sessionRevision) return@launch
+                result.fold(
                     onSuccess = {
+                        completedThreads[id] = updatedAt
                         _state.update { state ->
+                            val items = state.items.filterNot { it.id == id && it.updatedAt == updatedAt }
                             state.copy(
-                                items = state.items.filterNot { it.id == id },
-                                unreadIds = state.unreadIds - id,
+                                items = items,
+                                unreadIds = unreadIdsFor(items),
                                 triageErrorIds = state.triageErrorIds - id
                             )
                         }
@@ -274,10 +288,12 @@ class InboxViewModel(
                     }
                 )
             } finally {
-                _state.update { state ->
-                    state.copy(triageBusyIds = state.triageBusyIds - id)
+                if (revision == sessionRevision) {
+                    _state.update { state ->
+                        state.copy(triageBusyIds = state.triageBusyIds - id)
+                    }
+                    triageJobs.remove(id)
                 }
-                triageJobs.remove(id)
             }
         }
         triageJobs[id] = job

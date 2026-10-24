@@ -486,7 +486,7 @@ class GithubRepositoryDetailsRepositoryImplTest {
     fun webhookDeliveriesMapTheLatestAttempts() = runTest {
         server.enqueue(
             MockResponse().setResponseCode(200).setBody(
-                """[{"id":77,"guid":"g-77","delivered_at":"2026-09-20T10:00:00Z","redelivery":false,"duration":120,"status":"ok","status_code":200,"event":"push","action":null}]"""
+                """[{"id":77,"guid":"g-77","delivered_at":"2026-09-20T10:00:00Z","redelivery":false,"duration":0.123,"status":"ok","status_code":200,"event":"push","action":null}]"""
             )
         )
         val repository = repository(token = "test_token_12345678901234567890")
@@ -494,13 +494,66 @@ class GithubRepositoryDetailsRepositoryImplTest {
         val page = repository.webhookDeliveries("openai", "codex", 9).getOrThrow()
         val request = server.takeRequest()
 
-        assertEquals("/repos/openai/codex/hooks/9/deliveries?per_page=30&page=1", request.path)
+        assertEquals("/repos/openai/codex/hooks/9/deliveries?per_page=30", request.path)
+        assertEquals("Bearer test_token_12345678901234567890", request.getHeader("Authorization"))
         val delivery = page.items.single()
         assertEquals(77L, delivery.id)
         assertEquals("push", delivery.event)
         assertEquals("ok", delivery.status)
         assertEquals(200, delivery.statusCode)
         assertEquals(false, delivery.redelivery)
+        assertEquals(123, delivery.durationMs)
+        assertNull(page.nextCursor)
+    }
+
+    @Test
+    fun webhookDeliveriesPreserveOpaqueCursorAndEtagPagination() = runTest {
+        val cursor = "opaque+/=value&tail"
+        val nextUrl = server.url("/repos/openai/codex/hooks/9/deliveries").newBuilder()
+            .addQueryParameter("cursor", cursor).build()
+        server.enqueue(MockResponse().setHeader("ETag", "\"deliveries-v1\"")
+            .setHeader("Link", "<$nextUrl>; rel=\"next\"").setBody("[]"))
+        server.enqueue(MockResponse().setResponseCode(304))
+        server.enqueue(MockResponse().setBody("[]"))
+        val repository = repository("test_token_12345678901234567890", TestGithubCacheStore())
+        assertEquals(cursor, repository.webhookDeliveries("openai", "codex", 9).getOrThrow().nextCursor)
+        server.takeRequest()
+        assertEquals(cursor, repository.webhookDeliveries("openai", "codex", 9).getOrThrow().nextCursor)
+        assertEquals("\"deliveries-v1\"", server.takeRequest().getHeader("If-None-Match"))
+        val page = repository.webhookDeliveries("openai", "codex", 9, cursor = cursor).getOrThrow()
+        val request = server.takeRequest()
+        assertEquals(cursor, request.requestUrl?.queryParameter("cursor"))
+        assertNull(request.requestUrl?.queryParameter("page"))
+        assertNull(page.nextCursor)
+    }
+
+    @Test
+    fun redeliveryClearsDeliveryCacheOnlyAfterAnAcceptedRequest() = runTest {
+        val cache = TestGithubCacheStore()
+        val repository = repository("test_token_12345678901234567890", cache)
+        server.enqueue(MockResponse().setHeader("ETag", "\"deliveries-v1\"").setBody("[]"))
+        repository.webhookDeliveries("openai", "codex", 9).getOrThrow()
+        server.takeRequest()
+        server.enqueue(MockResponse().setResponseCode(403))
+        assertTrue(repository.redeliverWebhook("openai", "codex", 9, 77).isFailure)
+        server.takeRequest()
+        assertTrue(!cache.isEmpty())
+        server.enqueue(MockResponse().setResponseCode(202))
+        repository.redeliverWebhook("openai", "codex", 9, 77).getOrThrow()
+        server.takeRequest()
+        assertTrue(cache.isEmpty())
+    }
+
+    @Test
+    fun deliveriesDoNotFallBackToCacheAfterPermissionIsRevoked() = runTest {
+        val repository = repository("test_token_12345678901234567890", TestGithubCacheStore())
+        server.enqueue(MockResponse().setHeader("ETag", "\"deliveries-v1\"").setBody("[]"))
+        repository.webhookDeliveries("openai", "codex", 9).getOrThrow()
+        server.takeRequest()
+        server.enqueue(MockResponse().setResponseCode(403))
+        val failure = repository.webhookDeliveries("openai", "codex", 9).exceptionOrNull()
+        server.takeRequest()
+        assertEquals(403, (failure as GithubApiException).statusCode)
     }
 
     @Test

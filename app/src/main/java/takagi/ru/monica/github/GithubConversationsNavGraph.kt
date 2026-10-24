@@ -1,5 +1,6 @@
 package takagi.ru.monica.github
 
+import androidx.lifecycle.repeatOnLifecycle
 import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.createSavedStateHandle
@@ -215,7 +216,7 @@ import androidx.navigation.NavGraphBuilder
 /**
  * 议题与 PR 域导航图:列表、详情与创建议题。
  */
-internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
+internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubConversationNavScope) {
         composable<GithubRepositoryDiscussionsRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryDiscussionsRoute>()
             val accountId = (scope.sessionState.session as? GithubSession.SignedIn)?.account?.id
@@ -223,17 +224,14 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 object : androidx.lifecycle.ViewModelProvider.Factory {
                     @Suppress("UNCHECKED_CAST")
                     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
-                        DiscussionsViewModel(route.owner, route.name, scope.dependencies.discussionsRepository,
-                            extras.createSavedStateHandle(), accountId) as T
+                        DiscussionsViewModel(route.owner, route.name, scope.dependencies.discussionsRepository.forAccount(accountId),
+                            extras.createSavedStateHandle(), accountId,
+                            sessions = scope.dependencies.authRepository.session) as T
                 }
             }
             val vm: DiscussionsViewModel = viewModel(key = "discussions:${route.fullName}:$accountId", factory = factory)
-            var previousDiscussionVm by remember { mutableStateOf<DiscussionsViewModel?>(null) }
-            LaunchedEffect(vm) {
-                previousDiscussionVm?.takeIf { it !== vm }?.cancelPendingRequests()
-                previousDiscussionVm = vm
-            }
             androidx.compose.runtime.DisposableEffect(vm) {
+                vm.restorePendingDraft()
                 if (vm.state.value.repositoryId == null && !vm.state.value.loading) vm.load()
                 if (vm.state.value.categories.isEmpty()) vm.loadCategories()
                 onDispose { vm.cancelPendingRequests(clearAccountData = false) }
@@ -254,16 +252,25 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
         composable<GithubDiscussionRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubDiscussionRoute>()
             val accountId = (scope.sessionState.session as? GithubSession.SignedIn)?.account?.id
-            androidx.compose.runtime.key(accountId) {
-            var discussion by remember { mutableStateOf<takagi.ru.monica.github.domain.GithubDiscussion?>(null) }
-            var failed by remember { mutableStateOf(false) }
-            var attempt by remember { mutableStateOf(0) }
-            LaunchedEffect(route.fullName, route.number, attempt) {
-                failed = false
-                scope.dependencies.discussionsRepository.detail(route.owner, route.name, route.number)
-                    .fold(onSuccess = { discussion = it }, onFailure = { failed = true })
+            val factory = remember(route.fullName, route.number, scope.dependencies, accountId) {
+                object : androidx.lifecycle.ViewModelProvider.Factory {
+                    @Suppress("UNCHECKED_CAST")
+                    override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T =
+                        takagi.ru.monica.github.feature.discussions.DiscussionDetailViewModel(
+                            route.owner, route.name, route.number, accountId,
+                            scope.dependencies.discussionsRepository.forAccount(accountId),
+                            scope.dependencies.authRepository.session, extras.createSavedStateHandle()) as T
+                }
             }
-            val loaded = discussion
+            val vm: takagi.ru.monica.github.feature.discussions.DiscussionDetailViewModel = viewModel(
+                key = "discussion-detail:${route.fullName}:${route.number}:$accountId", factory = factory)
+            val state by vm.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.DisposableEffect(vm) {
+                vm.onEntered()
+                onDispose { vm.cancelPendingRequests() }
+            }
+            androidx.compose.runtime.key(accountId) {
+            val loaded = state.discussion
             if (loaded == null) {
                 takagi.ru.monica.github.component.GithubDetailScaffold(
                     title = stringResource(R.string.discussion_title),
@@ -271,24 +278,35 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                     backContentDescription = stringResource(R.string.discussion_back)
                 ) { padding ->
                     Column(Modifier.padding(padding).padding(20.dp)) {
-                        if (failed) {
+                        if (!state.accountReady) {
+                            Text(stringResource(R.string.discussion_sign_in))
+                            androidx.compose.material3.TextButton(onClick = { scope.navController.navigate(GithubSignInRoute) }) {
+                                Text(stringResource(R.string.github_sign_in))
+                            }
+                        } else if (state.failed) {
                             Text(stringResource(R.string.discussion_load_error))
-                            androidx.compose.material3.TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.discussion_retry)) }
+                            androidx.compose.material3.TextButton(onClick = vm::load) { Text(stringResource(R.string.discussion_retry)) }
                         } else androidx.compose.material3.CircularProgressIndicator()
                     }
                 }
             } else DiscussionDetailScreen(discussion = loaded,
-                onEdit = { title, body -> scope.dependencies.discussionsRepository.edit(loaded.id, title, body) },
+                onEdit = vm::edit,
                 onOpenLink = { target -> scope.openUrl(takagi.ru.monica.github.navigation.GithubWebUrls.resolveMarkdownLink(route.fullName, "HEAD", "", target)) },
-                loadReplies = scope.dependencies.discussionsRepository::replies,
-                editComment = scope.dependencies.discussionsRepository::editComment,
-                deleteComment = scope.dependencies.discussionsRepository::deleteComment,
-                replyToComment = { id, body -> scope.dependencies.discussionsRepository.replyToComment(loaded.id, id, body) },
-                onMarkAnswer = scope.dependencies.discussionsRepository::markAnswer,
-                loadComments = { cursor -> scope.dependencies.discussionsRepository.comments(loaded.id, cursor) },
-                signedIn = scope.sessionState.session is GithubSession.SignedIn,
-                onReply = { body -> scope.dependencies.discussionsRepository.reply(loaded.id, body) },
-                onBack = { scope.navController.popBackStack() }, modifier = Modifier.fillMaxSize())
+                loadReplies = vm::replies,
+                editComment = vm::editComment,
+                deleteComment = vm::deleteComment,
+                replyToComment = vm::replyToComment,
+                onMarkAnswer = vm::markAnswer,
+                loadComments = vm::comments,
+                signedIn = state.accountReady,
+                onReply = vm::reply,
+                onBack = { scope.navController.popBackStack() }, modifier = Modifier.fillMaxSize(),
+                viewerAccountId = accountId, draft = state.draft,
+                onEditDraftChange = vm::saveEdit, onReplyDraftChange = vm::saveReply,
+                onThreadDraftChange = vm::saveThreadReply, onCommentDraftChange = vm::saveCommentEdit,
+                unconfirmedOperations = state.unconfirmedOperations, refreshKey = state.readRevision,
+                onRefresh = vm::load, onAcknowledgeUnconfirmed = vm::acknowledgeUnconfirmed,
+                refreshing = state.loading, refreshFailed = state.failed)
         }
             }
         composable<GithubRepositoryIssuesRoute> { backStackEntry ->
@@ -297,7 +315,8 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 IssuesViewModel.Factory(
                     owner = route.owner,
                     name = route.name,
-                    repository = scope.dependencies.issuesRepository
+                    repository = scope.dependencies.issuesRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val issuesViewModel: IssuesViewModel = viewModel(
@@ -305,6 +324,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val issuesState by issuesViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(issuesState.viewerAccountId) {
             IssuesScreen(
                 state = issuesState,
                 onAction = issuesViewModel::onAction,
@@ -326,6 +346,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubRepositoryPullRequestsRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubRepositoryPullRequestsRoute>()
@@ -333,7 +354,8 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 PullRequestsViewModel.Factory(
                     owner = route.owner,
                     name = route.name,
-                    repository = scope.dependencies.pullRequestsRepository
+                    repository = scope.dependencies.pullRequestsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val pullRequestsViewModel: PullRequestsViewModel = viewModel(
@@ -351,19 +373,31 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                             { draft -> scope.dependencies.pullRequestsRepository.create(route.owner, route.name, draft) },
                             extras.createSavedStateHandle(),
                             { base, head, headRepository -> scope.dependencies.pullRequestsRepository.compare(route.owner, route.name, base, head, headRepository) },
-                            { takagi.ru.monica.github.data.GithubPullRequestTemplates(scope.dependencies.repositoryContentsRepository).load(route.owner, route.name) }) as T
+                            { takagi.ru.monica.github.data.GithubPullRequestTemplates(scope.dependencies.repositoryContentsRepository).load(route.owner, route.name) },
+                            sessions = scope.dependencies.authRepository.session,
+                            expectedAccountId = createAccountId) as T
                 }
             }
             val createVm: CreatePullRequestViewModel = viewModel(key = "create-pr:${route.fullName}:$createAccountId", factory = createFactory)
             val createState by createVm.state.collectAsStateWithLifecycle()
-            var creating by rememberSaveable(createAccountId) { mutableStateOf(false) }
-            androidx.compose.runtime.DisposableEffect(createVm) { onDispose { createVm.cancel() } }
+            // Keep text in the account-bound SavedStateHandle, but never restore an
+            // open composer from another account's saved navigation composition.
+            var creating by remember(createAccountId) { mutableStateOf(false) }
+            androidx.compose.runtime.DisposableEffect(createVm) {
+                createVm.onEntered()
+                onDispose { createVm.cancel() }
+            }
             androidx.activity.compose.BackHandler(creating) { if (!createState.submitting) creating = false }
-            LaunchedEffect(createState.created) {
-                createState.created?.let {
-                    creating = false; createVm.consumeCreated()
-                    pullRequestsViewModel.onAction(takagi.ru.monica.github.feature.pullrequest.PullRequestsAction.Retry)
-                    scope.navController.navigate(GithubPullRequestRoute(route.fullName, it.number))
+            LaunchedEffect(createState.created, createAccountId, createVm) {
+                if (createState.created == null) return@LaunchedEffect
+                backStackEntry.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+                    val liveAccountId = (scope.dependencies.authRepository.session.value as? GithubSession.SignedIn)?.account?.id
+                    if (liveAccountId != createAccountId) return@repeatOnLifecycle
+                    createVm.consumeCreatedForAccount(liveAccountId)?.let { created ->
+                        creating = false
+                        pullRequestsViewModel.onAction(takagi.ru.monica.github.feature.pullrequest.PullRequestsAction.Retry)
+                        scope.navController.navigate(GithubPullRequestRoute(route.fullName, created.number))
+                    }
                 }
             }
             if (creating) CreatePullRequestScreen(route.fullName, createState, createVm::edit, createVm::submit,
@@ -400,7 +434,8 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                     number = route.number,
                     pullRequestsRepository = scope.dependencies.pullRequestsRepository,
                     issuesRepository = scope.dependencies.issuesRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val pullRequestViewModel: PullRequestDetailViewModel = viewModel(
@@ -408,9 +443,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val pullRequestState by pullRequestViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, pullRequestViewModel) {
-                pullRequestViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(pullRequestState.viewerAccountId) {
             PullRequestDetailScreen(
                 state = pullRequestState,
                 onAction = pullRequestViewModel::onAction,
@@ -420,6 +453,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
 
         composable<GithubIssueRoute> { backStackEntry ->
@@ -430,7 +464,8 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                     name = route.name,
                     number = route.number,
                     repository = scope.dependencies.issuesRepository,
-                    detailsRepository = scope.dependencies.repositoryDetailsRepository
+                    detailsRepository = scope.dependencies.repositoryDetailsRepository,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val issueViewModel: IssueDetailViewModel = viewModel(
@@ -438,9 +473,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val issueState by issueViewModel.state.collectAsStateWithLifecycle()
-            LaunchedEffect(scope.sessionState.session, issueViewModel) {
-                issueViewModel.onSessionChanged(scope.sessionState.session)
-            }
+            androidx.compose.runtime.key(issueState.viewerAccountId) {
             IssueDetailScreen(
                 state = issueState,
                 onAction = issueViewModel::onAction,
@@ -450,6 +483,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 onOpenExternal = scope.openUrl,
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
         composable<GithubCreateIssueRoute> { backStackEntry ->
             val route = backStackEntry.toRoute<GithubCreateIssueRoute>()
@@ -461,7 +495,8 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                     name = route.name,
                     repository = scope.dependencies.issuesRepository,
                     templatesRepository = scope.dependencies.issueTemplatesRepository,
-                    initialTemplateLanguage = templateLanguage
+                    initialTemplateLanguage = templateLanguage,
+                    sessions = scope.dependencies.authRepository.session
                 )
             }
             val createViewModel: CreateIssueViewModel = viewModel(
@@ -469,6 +504,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 factory = factory
             )
             val createState by createViewModel.state.collectAsStateWithLifecycle()
+            androidx.compose.runtime.key(createState.viewerAccountId) {
             CreateIssueScreen(
                 state = createState,
                 canSubmit = scope.sessionState.session is GithubSession.SignedIn,
@@ -490,6 +526,7 @@ internal fun NavGraphBuilder.githubConversationsGraph(scope: GithubNavScope) {
                 },
                 modifier = Modifier.fillMaxSize()
             )
+            }
         }
 
 }

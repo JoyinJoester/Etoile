@@ -1,6 +1,7 @@
 package takagi.ru.monica.github.data
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
@@ -32,9 +33,14 @@ class GithubActionsRepositoryImpl(
     baseUrl: String = "https://api.github.com/",
     private val maxLogBytes: Long = DEFAULT_MAX_LOG_BYTES,
     private val cacheStore: GithubCacheStore = NoOpGithubCacheStore,
-    cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter
+    private val cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : GithubActionsRepository {
     private val apiBaseUrl = baseUrl.toHttpUrl()
+    override fun forAccount(accountId: Long?): GithubActionsRepository = GithubActionsRepositoryImpl(
+        requests.forAccount(accountId), client, json, apiBaseUrl.toString(), maxLogBytes,
+        cacheStore, cacheStatusReporter, ioDispatcher
+    )
     private val cachedGet = GithubCachedGetExecutor(cacheStore, cacheStatusReporter)
     private val noRedirectClient = client.newBuilder()
         .followRedirects(false)
@@ -65,7 +71,7 @@ class GithubActionsRepositoryImpl(
         page: Int,
         perPage: Int,
         forceRefresh: Boolean
-    ): Result<GithubPage<GithubWorkflow>> = withContext(Dispatchers.IO) {
+    ): Result<GithubPage<GithubWorkflow>> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "workflows").newBuilder()
                 .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
@@ -120,7 +126,7 @@ class GithubActionsRepositoryImpl(
         page: Int,
         perPage: Int,
         forceRefresh: Boolean
-    ): Result<GithubPage<GithubWorkflowRun>> = withContext(Dispatchers.IO) {
+    ): Result<GithubPage<GithubWorkflowRun>> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "workflows", workflowId.toString(), "runs").newBuilder()
                 .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
@@ -152,7 +158,7 @@ class GithubActionsRepositoryImpl(
         owner: String,
         name: String,
         runId: Long
-    ): Result<GithubWorkflowRun> = withContext(Dispatchers.IO) {
+    ): Result<GithubWorkflowRun> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "runs", runId.toString()).toString()
             val cacheKey = GithubCacheKeys.endpoint("actions-runs", requests.cacheScope(), url)
@@ -178,7 +184,7 @@ class GithubActionsRepositoryImpl(
         runId: Long,
         page: Int,
         perPage: Int
-    ): Result<GithubPage<GithubWorkflowJob>> = withContext(Dispatchers.IO) {
+    ): Result<GithubPage<GithubWorkflowJob>> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "runs", runId.toString(), "jobs").newBuilder()
                 .addQueryParameter("filter", "latest")
@@ -210,7 +216,7 @@ class GithubActionsRepositoryImpl(
         owner: String,
         name: String,
         jobId: Long
-    ): Result<GithubWorkflowJob> = withContext(Dispatchers.IO) {
+    ): Result<GithubWorkflowJob> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "jobs", jobId.toString()).toString()
             val cacheKey = GithubCacheKeys.endpoint("actions-jobs", requests.cacheScope(), url)
@@ -234,7 +240,7 @@ class GithubActionsRepositoryImpl(
         owner: String,
         name: String,
         jobId: Long
-    ): Result<GithubActionsLog> = withContext(Dispatchers.IO) {
+    ): Result<GithubActionsLog> = withContext(ioDispatcher) {
         githubRunCatching {
             val apiRequest = requests.optionalBuilder(
                 endpoint(owner, name, "actions", "jobs", jobId.toString(), "logs").toString()
@@ -263,7 +269,7 @@ class GithubActionsRepositoryImpl(
         runId: Long,
         page: Int,
         perPage: Int
-    ): Result<GithubPage<GithubWorkflowArtifact>> = withContext(Dispatchers.IO) {
+    ): Result<GithubPage<GithubWorkflowArtifact>> = withContext(ioDispatcher) {
         githubRunCatching {
             val url = endpoint(owner, name, "actions", "runs", runId.toString(), "artifacts").newBuilder()
                 .addQueryParameter("per_page", perPage.coerceIn(1, 100).toString())
@@ -295,7 +301,7 @@ class GithubActionsRepositoryImpl(
         name: String,
         artifactId: Long,
         open: () -> GithubArtifactOutput
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         githubRunCatching {
             val apiRequest = requests.optionalBuilder(
                 endpoint(owner, name, "actions", "artifacts", artifactId.toString(), "zip").toString()
@@ -323,7 +329,7 @@ class GithubActionsRepositoryImpl(
         name: String,
         runId: Long,
         action: GithubWorkflowRunAction
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         githubRunCatching {
             val path = when (action) {
                 GithubWorkflowRunAction.RERUN -> "rerun"
@@ -332,7 +338,7 @@ class GithubActionsRepositoryImpl(
             val request = requests.builder(
                 endpoint(owner, name, "actions", "runs", runId.toString(), path).toString()
             ).post("{}".toRequestBody("application/json; charset=utf-8".toMediaType())).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
                 Unit
@@ -345,13 +351,13 @@ class GithubActionsRepositoryImpl(
         name: String,
         workflowId: Long,
         enabled: Boolean
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         githubRunCatching {
             val action = if (enabled) "enable" else "disable"
             val request = requests.builder(
                 endpoint(owner, name, "actions", "workflows", workflowId.toString(), action).toString()
             ).put("{}".toRequestBody("application/json; charset=utf-8".toMediaType())).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
                 Unit
@@ -365,7 +371,7 @@ class GithubActionsRepositoryImpl(
         workflowId: Long,
         ref: String,
         inputs: Map<String, String>
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    ): Result<Unit> = withContext(ioDispatcher) {
         githubRunCatching {
             val normalizedRef = ref.trim()
             require(normalizedRef.isNotBlank()) { "Workflow ref must not be blank" }
@@ -384,7 +390,7 @@ class GithubActionsRepositoryImpl(
             val request = requests.builder(
                 endpoint(owner, name, "actions", "workflows", workflowId.toString(), "dispatches").toString()
             ).post(payload.toString().toRequestBody("application/json; charset=utf-8".toMediaType())).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
                 Unit

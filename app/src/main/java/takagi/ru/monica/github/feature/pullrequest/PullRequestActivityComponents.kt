@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.ui.text.font.FontFamily
@@ -55,6 +56,7 @@ import takagi.ru.monica.github.domain.GithubPullRequestState
 import takagi.ru.monica.github.domain.GithubReviewEvent
 import takagi.ru.monica.github.domain.GithubReviewState
 import takagi.ru.monica.github.navigation.GithubWebUrls
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 
 @Composable
@@ -95,7 +97,7 @@ internal fun PullRequestReviewCard(
                     onOpenExternalLink = { target ->
                         onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, ref, "", target))
                     },
-                    renderImages = false,
+                    imageContext = MarkdownImageContext(fullName, ref),
                     maxElements = 220,
                     modifier = Modifier.padding(top = 12.dp)
                 )
@@ -110,7 +112,9 @@ internal fun PullRequestReviewCommentCard(
     fullName: String,
     ref: String,
     onOpenExternal: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    canReply: Boolean = false,
+    onReply: () -> Unit = {}
 ) {
     var diffExpanded by rememberSaveable(comment.id) { mutableStateOf(false) }
     Surface(
@@ -129,16 +133,17 @@ internal fun PullRequestReviewCommentCard(
                 modifier = Modifier.fillMaxWidth()
             )
             Text(
-                text = stringResource(
-                    R.string.github_review_comment_location,
-                    comment.path,
-                    comment.line ?: comment.startLine ?: 0
-                ),
+                text = (comment.line ?: comment.startLine ?: comment.originalLine)?.takeIf { it > 0 }?.let { line ->
+                    stringResource(R.string.github_review_comment_location, comment.path, line)
+                } ?: comment.path,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(top = 8.dp)
             )
-            if (comment.diffHunk.isNotBlank()) {
+            if (comment.line == null && comment.originalLine != null) {
+                Text(stringResource(R.string.github_review_comment_outdated), style = MaterialTheme.typography.labelSmall)
+            }
+            if (comment.inReplyToId == null && comment.diffHunk.isNotBlank()) {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceContainerHighest,
                     shape = GithubExpressiveShapes.compact,
@@ -168,14 +173,19 @@ internal fun PullRequestReviewCommentCard(
                 onOpenExternalLink = { target ->
                     onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, ref, comment.path, target))
                 },
-                renderImages = false,
+                imageContext = MarkdownImageContext(fullName, ref, comment.path),
                 maxElements = 220,
                 modifier = Modifier.padding(top = 10.dp)
             )
-            GithubOpenOnGithubButton(
-                onClick = { onOpenExternal(comment.htmlUrl) },
-                modifier = Modifier.padding(top = 4.dp)
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (canReply) {
+                    TextButton(onClick = onReply) { Text(stringResource(R.string.github_review_reply)) }
+                }
+                GithubOpenOnGithubButton(
+                    onClick = { onOpenExternal(comment.htmlUrl) },
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+            }
         }
     }
 }
@@ -297,9 +307,9 @@ internal fun PullRequestActionsCard(
     }
     val methods = GithubMergeMethod.entries
     val selectedMethod = methods.firstOrNull { it.name == selectedMethodName } ?: GithubMergeMethod.SQUASH
-    var pendingMergeMethodName by rememberSaveable(pullRequest.id) { mutableStateOf<String?>(null) }
-    var mergeCommitTitle by rememberSaveable(pullRequest.id) { mutableStateOf("") }
-    var mergeCommitMessage by rememberSaveable(pullRequest.id) { mutableStateOf("") }
+    var pendingMergeMethodName by rememberSaveable(pullRequest.id, pullRequest.head.sha) { mutableStateOf<String?>(null) }
+    var mergeCommitTitle by rememberSaveable(pullRequest.id, pullRequest.head.sha) { mutableStateOf("") }
+    var mergeCommitMessage by rememberSaveable(pullRequest.id, pullRequest.head.sha) { mutableStateOf("") }
     val pendingMergeMethod = methods.firstOrNull { it.name == pendingMergeMethodName }
 
     if (pendingMergeMethod != null) {
@@ -311,7 +321,7 @@ internal fun PullRequestActionsCard(
             },
             title = { Text(stringResource(R.string.github_confirm_merge_pr_title)) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     Text(
                         stringResource(
                             R.string.github_confirm_merge_pr_message,
@@ -365,6 +375,7 @@ internal fun PullRequestActionsCard(
             },
             confirmButton = {
                 TextButton(
+                    enabled = canMerge && !isMerging && pullRequest.state == GithubPullRequestState.OPEN && !pullRequest.isMerged && pullRequest.mergeable != false,
                     onClick = {
                         pendingMergeMethodName = null
                         onMerge(pendingMergeMethod, mergeCommitTitle, mergeCommitMessage)

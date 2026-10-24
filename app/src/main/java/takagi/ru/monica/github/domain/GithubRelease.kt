@@ -68,9 +68,8 @@ class GithubReleaseDraft private constructor(
 }
 
 /**
- * A file ready to be streamed into a release as an attachment. [open] is called once per upload
- * attempt, so a redirect or a retry reads the file again from the start instead of replaying an
- * exhausted stream.
+ * A file ready to be streamed into a release as an attachment. Each explicitly requested
+ * upload opens a fresh stream once; transport redirects and failures never replay it automatically.
  */
 class GithubReleaseAssetUpload private constructor(
     val fileName: String,
@@ -129,6 +128,9 @@ interface GithubAssetInput {
 }
 
 interface GithubReleasesRepository {
+    /** Credential-backed implementations verify this numeric account when building each request. */
+    fun forAccount(accountId: Long?): GithubReleasesRepository = this
+
     suspend fun releases(
         owner: String,
         name: String,

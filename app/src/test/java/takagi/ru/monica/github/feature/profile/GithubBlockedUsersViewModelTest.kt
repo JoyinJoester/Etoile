@@ -1,10 +1,15 @@
 package takagi.ru.monica.github.feature.profile
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -145,7 +150,43 @@ class GithubBlockedUsersViewModelTest {
         assertFalse(viewModel.state.value.isRefreshing)
     }
 
+    @Test
+    fun loadingClearsPrivateRowsAndLateResponseCannotRestoreThem() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val sessions = MutableStateFlow<GithubSession>(GithubSession.SignedIn(account("alice")))
+        val viewModel = GithubBlockedUsersViewModel(repository, sessions)
+        advanceUntilIdle()
+        val gate = CompletableDeferred<Result<GithubPage<GithubUserSummary>>>()
+        repository.request = { withContext(NonCancellable) { gate.await() } }
+        viewModel.onAction(GithubBlockedUsersAction.Refresh)
+        runCurrent()
+        sessions.value = GithubSession.Loading
+        runCurrent()
+        assertTrue(viewModel.state.value.users.isEmpty())
+        gate.complete(Result.success(GithubPage(listOf(blockedSummary("private")), null)))
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.users.isEmpty())
+        viewModel.onAction(GithubBlockedUsersAction.Refresh)
+        viewModel.onAction(GithubBlockedUsersAction.Retry)
+        advanceUntilIdle()
+        assertEquals(2, repository.listRequests)
+    }
+
+    @Test
+    fun numericAccountIdentityWorksEvenWhenLoginMatches() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val sessions = MutableStateFlow<GithubSession>(GithubSession.SignedIn(account("alice")))
+        val viewModel = GithubBlockedUsersViewModel(repository, sessions)
+        advanceUntilIdle()
+        repository.pages = listOf(GithubPage(listOf(blockedSummary("second-account")), null))
+        sessions.value = GithubSession.SignedIn(account("alice").copy(id = 2))
+        advanceUntilIdle()
+        assertEquals(2, repository.listRequests)
+        assertEquals(listOf("second-account"), viewModel.state.value.users.map { it.login })
+    }
+
     private class FakeRepository : GithubPublicUserRepository {
+        var request: (suspend () -> Result<GithubPage<GithubUserSummary>>)? = null
         var listRequests = 0
         val requested = mutableListOf<Int>()
         var failNext: Throwable? = null
@@ -157,6 +198,7 @@ class GithubBlockedUsersViewModelTest {
         override suspend fun blockedUsers(page: Int, perPage: Int): Result<GithubPage<GithubUserSummary>> {
             listRequests++
             requested += page
+            request?.let { return it() }
             failNext?.let { return Result.failure(it) }
             return Result.success(pages.getOrElse(page - 1) { GithubPage(emptyList(), null) })
         }
@@ -175,7 +217,7 @@ class GithubBlockedUsersViewModelTest {
     }
 
     private fun account(login: String) = GithubAccount(
-        id = 1,
+        id = if (login == "alice") 1 else 2,
         login = login,
         name = null,
         bio = null,

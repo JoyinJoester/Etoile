@@ -63,7 +63,7 @@ fun CreateRepositoryScreen(
         ) {
             OutlinedTextField(
                 value = state.name,
-                readOnly = state.isSubmitting,
+                readOnly = state.isSubmitting || !state.accountAvailable,
                 onValueChange = { onAction(CreateRepositoryAction.NameChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.github_repository_name)) },
@@ -77,7 +77,7 @@ fun CreateRepositoryScreen(
             )
             OutlinedTextField(
                 value = state.description,
-                readOnly = state.isSubmitting,
+                readOnly = state.isSubmitting || !state.accountAvailable,
                 onValueChange = { onAction(CreateRepositoryAction.DescriptionChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 label = { Text(stringResource(R.string.github_repository_description)) },
@@ -92,14 +92,14 @@ fun CreateRepositoryScreen(
                     else R.string.github_visibility_public
                 ),
                 checked = state.isPrivate,
-                enabled = !state.isSubmitting,
+                enabled = !state.isSubmitting && state.accountAvailable,
                 onCheckedChange = { onAction(CreateRepositoryAction.TogglePrivate) }
             )
             FormChoiceRow(
                 title = stringResource(R.string.github_add_readme),
                 summary = null,
                 checked = state.autoInit,
-                enabled = !state.isSubmitting,
+                enabled = !state.isSubmitting && state.accountAvailable,
                 onCheckedChange = { onAction(CreateRepositoryAction.ToggleAutoInit) }
             )
             Text(

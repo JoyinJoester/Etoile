@@ -6,7 +6,7 @@
 
 <img src="image/etoile_launcher.png" alt="Etoile App Icon" width="220" />
 
-<p><strong>专注 GitHub 的独立 Android 客户端</strong></p>
+<p><strong>支持 GitHub 与 GitLab 的独立 Android 客户端</strong></p>
 <p>收件箱 · 仓库与代码浏览 · Issue · Pull Request · Actions · Release · Explore</p>
 
 <p>
@@ -34,7 +34,7 @@
 
 <br>
 
-Etoile 是一款独立维护的 GitHub 第三方 Android 客户端，用 Jetpack Compose 与 Material 3 Expressive 构建，
+Etoile 是一款独立维护的 GitHub / GitLab 第三方 Android 客户端，用 Jetpack Compose 与 Material 3 Expressive 构建，
 把 GitHub 的日常协作收在一部手机里：分拣通知、读代码、处理 Issue 与 Pull Request、盯 Actions 运行。
 
 > **当前状态：公开测试版。** 接口与布局仍会调整，不是正式版，也不是 GitHub 官方客户端。
@@ -53,7 +53,7 @@ Etoile 是一款独立维护的 GitHub 第三方 Android 客户端，用 Jetpack
 ### 你能得到什么
 - **收件箱**：通知线程分页、逐条 Done / 取消订阅、未读状态与失败就地提示。
 - **仓库与代码**：目录浏览、Branch/Tag 切换、README 渲染、文件原文、Commits、Releases；
-  独立的分支列表、协作者权限与 Webhooks 只读页面。
+  支持文件、分支、协作者权限及部分仓库管理，Webhooks 提供启停、删除、投递记录和确认后重投。
 - **Issue**：选择仓库的 Markdown / YAML 模板，或内置的中英文问题反馈、功能建议、使用求助模板创建议题；支持必填表单、预览与草稿恢复。
   详情与管理弹层支持标题正文编辑、Labels、Assignees、Milestone、
   关闭/重开、会话锁定与 Reaction。
@@ -62,30 +62,32 @@ Etoile 是一款独立维护的 GitHub 第三方 Android 客户端，用 Jetpack
 - **Actions**：Workflow 与 Run 列表、日志、重跑/取消、启停与手动 Dispatch。
 - **Explore**：Repositories / Users / Code / Issues / Pull Requests 五类搜索共享防抖、分页与错误状态。
 - **个人资料**：公开资料、Followers / Following、仓库与星标（本地分类）。
+- **GitLab**：gitlab.com 与 HTTPS 自建实例，OAuth / 个人访问令牌、多账号、项目搜索与代码浏览；Issue、合并请求、流水线和作业支持原生协作。高级评审、通知和管理尚未与 GitHub 对齐，详见 [功能边界](docs/configuration/GITLAB_WORKFLOWS.md)。
 - **深链**：可识别的 `github.com` Issue、PR、Actions Run/Job 链接进入原生页面，未知路径仍交给浏览器。
 
 ### 快速安装
 
 1. 从 [Releases](https://github.com/JoyinJoester/Etoile/releases) 下载与设备架构匹配的 APK。
 2. 在 Android 8.0+ 设备安装。
-3. 使用 GitHub OAuth 登录；个人构建可配置 `etoile://oauth` 浏览器回调，未配置时回退到 Device Flow。
+3. 使用 GitHub OAuth 登录；Release 浏览器登录需配置已部署的授权服务，另可使用 Device Flow 或令牌登录。Debug 兼容个人 OAuth App 的 `etoile://oauth` 浏览器回调。
 
 ### 已知限制
 - 仍为公开测试版，接口与布局可能随时调整。
 - 依赖 GitHub REST API，受速率限制影响；限流与缓存回退会在界面上明确提示，不会静默展示旧数据。
-- 分支保护规则编辑、协作者增删、Webhook 的发送/删除等高风险或有外部副作用的操作，
-  仍引导至 GitHub 官方设置页完成，客户端不复制网页权限模型。
+- 部分高级设置仍由服务网页提供；客户端已支持的危险写操作保留目标确认、权限检查和重复提交保护。具体范围见 [危险操作说明](docs/configuration/DANGEROUS_ACTIONS.md)。
+- 当前稳定发行验收尚未完成，进展与缺失证据见 [发布验收矩阵](docs/acceptance/CLIENT_ACCEPTANCE.md)。
 - 最终合并、权限变更等结果**以 GitHub 服务端返回为准**。
 
 ---
 
 ## 数据与安全边界
 
-- 应用 ID：`app.etoile`，数据由 Android 应用沙箱隔离。
-- 访问令牌经 GitHub OAuth 取得并保存在设备端加密存储；个人构建的浏览器 OAuth 会将 Client Secret 编入 APK，详见配置文档。
+- 应用 ID：`takagi.joyin.github.etoile`，数据由 Android 应用沙箱隔离。
+- 访问令牌保存在设备端加密存储；Release 固定不嵌入 OAuth Client Secret。Debug 的个人 OAuth App 兼容模式会内嵌 Secret，详见配置文档。
 - 缓存遵循 ETag / 304 校验，退出登录或切换账号时清理，401/403/4xx 不会展示其他账号的旧数据。
 - Webhook 的 URL、secret 等敏感配置不进入客户端模型与界面。
 - 本仓库不含遥测或广告 SDK。
+- 隐私、第三方网络请求与本地数据清理方式见 [隐私说明](PRIVACY.md)，应用设置中的「关于 Etoile」也提供离线说明与许可证。
 
 ### 技术实现
 - UI：Jetpack Compose + Material 3 / Material 3 Expressive，手机与平板自适应布局。
@@ -124,9 +126,10 @@ Etoile 的代码基座来自 [Monica Android](https://github.com/Monica-Pass/Mon
 
 ### 环境要求
 - Android Studio 最新稳定版。
-- JDK 17+。
-- `compileSdk 35`，`targetSdk 34`，`minSdk 26`（Android 8.0+）。
-- 构建基线：AGP `8.7.3`，Kotlin `2.0.21`，Compose BOM `2026.03.00`（以 `gradle/libs.versions.toml` 为准）。
+- JDK 21（主机原生组件测试所需）。
+- `compileSdk 37`，`targetSdk 34`，`minSdk 26`（Android 8.0+）。目标 SDK 尚未完成未来商店上架适配。
+- 构建基线：Gradle `8.14.3`、AGP `8.13.2`、Kotlin `2.4.10`、Compose BOM `2026.03.00`（以版本目录为准）。
+- Rust stable、`cargo-ndk`、`aarch64-linux-android` / `armv7-linux-androideabi` targets，以及 Android NDK `28.2.13676358`，用于 JNI 源码阅读器。
 
 ### 常用命令
 
@@ -151,13 +154,15 @@ Release 签名通过 `keystore.properties` 或 `ETOILE_RELEASE_*` 环境变量�
 ### 项目分层（代码现状）
 - `takagi/ru/monica/github`：GitHub 客户端全部业务，按 `feature` / `domain` / `data` / `component` / `design` / `navigation` 分层。
 - `takagi/ru/monica/data` / `utils` / `ui`：应用级设置、偏好存储、主题与基类 Activity 等共享支撑。
-- 包名仍为 `takagi.ru.monica`（沿承自 Monica），`applicationId` 为 `app.etoile`。
+- 包名仍为 `takagi.ru.monica`（沿承自 Monica），`applicationId` 为 `takagi.joyin.github.etoile`。
 
 ### 仓库导航
 - [`README_EN.md`](./README_EN.md) — English overview
 - [`docs/architecture/GITHUB_MODULES.md`](./docs/architecture/GITHUB_MODULES.md) — 分层、分页与 UI 维护约定
 - [`docs/architecture/GITHUB_UI_LAYOUT.md`](./docs/architecture/GITHUB_UI_LAYOUT.md) — 响应式布局约定
 - [`docs/configuration/GITHUB_OAUTH.md`](./docs/configuration/GITHUB_OAUTH.md) — OAuth Client ID 配置
+- [`docs/configuration/GITLAB_AUTH.md`](./docs/configuration/GITLAB_AUTH.md) — GitLab 浏览器 OAuth、个人访问令牌与多实例账号管理
+- [`docs/configuration/DANGEROUS_ACTIONS.md`](./docs/configuration/DANGEROUS_ACTIONS.md) — 危险操作二次确认检查
 - [`docs/release-signing.md`](./docs/release-signing.md) — 外部签名契约
 - [`SOURCE.md`](./SOURCE.md) — 从 Monica Android 的提取基线
 - [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) — 第三方组件声明

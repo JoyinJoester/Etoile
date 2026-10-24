@@ -64,7 +64,7 @@ class EtoileActivity : BaseMonicaActivity() {
     private fun isSupportedIncomingUrl(url: String): Boolean {
         val uri = runCatching { android.net.Uri.parse(url) }.getOrNull() ?: return false
         val isOAuthCallback = uri.scheme.equals("etoile", ignoreCase = true) &&
-            uri.host.equals("oauth", ignoreCase = true)
+            (uri.host.equals("oauth", ignoreCase = true) || uri.host.equals("gitlab-oauth", ignoreCase = true))
         return isOAuthCallback || GithubLinkRouter.parse(url) != null
     }
 }

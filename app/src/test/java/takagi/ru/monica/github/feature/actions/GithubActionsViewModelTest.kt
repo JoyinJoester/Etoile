@@ -1,5 +1,11 @@
 package takagi.ru.monica.github.feature.actions
 
+import takagi.ru.monica.github.domain.GithubCollaboratorRole
+import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.Continuation
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -231,11 +237,244 @@ class GithubActionsViewModelTest {
         assertEquals(null, viewModel.state.value.log)
     }
 
+    @Test
+    fun backgroundWorkflowObserverRevokesSameLoginAccountPermissionsBeforeRoleReturns() = runTest(dispatcher) {
+        val first = signedInSession("same-login")
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val details = TestGithubRepositoryDetailsRepository()
+        val actions = FakeActionsRepository()
+        val vm = ActionsWorkflowsViewModel("o", "r", actions, details, sessions)
+        runCurrent()
+        assertTrue(vm.state.value.canManageWorkflows)
+        details.viewerRole = GithubCollaboratorRole.READ
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        // This VM is not collected by any screen; only its permanent auth observer runs.
+        runCurrent()
+        assertEquals(2L, vm.state.value.viewerAccountId)
+        assertFalse(vm.state.value.canManageWorkflows)
+        vm.onAction(ActionsWorkflowsAction.SetWorkflowEnabled(1, false, 1L))
+        runCurrent()
+        assertTrue(actions.workflowStates.isEmpty())
+        sessions.value = GithubSession.SignedOut
+        runCurrent()
+        assertFalse(vm.state.value.canManageWorkflows)
+    }
+
+    @Test
+    fun latePrivateWorkflowReadCannotPopulateAnotherAccount() = runTest(dispatcher) {
+        val first = signedInSession("same-login")
+        val sessions = MutableStateFlow<GithubSession>(first)
+        lateinit var response: Continuation<Result<GithubPage<GithubWorkflow>>>
+        val base = FakeActionsRepository()
+        val repository = object : GithubActionsRepository by base {
+            override fun forAccount(accountId: Long?): GithubActionsRepository = this
+            override suspend fun workflows(owner: String, name: String, page: Int, perPage: Int): Result<GithubPage<GithubWorkflow>> =
+                if ((sessions.value as? GithubSession.SignedIn)?.account?.id == 1L)
+                    suspendCoroutine { response = it }
+                else Result.failure(IllegalStateException("private repo denied"))
+        }
+        val vm = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions)
+        runCurrent()
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        runCurrent()
+        response.resume(base.workflows("o", "r", 1, 30))
+        runCurrent()
+        assertEquals(2L, vm.state.value.viewerAccountId)
+        assertTrue(vm.state.value.items.isEmpty())
+    }
+
+    @Test
+    fun oldWorkflowWriteCannotChangeNewAccountsWorkflow() = runTest(dispatcher) {
+        val first = signedInSession("same-login")
+        val sessions = MutableStateFlow<GithubSession>(first)
+        lateinit var response: Continuation<Result<Unit>>
+        val base = FakeActionsRepository()
+        val repository = object : GithubActionsRepository by base {
+            override fun forAccount(accountId: Long?): GithubActionsRepository = this
+            override suspend fun setWorkflowEnabled(owner: String, name: String, workflowId: Long, enabled: Boolean): Result<Unit> =
+                suspendCoroutine { response = it }
+        }
+        val vm = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions)
+        runCurrent()
+        vm.onAction(ActionsWorkflowsAction.SetWorkflowEnabled(1, false, 1L))
+        runCurrent()
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        runCurrent()
+        response.resume(Result.success(Unit))
+        runCurrent()
+        assertEquals(GithubWorkflowState.ACTIVE, vm.state.value.items.single().state)
+        assertTrue(vm.state.value.workflowBusyIds.isEmpty())
+    }
+
+    @Test fun liveAccountChangeRejectsWorkflowDispatchBeforeCollectorRuns() = runTest(dispatcher) {
+        val first = signedInSession("same-login")
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val repository = FakeActionsRepository()
+        val vm = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions)
+        runCurrent()
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        vm.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L))
+        assertTrue("Stale action must not enter pending state", vm.state.value.dispatchBusyIds.isEmpty())
+        runCurrent()
+        assertTrue(repository.dispatches.isEmpty())
+    }
+
+    @Test fun queuedWorkflowDispatchChecksLiveAccountBeforeRepositoryCall() = runTest(dispatcher) {
+        val first = signedInSession("same-login")
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val repository = FakeActionsRepository()
+        val vm = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions)
+        runCurrent()
+        vm.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L))
+        assertEquals(setOf(1L), vm.state.value.dispatchBusyIds)
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        runCurrent()
+        assertTrue("Queued write must not call the repository", repository.dispatches.isEmpty())
+    }
+
+    @Test fun toggleAndRunRejectImmediateQueuedAndPreviouslyConfirmedAccountChanges() = runTest(dispatcher) {
+        for (phase in 0..2) {
+            val first = signedInSession("same-login")
+            val sessions = MutableStateFlow<GithubSession>(first)
+            val repository = FakeActionsRepository()
+            val workflows = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions)
+            val run = ActionsRunDetailViewModel("o", "r", 1, repository, TestGithubRepositoryDetailsRepository(), sessions)
+            runCurrent()
+            fun write() {
+                workflows.onAction(ActionsWorkflowsAction.SetWorkflowEnabled(1, false, 1L))
+                run.onAction(ActionsRunDetailAction.PerformRunAction(GithubWorkflowRunAction.RERUN, 1L))
+            }
+            if (phase == 1) {
+                write()
+                assertEquals(setOf(1L), workflows.state.value.workflowBusyIds)
+                assertTrue(run.state.value.isPerformingAction)
+            }
+            sessions.value = first.copy(account = first.account.copy(id = 2))
+            if (phase == 2) runCurrent()
+            if (phase != 1) write()
+            runCurrent()
+            assertTrue(repository.workflowStates.isEmpty())
+            assertTrue(repository.runActions.isEmpty())
+        }
+    }
+
+    @Test fun everyMatchingAccountActionSelectsTheBoundRepository() = runTest(dispatcher) {
+        val sessions = MutableStateFlow<GithubSession>(signedInSession("same-login"))
+        val repository = FakeActionsRepository()
+        val workflows = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions)
+        val run = ActionsRunDetailViewModel("o", "r", 1, repository, TestGithubRepositoryDetailsRepository(), sessions)
+        runCurrent()
+        workflows.onAction(ActionsWorkflowsAction.SetWorkflowEnabled(1, false, 1L))
+        workflows.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L))
+        run.onAction(ActionsRunDetailAction.PerformRunAction(GithubWorkflowRunAction.RERUN, 1L))
+        runCurrent()
+        assertEquals(listOf(1L, 1L, 1L), repository.boundAccounts)
+        assertEquals(listOf(1L to false), repository.workflowStates)
+        assertEquals(1, repository.dispatches.size)
+        assertEquals(listOf(GithubWorkflowRunAction.RERUN), repository.runActions)
+    }
+
+    @Test fun uncertainDispatchCannotBeRepeatedWithoutExplicitConsent() = runTest(dispatcher) {
+        val repository = FakeActionsRepository().apply { writeFailure = java.io.IOException("response lost") }
+        val vm = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository())
+        vm.onSessionChanged(signedInSession("same-login")); runCurrent()
+        val action = ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap())
+        vm.onAction(action); runCurrent()
+        vm.onAction(action); runCurrent()
+        assertEquals("A lost result must require new consent", 1, repository.dispatches.size)
+    }
+
+    @Test fun uncertainRunCannotBeRepeatedWithoutExplicitConsent() = runTest(dispatcher) {
+        val repository = FakeActionsRepository().apply { writeFailure = java.io.IOException("response lost") }
+        val vm = ActionsRunDetailViewModel("o", "r", 1, repository, TestGithubRepositoryDetailsRepository())
+        vm.onSessionChanged(signedInSession("same-login")); runCurrent()
+        val action = ActionsRunDetailAction.PerformRunAction(GithubWorkflowRunAction.RERUN)
+        vm.onAction(action); runCurrent()
+        vm.onAction(action); runCurrent()
+        assertEquals("A lost result must require new consent", 1, repository.runActions.size)
+    }
+
+    @Test fun uncertainToggleCannotBeRepeatedWithoutExplicitConsent() = runTest(dispatcher) {
+        val repository = FakeActionsRepository().apply { writeFailure = java.io.IOException("response lost") }
+        val vm = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository())
+        vm.onSessionChanged(signedInSession("same-login")); runCurrent()
+        val action = ActionsWorkflowsAction.SetWorkflowEnabled(1, false)
+        vm.onAction(action); runCurrent()
+        vm.onAction(action); runCurrent()
+        assertEquals("A lost result must require new consent", 1, repository.workflowStates.size)
+    }
+
+    @Test fun pendingDispatchSurvivesANewViewModelAndReadRefreshUntilExplicitRepeat() = runTest(dispatcher) {
+        val journal = takagi.ru.monica.github.data.InMemoryGithubActionJournal()
+        val repository = FakeActionsRepository().apply { writeFailure = java.io.IOException("response lost") }
+        val sessions = MutableStateFlow<GithubSession>(signedInSession("same-login"))
+        fun newModel() = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions, journal)
+        val first = newModel(); runCurrent()
+        first.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L)); runCurrent()
+        val restored = newModel(); runCurrent()
+        assertEquals(1, restored.state.value.unconfirmedOperations.size)
+        restored.onAction(ActionsWorkflowsAction.Refresh); runCurrent()
+        restored.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L)); runCurrent()
+        assertEquals(1, repository.dispatches.size)
+        assertEquals(1, restored.state.value.unconfirmedOperations.size)
+        repository.writeFailure = null
+        restored.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L, repeatConfirmed = true)); runCurrent()
+        assertEquals(2, repository.dispatches.size)
+        assertTrue(restored.state.value.unconfirmedOperations.isEmpty())
+        assertTrue(first.state.value.unconfirmedOperations.isEmpty())
+    }
+
+    @Test fun runWarningIsScopedToNumericAccountAndAcknowledgementNeverWritesRemotely() = runTest(dispatcher) {
+        val journal = takagi.ru.monica.github.data.InMemoryGithubActionJournal()
+        val repository = FakeActionsRepository().apply { writeFailure = java.io.IOException("response lost") }
+        val original = signedInSession("same-login") as GithubSession.SignedIn
+        val sessions = MutableStateFlow<GithubSession>(original)
+        val vm = ActionsRunDetailViewModel("o", "r", 1, repository, TestGithubRepositoryDetailsRepository(), sessions, journal)
+        runCurrent()
+        vm.onAction(ActionsRunDetailAction.PerformRunAction(GithubWorkflowRunAction.RERUN, 1L)); runCurrent()
+        assertTrue(vm.state.value.unconfirmedAction)
+        sessions.value = GithubSession.SignedIn(original.account.copy(id = 2)); runCurrent()
+        assertFalse(vm.state.value.unconfirmedAction)
+        vm.onAction(ActionsRunDetailAction.Acknowledge(1L)); runCurrent()
+        sessions.value = original; runCurrent()
+        assertTrue(vm.state.value.unconfirmedAction)
+        vm.onAction(ActionsRunDetailAction.RetryRun); runCurrent()
+        assertTrue(vm.state.value.unconfirmedAction)
+        vm.onAction(ActionsRunDetailAction.Acknowledge(1L)); runCurrent()
+        assertFalse(vm.state.value.unconfirmedAction)
+        assertEquals(listOf(GithubWorkflowRunAction.RERUN), repository.runActions)
+    }
+
+    @Test fun unreadableJournalDisablesAllActionWrites() = runTest(dispatcher) {
+        val journal = object : takagi.ru.monica.github.domain.GithubActionJournal {
+            override fun observe(scope: takagi.ru.monica.github.domain.GithubActionScope) =
+                kotlinx.coroutines.flow.flow<Set<takagi.ru.monica.github.domain.GithubActionOperation>> { throw java.io.IOException("unreadable") }
+            override suspend fun begin(scope: takagi.ru.monica.github.domain.GithubActionScope, operation: takagi.ru.monica.github.domain.GithubActionOperation, repeatConfirmed: Boolean): takagi.ru.monica.github.domain.GithubActionAttempt = error("Must not begin")
+            override suspend fun finish(attempt: takagi.ru.monica.github.domain.GithubActionAttempt, acceptedSuccess: Boolean) = error("Must not finish")
+            override suspend fun acknowledge(scope: takagi.ru.monica.github.domain.GithubActionScope, operation: takagi.ru.monica.github.domain.GithubActionOperation) = error("Must not acknowledge")
+        }
+        val repository = FakeActionsRepository()
+        val sessions = MutableStateFlow<GithubSession>(signedInSession("same-login"))
+        val list = ActionsWorkflowsViewModel("o", "r", repository, TestGithubRepositoryDetailsRepository(), sessions, journal)
+        val run = ActionsRunDetailViewModel("o", "r", 1, repository, TestGithubRepositoryDetailsRepository(), sessions, journal)
+        runCurrent()
+        assertTrue(list.state.value.journalUnavailable)
+        assertTrue(run.state.value.journalUnavailable)
+        list.onAction(ActionsWorkflowsAction.SetWorkflowEnabled(1, false, 1L, true))
+        list.onAction(ActionsWorkflowsAction.DispatchWorkflow(1, "main", emptyMap(), 1L, true))
+        run.onAction(ActionsRunDetailAction.PerformRunAction(GithubWorkflowRunAction.RERUN, 1L, true))
+        runCurrent()
+        assertTrue(repository.workflowStates.isEmpty() && repository.dispatches.isEmpty() && repository.runActions.isEmpty())
+    }
+
     private class FakeActionsRepository(
         private val failLog: Boolean = false,
         private val failArtifacts: Boolean = false,
         private val failDownload: Boolean = false
     ) : GithubActionsRepository {
+        var writeFailure: Throwable? = null
+        val boundAccounts = mutableListOf<Long?>()
+        override fun forAccount(accountId: Long?): GithubActionsRepository { boundAccounts += accountId; return this }
         val runActions = mutableListOf<GithubWorkflowRunAction>()
         val workflowStates = mutableListOf<Pair<Long, Boolean>>()
         val dispatches = mutableListOf<Triple<Long, String, Map<String, String>>>()
@@ -301,7 +540,7 @@ class GithubActionsViewModelTest {
             action: GithubWorkflowRunAction
         ): Result<Unit> {
             runActions += action
-            return Result.success(Unit)
+            return writeFailure?.let { Result.failure(it) } ?: Result.success(Unit)
         }
 
         override suspend fun setWorkflowEnabled(
@@ -311,7 +550,7 @@ class GithubActionsViewModelTest {
             enabled: Boolean
         ): Result<Unit> {
             workflowStates += workflowId to enabled
-            return Result.success(Unit)
+            return writeFailure?.let { Result.failure(it) } ?: Result.success(Unit)
         }
 
         override suspend fun dispatchWorkflow(
@@ -322,7 +561,7 @@ class GithubActionsViewModelTest {
             inputs: Map<String, String>
         ): Result<Unit> {
             dispatches += Triple(workflowId, ref, inputs)
-            return Result.success(Unit)
+            return writeFailure?.let { Result.failure(it) } ?: Result.success(Unit)
         }
     }
 

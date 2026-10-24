@@ -1,5 +1,8 @@
 package takagi.ru.monica.github.data
 
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.*
@@ -8,11 +11,31 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.MediaType.Companion.toMediaType
 import takagi.ru.monica.github.domain.*
 
-class GithubDiscussionsRepositoryImpl(
+class GithubDiscussionsRepositoryImpl private constructor(
     private val requests: GithubAuthenticatedRequests,
     private val client: OkHttpClient,
-    private val endpoint: String = "https://api.github.com/graphql"
+    private val endpoint: String,
+    private val accountBinding: AccountBinding?,
+    private val ioDispatcher: CoroutineDispatcher
 ) : GithubDiscussionsRepository {
+    constructor(
+        requests: GithubAuthenticatedRequests,
+        client: OkHttpClient,
+        endpoint: String = "https://api.github.com/graphql",
+        ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+    ) : this(requests, client, endpoint, null, ioDispatcher)
+
+    private data class AccountBinding(val id: Long?)
+
+    private val graphQlClient = client.newBuilder()
+        .followRedirects(false)
+        .followSslRedirects(false)
+        .retryOnConnectionFailure(false)
+        .build()
+
+    override fun forAccount(accountId: Long?): GithubDiscussionsRepository =
+        GithubDiscussionsRepositoryImpl(requests, client, endpoint, AccountBinding(accountId), ioDispatcher)
+
     override suspend fun editComment(id: String, body: String): Result<GithubDiscussionComment> {
         if (id.isBlank() || body.isBlank() || body.length > 65536) {
             return Result.failure(IllegalArgumentException("Invalid comment"))
@@ -141,11 +164,17 @@ class GithubDiscussionsRepositoryImpl(
         ) { it.getValue("addDiscussionComment").jsonObject.getValue("comment").jsonObject.text("id") }
     }
 
-    private suspend fun <T> execute(query: String, variables: JsonObject, decode: (JsonObject) -> T): Result<T> = withContext(Dispatchers.IO) {
+    private suspend fun <T> execute(query: String, variables: JsonObject, decode: (JsonObject) -> T): Result<T> = withContext(ioDispatcher) {
         githubRunCatching {
-            val body = buildJsonObject { put("query", query); put("variables", variables) }
-            val request = requests.builder(endpoint).post(body.toString().toRequestBody("application/json".toMediaType())).build()
-            client.newCall(request).execute().use { response ->
+            currentCoroutineContext().ensureActive()
+            val payload = buildJsonObject { put("query", query); put("variables", variables) }
+                .toString().toRequestBody("application/json".toMediaType())
+            val body = if (query.trimStart().startsWith("mutation")) payload.githubSingleUseBody() else payload
+            val builder = if (accountBinding == null) requests.builder(endpoint)
+                else requests.builderForAccount(endpoint, accountBinding.id)
+            val request = builder.post(body).build()
+            currentCoroutineContext().ensureActive()
+            graphQlClient.newCall(request).readAuthResponse { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 val payload = Json.parseToJsonElement(response.body?.string().orEmpty()).jsonObject
                 if (payload["errors"]?.jsonArray?.isNotEmpty() == true) throw GithubDiscussionException()

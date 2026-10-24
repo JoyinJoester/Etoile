@@ -1,0 +1,1023 @@
+{
+  "generatedAtUtc": "2026-10-24T03:49:25.545635+00:00",
+  "baseCommit": "d5d84679d6b4874b13e270d24ec8831f1e572ed0",
+  "workingTreeClean": false,
+  "sourceSnapshot": {
+    "files": 528,
+    "sha256": "5c28a5220c7450bdd64b60f83a18daa5cdc2eb9380a33e5d6a7a2ebc63ff3111",
+    "scope": "Application main/debug/test sources and resources, docs/legal and root legal texts, Rust sources/lock/manifest, auth service, Gradle configuration, scripts and CI workflow; excludes local account/signing configuration and generated outputs.",
+    "algorithm": "SHA-256 over sorted UTF-8 path + NUL + file SHA-256 hex + LF entries (raw file bytes).",
+    "manifest": "app/build/reports/acceptance/source-snapshot.json"
+  },
+  "overall": "NOT_ACCEPTED_FOR_STABLE_RELEASE",
+  "distribution": "GitHub Releases first; future store eligibility requires separate policy verification",
+  "command": "./scripts/verify-client.ps1",
+  "buildResult": "PASS",
+  "variants": {
+    "debug": {
+      "classes": 130,
+      "tests": 1197,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "lint": {
+        "Warning": 129,
+        "Error": 0,
+        "Fatal": 0
+      }
+    },
+    "release": {
+      "classes": 130,
+      "tests": 1197,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "lint": {
+        "Warning": 131,
+        "Error": 0,
+        "Fatal": 0
+      }
+    }
+  },
+  "rustTests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "authServiceTests": {
+    "passed": 5,
+    "failed": 0
+  },
+  "coverage": "NOT_MEASURED",
+  "packagedApk": true,
+  "installedApp": true,
+  "realAccountsTested": false,
+  "osv": {
+    "checkedAt": "2026-10-21T20:29:54.789789+00:00",
+    "coordinates": 252,
+    "packagesWithIndexedAdvisories": 0,
+    "scope": "Resolved release Maven runtime coordinates and Cargo.lock registry packages. Build tooling, Android OS, unindexed vulnerabilities and reachability are not assessed."
+  },
+  "publicReleaseConfiguration": {
+    "result": "FAIL",
+    "reasons": [
+      "External release signing absent"
+    ],
+    "credentialValuesInspectedOrDisclosed": false
+  },
+  "ciRemoteExecution": "NOT_RUN",
+  "lintLimitations": "Several Compose/lifecycle detectors and MissingTranslation disabled due documented toolchain issues; dependency registries not checked.",
+  "evidence": {
+    "fullLog": {
+      "path": ".codex-tmp/acceptance-full.log",
+      "sha256": "fea6e326afee1afa17fe2a789b55014087bfd52f49dcd998cb04f101a86c2936"
+    },
+    "junit": "app/build/test-results/test{Debug,Release}UnitTest/",
+    "lint": "app/build/reports/lint-results-{debug,release}.xml",
+    "osv": "app/build/reports/acceptance/dependency-advisories.json",
+    "publicReleaseConfiguration": {
+      "path": ".codex-tmp/acceptance-public-release.log",
+      "sha256": "25c67e92a8721fc7ceb17bf86887ab895b7ba8faf73d3a802c5b8f9421f75074"
+    },
+    "advisoryLog": {
+      "path": ".codex-tmp/acceptance-advisories.log",
+      "sha256": "19ee7bc16e30caa34fddb5cb1c4a10250994230053a39c21fb6f202f61af24bb"
+    },
+    "sourceManifest": {
+      "path": "app/build/reports/acceptance/source-snapshot.json",
+      "sha256": "d67e094a63171d51ca52efeeec98bdcfec8a60322a308892f63a83636230d818"
+    },
+    "licenseLedger": {
+      "path": "docs/legal/dependencies.json",
+      "sha256": "02db45100202002c3204be0d016b616e8aeac80d86607384b2daeafb0882a319"
+    },
+    "noticeFaultInjection": [
+      {
+        "path": ".codex-tmp/acceptance-legal-missing-module.log",
+        "sha256": "6bb152276cf1c4cf009dd5939a9ac261b2d94404a6ab765bb1707cf924017ba2"
+      },
+      {
+        "path": ".codex-tmp/acceptance-legal-changed-lock.log",
+        "sha256": "5b9577ff86f0e7b37b9298e3d4dfc93b227c4b729c34fd2b5c9392a6819f1410"
+      },
+      {
+        "path": ".codex-tmp/acceptance-legal-missing-notice.log",
+        "sha256": "d1cfeed4ab5148810286ecaabae8ddad7289de6ccd59ac38229bb91b176367c3"
+      }
+    ],
+    "releaseAuthentication": {
+      "configurationCanary": {
+        "path": ".codex-tmp/acceptance-release-auth-policy.log",
+        "sha256": "b1bfadd327b5188c843209986f90335023b1e92a196a0ea90a38d2746ab409ce"
+      },
+      "preBuildFaultInjection": {
+        "path": ".codex-tmp/acceptance-release-auth-fault.log",
+        "sha256": "52776b87c0ba43a5e93ab1772864fa44f441842949f37866c2fc8b5e7a65940a"
+      },
+      "accountAuthTargeted": {
+        "path": ".codex-tmp/acceptance-account-auth-targeted.log",
+        "sha256": "c4c87982c42c99de8e451f427e157cc75a1ab08fb8b10121ae554f1dbfbe3d6c"
+      },
+      "storeFilteringTargeted": {
+        "path": ".codex-tmp/acceptance-store-filter-targeted.log",
+        "sha256": "8387378f2b74c63bf6b16dc30bba02ea93325c4b04dbfbe3de26d28d667533a1"
+      }
+    },
+    "discussionDetail": {
+      "targeted": {
+        "path": ".codex-tmp/acceptance-discussion-targeted.log",
+        "sha256": "fa430aa9909791317ec8d05bf48458c757a6b7f2db01a8195b77f6557d89b350"
+      },
+      "cleanEditor": {
+        "path": ".codex-tmp/acceptance-discussion-clean-editor.log",
+        "sha256": "f967aaab258befc60337bff818400e137a3ebb313843f28f36bf033ffca92ba3"
+      }
+    },
+    "conversationNavigation": {
+      "path": ".codex-tmp/acceptance-conversation-navigation.log",
+      "sha256": "416b860c928670616be4ab3b0241b249c8cc5e18d4f13531047b4d0ff2ecece0"
+    },
+    "resourceMutationTransport": {
+      "initialRed": {
+        "path": ".codex-tmp/acceptance-mutation-initial-red.log",
+        "sha256": "04593df8128e17e682114caa2b80169f84663125f895692479cf3b3b6f81272f"
+      },
+      "finalTargeted": {
+        "path": ".codex-tmp/acceptance-mutation-targeted.log",
+        "sha256": "ade1216f4f1a8c75cc3a8430984c7d591409b9ea42d2a7be7976ade9d03708e2"
+      }
+    },
+    "actionsReleaseAccountBinding": {
+      "initialRed": {
+        "path": ".codex-tmp/acceptance-action-release-account-red.log",
+        "sha256": "34c111dba434a022a9f72a5e0744cdbbd2c000a12422014e1752a469e104358b"
+      },
+      "dialogFailure": {
+        "path": ".codex-tmp/acceptance-action-release-dialog-failure.log",
+        "sha256": "e96fb1264d6451d61e2ca3da26168d3aaca5b7e250089dc467353dde9c8f1d69"
+      },
+      "finalTargeted": {
+        "path": ".codex-tmp/acceptance-action-release-account-targeted.log",
+        "sha256": "324fa2f488842e262fdfbd15b2ceedb3dc8eed88fbb2a5bdcbd89b7e572895f7"
+      },
+      "narrowLargeFontScreenshot": {
+        "path": "app/build/reports/acceptance/workflow-dispatch-narrow-large-font.png",
+        "sha256": "6b1c302e2c2b3d2e08d17d76b4a6072fec86878bc306cdef1bdf2e3dbb8dfd95"
+      }
+    },
+    "actionsUncertainOutcomes": {
+      "initialRed": {
+        "path": ".codex-tmp/acceptance-actions-uncertain-red.log",
+        "sha256": "9cb402fdeac2f11f4e6ef7e66512bb8fc01dd9f0e1a1eb2942bd086c8b65eb39"
+      },
+      "finalTargeted": {
+        "path": ".codex-tmp/acceptance-actions-uncertain-targeted.log",
+        "sha256": "e43b92d2939770f0c263ab4d060382be499299b85764e418be05e67dfd57deb2"
+      }
+    },
+    "emulatorFindings": {
+      "quotaRed": {
+        "path": ".codex-tmp/emulator-rate-limit-red.log",
+        "sha256": "377df600b9f94c7344969a5e44a14eabc60258e437832a671aa359de13ec3bc0"
+      },
+      "largeFontRed": {
+        "path": ".codex-tmp/emulator-quota-layout-red.log",
+        "sha256": "de0c1a14f812752a67a629607d01605c629acc808600a271fbf7de372a8ab886"
+      },
+      "artifacts": [
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/anr-events.txt",
+          "sha256": "2153ab1d89ff1255b665faa132c0f03e44978bc69e178bb282a5521b15512e24"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/gfx-cold-boot.txt",
+          "sha256": "5932deb85dd5a13b2cd91466ea475397d27834c27a9cca4854046b2fa8a65998"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/gfx-navigation.txt",
+          "sha256": "345e99b37522c8c8e9ab13421cbfe29dad3fc24af030dfbc979776dab3d7dcab"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/github-sign-in-production.png",
+          "sha256": "01af2082165460331c26e10a34610844e413f9f6def5ff31a8a6f1b30779ac4a"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/gitlab-fixture-installed.png",
+          "sha256": "35eeb003a31253e6d03151e2b70a40312e3382993e1febab48656b9ba0a2b90c"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/gitlab-pat-bottom-production.png",
+          "sha256": "0bb70a4402fd9f4dc9a9b487f87ff2a7a1d11350a41ae78e05ade7f6b0ca792f"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/gitlab-sign-in-production.png",
+          "sha256": "c52e6c29e3d244a9fa54adf4d27e3df5c79b956c6e2acc70c3c28cc32e3f2026"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/home-font-1_0.png",
+          "sha256": "3446ac54ebb8d20545c8c3ed9a982b1a2256d72ea0ba5062cabf1b7acb98095b"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/home-font-1_5.png",
+          "sha256": "730bfad9545643db89804d1d3c13f1219717c5cbfb730c5a8faf8f2acd7de2ed"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/profile-signed-out-production.png",
+          "sha256": "b358f42f602cb717bf08b28e81a44b2d97eb0533de33161d4b679e359ceb89c5"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/recovered-home.png",
+          "sha256": "0ab71a8402be41dd2caa54a8b3d319f49247badcc72aea05af1cfda108e68900"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-cold-boot-frames.png",
+          "sha256": "045c139ce356b6b1f42743250361887d649bdcbd0247137b1618928b21b7963e"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-cold-boot.mp4",
+          "sha256": "4989e85d6ab4577b74daf3c0b87c2f58511d3d2a9284e654d54c6bb6b2437f63"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-comparison.png",
+          "sha256": "9e304021b1fe17268461efb8b744471deb119404a8cbecb1a11181b053a5b7df"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-font-1_0.png",
+          "sha256": "b64511e527dcd1c30b6c1f0efb464f1f67020e4428b69604b8d9a4c8fb57493a"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-font-1_5.png",
+          "sha256": "90cfdfd573deabffc7f92d1a7b29c1acfdb092aa014cea596507ba965ab73e6e"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-navigation-frames.png",
+          "sha256": "ac10a9ff7bbbde2d9015d4b0f62f0e374710de3e99d1d5dc77c8b24f30e444ab"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/settings-navigation.mp4",
+          "sha256": "cf5f3efb335f20bea0bf878a52968a368e71f7d51640fd80a6467d98f0bbdf39"
+        },
+        {
+          "path": "app/build/reports/acceptance/emulator-2026-10-22/system-ui-anr.png",
+          "sha256": "21477e829597f9d896e7ffdc1967d7f9191151ac1ceaca5bb7d9280e201a2ce9"
+        }
+      ]
+    },
+    "currentEmulator": {
+      "path": "app/build/reports/acceptance/emulator-current-2026-10-22/evidence.json",
+      "sha256": "39ce2e8d468cf7fc1c83e496823e886531f9207d0d007e87a2c21d95645eac3e"
+    },
+    "settingsRowEmulator": {
+      "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/evidence.json",
+      "sha256": "fbfe8778d183aed82646b7db5abc57d9b5ede4958c5f24a252aa0773fea02cbc"
+    },
+    "currentSourceEmulatorSmoke": {
+      "path": ".codex-tmp/current-emulator-release-smoke.json",
+      "sha256": "ffb2c09cd94a7eaa240f1d85d6a9fcbf2ae15a77da22c7c7e8fd8bc9ba2d5610"
+    }
+  },
+  "pending": [
+    "Real GitHub/GitLab read-only authorization on production configuration",
+    "Signing continuity/version plan and public auth configuration",
+    "Real device frame timing, memory, accessibility and API/ABI matrix",
+    "Complete per-entry failure and write acceptance in an explicitly designated test project",
+    "Remaining GitHub resource writes: account binding before IO beyond Discussions/Actions/Releases, plus persistent uncertain-result/resend handling per entry; common transport protection does not replace these checks",
+    "Native navigation/account-switch confirmation evidence for Actions and remaining entry points",
+    "Real Android process death draft restoration and complete app navigation; selected CreatePR/Discussions production NavHost paths and fresh-host saved-Bundle restoration pass on Robolectric",
+    "Large catalog and long Markdown/Diff timing on real devices; catalog filtering now runs on Default",
+    "Release artifact legal/attribution review and remote CI execution",
+    "Official release packaging/signing/upgrade and arm32-device acceptance; current optimized debug-signed arm64 build passed selected emulator smoke paths only",
+    "Settings performance remains NOT_PASSED; requires profiling and reproducible device benchmark",
+    "Prior settings screenshots belong to an earlier source snapshot and remain historical."
+  ],
+  "thirdPartyNotices": {
+    "result": "PASS",
+    "mavenModules": 222,
+    "cargoPackages": 30,
+    "publishedTexts": 20,
+    "faultInjection": "Stale module, changed Cargo.lock digest and missing notice reference rejected; original ledger restored before complete verification.",
+    "scope": "Resolved release runtime Maven graph (including metadata/platforms) and Cargo.lock registry superset (including build/target-specific crates). Font and project licenses are documented separately.",
+    "limitation": "Declared license inventory and offline texts do not establish legal compatibility or actual release binary contents."
+  },
+  "targetedVerification": {
+    "initialTests": 290,
+    "initialFailures": 2,
+    "cause": "Coroutine debug names appended an id to thread names; corrected assertions compare actual worker thread identities and reject the main test thread.",
+    "recheck": "GitHub session class passed, then both complete variant suites passed."
+  },
+  "releaseDraftVerification": {
+    "accountAndTargetIsolation": "PASS",
+    "savedStateHandleRecreation": "PASS",
+    "lateSuccessGuard": "PASS",
+    "failedSaveRetainsDraft": "PASS",
+    "nativePublishReviewThenSave": "PASS",
+    "nativeActionsAccountConfirmation": "PASS",
+    "actualProcessDeathOrNavigation": "NOT_TESTED",
+    "editorLayout": "Full page; prior AlertDialog layout failed native idling, same semantic test passes with normal animations and unchanged timeout."
+  },
+  "releaseAuthenticationPolicy": {
+    "result": "PASS",
+    "releaseSecretAlwaysEmpty": true,
+    "debugCompatibilityPreserved": true,
+    "preReleaseBuildGuard": "PASS",
+    "syntheticProjectSecretExcludedFromGeneratedReleaseBuildConfig": "PASS",
+    "syntheticNonEmptyReleaseOverrideRejected": "PASS",
+    "releaseBrowserSignIn": "Requires deployed HTTPS auth service; Device Flow and PAT remain available",
+    "realAuthorization": "NOT_TESTED"
+  },
+  "conversationDraftVerification": {
+    "createPullRequestTests": 15,
+    "discussionsTests": 21,
+    "permanentSessionObservation": "PASS",
+    "numericAccountIdDraftIsolation": "PASS",
+    "savedStateHandleRecreation": "PASS",
+    "queuedRequestsAfterAccountSwitchRejected": "PASS",
+    "lateResultsAndSuccessIsolation": "PASS",
+    "cancelledFirstPageReentry": "PASS",
+    "createPrNavigationGuard": "Production NavGraph host test proves success waits for RESUMED, navigates once, and does not navigate after switching accounts",
+    "productionNavHostOnRobolectric": "PASS",
+    "freshActivityAndViewModelStoreWithParcelledSavedState": "PASS",
+    "actualAndroidProcessDeath": "NOT_TESTED"
+  },
+  "fdroidFilteringVerification": {
+    "tests": 3,
+    "workerThreadScan": "PASS",
+    "queryChangeDuringBlockedScan": "PASS",
+    "obsoleteResultRejected": "PASS",
+    "downloadProgressDoesNotRescan": "PASS",
+    "pendingQueryHidesOldMatches": "PASS",
+    "realDeviceTiming": "NOT_TESTED"
+  },
+  "discussionDetailVerification": {
+    "viewModelTests": 13,
+    "transportTests": 7,
+    "nativeDiscussionTests": 9,
+    "initialTargetedTests": 58,
+    "finalNativeDiscussionTargetedTests": 9,
+    "numericAccountAndTokenBindingBeforeIO": "PASS",
+    "queuedSwitchAndLateNonCooperativeResultsRejected": "PASS",
+    "savedStateHandleDraftAndUnconfirmedOutcomeRestoration": "PASS",
+    "singleFlightAndSelectiveDraftClear": "PASS",
+    "answerConfirmationAndAccountInvalidation": "PASS",
+    "deleteConfirmationNotRestored": "PASS",
+    "inFlightDeletionSurvivesRowRecycling": "PASS",
+    "mutationBackGuard": "PASS",
+    "narrowLargeFontFullPageEditFailurePreservesDraft": "PASS",
+    "unmodifiedCommentEditorUsesFreshBodyAndTypedDraftSurvives": "PASS",
+    "uncertainTopLevelAndNestedReplyRequireExplicitConfirmation": "PASS",
+    "readOnlyRefreshAndLocalAcknowledgementNeverResend": "PASS",
+    "noReplayOn503DisconnectOrRedirect": "PASS",
+    "actualNetworkCallAndBodyReadCancellation": "PASS",
+    "developmentFailures": "A fast A-B-A session conflation initially lost draft restoration; reconciled eager invalidation after yielding. Two new native tests selected shared Reply labels incorrectly; changed to clickable controls. Comment editing with AlertDialog and a constrained BasicAlertDialog did not idle in the native test; the shared full-page editor passes. Assertions, animations and timeout preserved.",
+    "productionNavHostOnRobolectric": "PASS",
+    "actualAndroidProcessDeathRealGitHubWritesAndDeviceTiming": "NOT_TESTED"
+  },
+  "conversationNavigationVerification": {
+    "tests": 7,
+    "implementation": "Production githubConversationsGraph, NavHost, NavController, NavBackStackEntry lifecycle and production transition functions under Robolectric native graphics; domain services injected through a narrow interface",
+    "retainedAccountAndDraftIsolation": "PASS",
+    "discussionConfirmationInvalidatedByNavigationAndAccountChange": "PASS",
+    "discussionSavedDraftWithoutRestoredDeleteConfirmation": "PASS",
+    "createPrSuccessWaitsForResumedAndNavigatesExactlyOnce": "PASS",
+    "oldCreateSuccessCannotNavigateOrEraseDraftAfterSwitch": "PASS",
+    "createPrSavedFieldsRequireManualEditorReopen": "PASS",
+    "freshActivityNavControllerAndViewModelStoreFromParcelledBundle": "PASS",
+    "fixedDefect": "Saveable composer-open state could return after navigation/account changes. Keep only the text in the account-bound SavedStateHandle; opening the composer is transient.",
+    "testHarnessCorrections": "Corrected hasRoute import for installed Navigation API; explicitly implemented required PR detail read fixtures instead of double-boxing Result through a proxy; composer-closed assertion targets its title field, since the list has a legitimate search field.",
+    "scopeLimitations": "Home, account picker and sign-in are fixture destinations; account flow is driven directly. Full app chrome, actual Android process death, encrypted storage and real GitHub calls remain unverified here."
+  },
+  "resourceMutationTransportVerification": {
+    "initialReproductionTests": 13,
+    "initialFailures": 13,
+    "matrixTests": 52,
+    "helperTests": 3,
+    "finalTargetedClasses": 20,
+    "finalTargetedTests": 261,
+    "connectedCallSites": 56,
+    "connectedFiles": 11,
+    "first503RetryAfterZeroResponsePreserved": "PASS",
+    "redirects301302303307308RejectedWithoutDestinationRequest": "PASS",
+    "receivedWriteDisconnectDoesNotReplay": "PASS",
+    "actualCallCancellationBeforeResponseAndDuringBodyRead": "PASS",
+    "releaseUploadOneOpenAndClosePerExplicitAttempt": "PASS",
+    "callerInterceptorsAuthenticationPayloadAndTimeoutRetained": "PASS",
+    "readOnlyGetRetainsCallerRetryAndRedirectPolicy": "PASS",
+    "errorWording": "14 English/default and Chinese resource messages advise checking remote state before another write; this is not a persistent uncertain-result state machine.",
+    "testHarnessCorrections": "An indefinite response delay prevented MockWebServer shutdown; a response-only Dispatcher then avoided throttling the incoming POST. Final cancellation test keeps actual body-start/cancel assertions and the original timeout.",
+    "scopeLimitations": "Representative production repository entry points use local MockWebServer. No real writes, universal account binding, atomic multi-request batches, or per-entry persistent unconfirmed-outcome/resend confirmation are established. Auth token endpoints and raw read-only execute paths are outside this change. GraphQL POST queries conservatively also use the single-use policy."
+  },
+  "actionsReleaseAccountBindingVerification": {
+    "initialReproductionTests": 4,
+    "initialFailures": 4,
+    "repositoryMatrixTests": 32,
+    "newViewModelTests": 8,
+    "newNativeTests": 4,
+    "finalTargetedClasses": 9,
+    "finalTargetedTests": 168,
+    "operations": [
+      "Actions run rerun/cancel",
+      "Workflow enable/disable",
+      "Workflow dispatch",
+      "Release create",
+      "Release edit",
+      "Release delete",
+      "Release asset upload",
+      "Release asset delete"
+    ],
+    "entryLiveStateFlowAndExpectedAccountCheck": "PASS",
+    "queuedWriteChecksBeforeRepositoryCall": "PASS",
+    "lateResultChecksLiveAccountBeforeApplying": "Implemented; existing noncooperative cancellation regressions pass",
+    "productionRepositoriesSelectBoundCredentialUnderStoreLockOnWorker": "PASS",
+    "anonymousInvalidMissingEmptyAndMismatchedCredentialNeverSelectReplacement": "PASS",
+    "matchingAccountCredentialRotationRetained": "PASS",
+    "workflowConfirmationInvalidatedByNumericAccount": "PASS",
+    "workflowDispatchPresentation": "Full page owned by screen; explicit Run, repository/workflow/ref/inputs and deployment/billing notice; Back does not submit",
+    "dispatchFieldsScopedToAccountRepositoryAndWorkflow": "PASS",
+    "freshActivityWithParcelledSavedBundleNeverReopensOrSubmits": "PASS",
+    "restoredOwnedFieldsAvailableOnlyAfterManualReopen": "PASS",
+    "restoredOtherAccountDoesNotSeePrivateFields": "PASS",
+    "narrow320dpFontScale1_5InputsAndRunReachable": "PASS; screenshot manually viewed",
+    "testHarnessCorrections": "Three new native tests did not idle with the original dispatch AlertDialog. Full-page form passes the same assertions with animations/timeouts unchanged. A later duplicate title/button selector was narrowed to the clickable button; screenshot helper compilation corrected to extension receiver/import.",
+    "productionScope": "Production Workflow navigation previously keyed the whole screen by account; component had no own account key. Now the component invalidates consent and the screen scopes saved fields internally; redundant outer Workflow key removed.",
+    "limitations": "Local MockWebServer and selected Robolectric components. No complete Actions production NavHost, actual OS process death, real credentials or writes, device performance, or persistent uncertain-outcome state machine for all Actions/Release writes. Other GitHub resource entry points still need account-binding audit."
+  },
+  "actionsUncertainOutcomeVerification": {
+    "initialFailures": 3,
+    "journalTests": 8,
+    "realPreferencesHostTests": 1,
+    "newViewModelTests": 6,
+    "newNativeComponentTests": 3,
+    "persistentMarkerCommittedBeforeNetwork": "PASS",
+    "sameProcessConcurrentAttemptsRejectedEvenWithRepeatConsent": "PASS",
+    "cancelledOrOldSuccessRetainsWarning": "PASS",
+    "newJournalAndViewModelRestorePendingState": "PASS",
+    "numericAccountRepositoryKindTargetIsolation": "PASS",
+    "explicitRepeatConfirmationAndFieldAccountInvalidation": "PASS",
+    "inspectionRefreshAndLocalAcknowledgementNeverResend": "PASS",
+    "unreadableOrUnwritableStoragePreventsNetworkWrites": "PASS",
+    "productionInjection": "One application-owned SharedPreferences journal injected through production Actions navigation factories",
+    "storedData": "Hashed account/repository scope, operation kind, target ID and random attempt ID; no token/ref/inputs/body",
+    "limitations": "Selected host components and repository fixtures; no full Actions NavHost, actual OS process death, multi-process coordination or real provider writes; other write entries need separate acceptance."
+  },
+  "emulatorVerification": {
+    "generatedAtUtc": "2026-10-23T13:00:18.978603+00:00",
+    "sourceSnapshot": {
+      "files": 528,
+      "sha256": "a12f6cd98a50edde4ca92782e9a58f6ec2888da306435caf8b01d483b470dc08",
+      "scope": "Application main/debug/test sources and resources, docs/legal and root legal texts, Rust sources/lock/manifest, auth service, Gradle configuration, scripts and CI workflow; excludes local account/signing configuration and generated outputs.",
+      "algorithm": "SHA-256 over sorted UTF-8 path + NUL + file SHA-256 hex + LF entries (raw file bytes).",
+      "manifest": "app/build/reports/acceptance/source-snapshot.json"
+    },
+    "device": "emulator-5554 / Monica_Issue136_API_32 / Android12 API32 x86_64 / ARM64 native bridge",
+    "authorization": "Only emulator-5554 debug build/install, preserve application data; no clear/uninstall/wipe or provider writes.",
+    "variant": "debug-signed, debuggable=false, R8 9.1.29 optimization and resource shrinking enabled",
+    "apk": {
+      "path": "app/build/outputs/apk/debug/Etoile-Android-arm64-v8a-0.1.0-26102201-03.APK",
+      "sha256": "f9c87f4ea4a300bd24508a5584d87b63384f0af9bfb5c48bd5956394ca4d27ab"
+    },
+    "installedApplicationSha256": "f9c87f4ea4a300bd24508a5584d87b63384f0af9bfb5c48bd5956394ca4d27ab",
+    "packageMetadata": "    primaryCpuAbi=arm64-v8a\n    versionCode=1 minSdk=26 targetSdk=34\n    versionName=0.1.0\n    firstInstallTime=2026-09-16 00:44:18\n    lastUpdateTime=2026-10-23 12:33:27",
+    "currentSourceInstalled": false,
+    "productionChecks": [
+      "Signed-out cold launch",
+      "Settings entry/back, five traced warm round trips",
+      "English settings at font1.0 and1.5"
+    ],
+    "fixtureChecks": [
+      "Chinese settings and profile at font1.5 using deterministic data and production components"
+    ],
+    "fixtureLimitations": "No real account, provider writes, complete authenticated navigation, or real login tested.",
+    "discardedDeviceObservation": "After restarting AVD, installed package SHA256 52de7fb6f6646164d92e9468d7d7c5d97e345c76ac75a345c86df21d2d55db1c and density320 differed from previous session. No current-source conclusion drawn from that screenshot. Reinstalled03, pulled public installed base.apk and compared hash before accepting captures.",
+    "fontAndDensity": "Profile/captures at density420; font1.0 then1.5; restored observed initial override density320 and font1.5 afterward.",
+    "settingsGraphics": {
+      "frames": 224,
+      "jankyFrames": 13,
+      "jankyPercent": 5.8,
+      "p50ms": 11,
+      "p90ms": 20,
+      "p95ms": 29
+    },
+    "performanceAcceptance": "NOT_PASSED",
+    "performanceLimitations": "No recorder, warm2 then5 cycles with atrace; shared host, ARM translation, small signed-out sample. Earlier traces before 226/9 janky and after229/16 are not isolated A/B; latest224/13 does not prove an improvement. No claim of real-device performance.",
+    "regression": {
+      "newTests": 3,
+      "initialTests": 3,
+      "initialFailures": 1,
+      "targetedClasses": 3,
+      "targetedTests": 34,
+      "scope": [
+        "Wide glyph summary remains unellipsized and clickable",
+        "320dp,font1.5 wraps and retains56dp target",
+        "RTL inline label/value ordering"
+      ],
+      "harnessAndImplementationCorrections": "Initial missing test Settings import fixed; Layout constrainWidth/Height extension imports fixed. Initial direct measure reported paragraph width larger than its placeable due text intrinsic sizing; bounded intrinsic widths are now used as exact constraints, without weakening overflow assertions."
+    },
+    "runtimeObservation": "No captured current-process AndroidRuntime exception and no am_anr in retained buffer; not a full stability acceptance.",
+    "realAuthorizationReleaseSigningUpgrade": "NOT_TESTED",
+    "evidence": {
+      "buildLog": {
+        "path": ".codex-tmp/settings-row-assemble.log",
+        "sha256": "7d0c753728bd9e83a3260a031ed434ea85bf929b80d2a1d95c52bee95f593d62"
+      },
+      "initialRed": {
+        "path": ".codex-tmp/settings-row-initial-red.xml",
+        "sha256": "8eb1d4e79b65f648a0448bc1c17823850d0419cb4bb9d8da1b115cd1911404d0"
+      },
+      "targeted": {
+        "path": ".codex-tmp/settings-row-final-targeted.log",
+        "sha256": "a60c17232f2d9e46183a7256aa00461f637d3a924d45108abb47b4f9b605232c"
+      },
+      "full": {
+        "path": ".codex-tmp/acceptance-full.log",
+        "sha256": "75192de84caa3478717cd67d0cc71f54ee915f00b6c1dd5200e38b047c22402e"
+      }
+    },
+    "artifacts": [
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/anr-events.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/app-pid.txt",
+        "sha256": "7246d3094b003dbeb778739262e4980834de5abadc780d9d89432ae9017b92a6"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/app-trace-sections.json",
+        "sha256": "3ea4d196799700ce24b2310d25146b543ce192347edb89068697bfae24988daf"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/fixture-profile-zh-after-1.5.png",
+        "sha256": "a6edfb18c785aa87baff995c18b4f636b3d7c7ede8cbef623a4491bfbc59b4e1"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/fixture-profile-zh-after-1.5.xml",
+        "sha256": "978af69855dc6375603578cf5a05bdd793c0d96877df02f3189e299b4ecca6de"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/fixture-settings-zh-after-1.5.png",
+        "sha256": "2bea45fc20481d5a20e0aef9f73f93b54508360186832136de099e040972d8d0"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/fixture-settings-zh-after-1.5.xml",
+        "sha256": "87c0cb3131f061dfc61d1f02bf3b66da9ad945ac7dbed4e1da7b53b2315217f0"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/gfxinfo-traced.txt",
+        "sha256": "2f6c9bdf15558a5180cc5a7482b4d86e0810cc6c6d63e784d44be705fe5ef6d5"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/installed-package.json",
+        "sha256": "d14467641a74bba438f000fb3bd696ecd4de566384e5f0d0750ea450357eac5d"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/main-thread-sections.json",
+        "sha256": "267d683995d58a6c6e3b55a067ca541513f435b8c5cdf2acd4dd9e1a9599cc75"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/production-settings-after-1.0.png",
+        "sha256": "2a9955f0893b0fff72adf7386c27d3c52b0a162e04ce45850992b8d88a284b24"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/production-settings-after-1.0.xml",
+        "sha256": "d4b45a51432e54ffb0a1a8169d95569410b0fb5cf1236753b818891d4f30e74d"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/production-settings-after-1.5.png",
+        "sha256": "620f5396cda2754bf5ae4f7ccc0fd10360cc0c6996d211ddae1e1b5af8d1cd3b"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/production-settings-after-1.5.xml",
+        "sha256": "f5afee521e4e316463463aa3243a69c87c4164fe69995d3efe0f1e8d896061de"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/restored-device-display.txt",
+        "sha256": "b8c22774adb0313e0ea0fd7c8b9fb8d1e3d51f3ed38a306fd19c61532ee77c8d"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/runtime-errors.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/settings-contact-sheet.png",
+        "sha256": "9f97fb9af08411305237ddaa571855dd43bb0c9ddfe18fb2d6182b06f88a995e"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/settings.atrace",
+        "sha256": "7224674eddf2f22c5d62f1327c28b8a64e9697989333db14a419b4fdc57507c4"
+      },
+      {
+        "path": "app/build/reports/acceptance/settings-recheck-2026-10-23/slow-main-frames.json",
+        "sha256": "55bc609995f2892d8522f8f9620e406b9a063e5f2ac430ab23a3924cd4a7a5f2"
+      }
+    ],
+    "matchesCurrentSourceSnapshot": false,
+    "currentSourceSmoke": {
+      "capturedAtUtc": "2026-10-24T02:26:36.1976105Z",
+      "device": "emulator-5554 / Android 12 API 32 / x86_64 / 1080x2100",
+      "package": "takagi.joyin.github.etoile",
+      "apk": "D:/Etoile/app/build/outputs/apk/debug/Etoile-Android-arm64-v8a-0.1.0-26102401-01.APK",
+      "apkSha256": "c4e8d1222ca16e9280715744f3a6746ed1b46ef3d75978fb96125201bfff24cc",
+      "screenshots": [
+        "D:/Etoile/.codex-tmp/release-current-home.png",
+        "D:/Etoile/.codex-tmp/current-gitlab-accounts.png",
+        "D:/Etoile/.codex-tmp/current-markdown.png",
+        "D:/Etoile/.codex-tmp/current-repository-reader.png",
+        "D:/Etoile/.codex-tmp/current-settings.png"
+      ],
+      "sourceFiles": 528,
+      "sourceSha256": "5c28a5220c7450bdd64b60f83a18daa5cdc2eb9380a33e5d6a7a2ebc63ff3111",
+      "scope": "Current optimized debug package installed with preserved app data; signed-out production Home plus deterministic GitLab, Markdown and code-reader fixtures. No login or write operation started."
+    },
+    "matchedItsSourceWhenInstalled": true,
+    "scopeCorrection": "Settings observation belongs to its recorded older source snapshot. Nested currentSourceSmoke is a separate observation, not evidence that the settings performance trace used the newer source."
+  },
+  "priorEmulatorVerification": {
+    "device": "emulator-5554 / Android 12 / x86_64 / 1080x2100 / 420dpi",
+    "installedApplication": "takagi.joyin.github.etoile 0.1.0 (1), targetSdk 34, last updated 2026-10-21 08:40:52 per device",
+    "currentSourceInstalled": false,
+    "apkGeneratedOrInstalledThisTurn": false,
+    "screenshotsAndVideo": "Actual ADB screencap/screenrecord, stored separately from Robolectric images",
+    "checked": "Installed signed-out production home/settings/profile, GitHub sign-in, GitLab OAuth/PAT form and bottom scroll; old GitLab sample identified separately. No authorization started or credentials entered; temporary font 1.0 restored to initial 1.5",
+    "quotaWarningAtNineOfTen": "Reproduced on installed app; source fixed with two regression tests that initially failed",
+    "largeFontClippedStatus": "Reproduced on installed app; source allows wrapping, 320dp/1.5 TextLayoutResult regression initially failed and now passes",
+    "graphicsObservation": "34 of 34 frames over budget; P50 93ms, P90 300ms; includes system/environment disturbance and recording overhead, not an isolated app benchmark",
+    "systemAnr": "Observed System UI not responding; am_anr confirms com.android.systemui NavigationBar0 input timeout. Reboot did not restore screenshots; subsequent data-preserving cold boot of only Monica_Issue136_API_32 restored ADB/screencap/UIAutomator and app navigation. WHPX available.",
+    "afterColdBootObservation": "142 frames, 20 over budget (14.08%), P50 20ms/P90 26ms/P95 34ms during settings recording. Still an old debug build under emulator/recording; performance not accepted.",
+    "performanceAcceptance": "NOT_PASSED",
+    "realAuthorizationAndLatestBuildDeviceAcceptance": "NOT_TESTED"
+  },
+  "historicalEmulatorVerification": {
+    "generatedAtUtc": "2026-10-22T05:40:06.028326+00:00",
+    "authorization": "User explicitly allowed building and overwriting the debug APK only on emulator-5554, preserving application data.",
+    "device": "emulator-5554 / Monica_Issue136_API_32 / Android 12 API32 / x86_64 / WHPX / 1080x2100 / 420dpi",
+    "variant": "debug, debug-signed, debuggable=false, minifyEnabled=true, shrinkResources=true",
+    "apk": {
+      "path": "app/build/outputs/apk/debug/Etoile-Android-arm64-v8a-0.1.0-26102201-02.APK",
+      "sha256": "0e19698870e97405adc4c420432292347e053b8e443d322fb0be1c5d9cdf279b"
+    },
+    "buildLog": {
+      "path": ".codex-tmp/acceptance-emulator-r8-compatible-build.log",
+      "sha256": "7d12cbd25ecd3f42a7a878c37a1aad8744b17f0e7d84b1589cd2809cabc0bf41"
+    },
+    "r8Version": "9.1.29",
+    "kotlinMetadataParsingWarnings": 0,
+    "remainingBuildWarnings": "Two AGP class-file provider async parsing warnings; existing source/deprecation warnings. Not a warning-free build.",
+    "install": "adb -s emulator-5554 install -r; Success; no uninstall/clear/wipe",
+    "packageMetadata": "    primaryCpuAbi=arm64-v8a\n    secondaryCpuAbi=null\n    versionCode=1 minSdk=26 targetSdk=34\n    versionName=0.1.0\n    firstInstallTime=2026-09-16 00:44:18\n    lastUpdateTime=2026-10-22 05:19:09",
+    "currentSourceInstalled": true,
+    "apkGeneratedOrInstalledThisTurn": true,
+    "productionChecks": [
+      "Signed-out home and profile",
+      "Settings, Appearance, Language, DPI, About",
+      "Offline privacy and third-party notices",
+      "GitHub sign-in options",
+      "GitLab OAuth and PAT forms, scrolling, empty-submit disabled",
+      "Production settings entry and back navigation"
+    ],
+    "fixtureChecks": [
+      "Chinese compact seven-row home",
+      "Profile horizontal stats and adjacent left-aligned avatar text",
+      "Followers list at font1.0 and1.5",
+      "Contribution calendar newest edge and drag to earlier dates",
+      "Markdown relative PNG, SVG badge, HTML image and literal inline code",
+      "220-line production code reader JNI, scroll, search renderLine219 returns one match"
+    ],
+    "fixtureLimit": "Local deterministic data in DesignAuditActivity using production components; no real account or production account navigation acceptance.",
+    "calendarDates": {
+      "initial": {
+        "firstVisibleDate": "2026-03-29",
+        "lastVisibleDate": "2026-09-12"
+      },
+      "afterRightwardDrag": {
+        "firstVisibleDate": "2025-09-28",
+        "lastVisibleDate": "2026-03-21"
+      }
+    },
+    "fontScale": "Initial1.5; temporary1.0; restored1.5 at end",
+    "settingsUnrecorded": {
+      "frames": 227,
+      "jankyFrames": 18,
+      "jankyPercent": 7.93,
+      "p50ms": 11,
+      "p90ms": 18,
+      "p95ms": 26
+    },
+    "settingsRecorded": {
+      "frames": 137,
+      "jankyFrames": 42,
+      "jankyPercent": 30.66,
+      "p50ms": 22,
+      "p90ms": 34,
+      "p95ms": 57
+    },
+    "performanceAcceptance": "NOT_PASSED",
+    "performanceLimit": "Local simulator observations only; ARM64 through libndk_translation on x86_64, shared host, small signed-out sample. No isolated benchmark or comparison with old disturbed environment. Recorded video PTS is not reliable wall-clock timing.",
+    "runtimeObservation": "No Etoile fatal exception found in captured AndroidRuntime records; current-process filter empty. Global log contains unrelated ru.monica.wear AndroidJUnitRunner crash; not attributed to Etoile. No am_anr records in retained buffer.",
+    "realAuthorization": "NOT_TESTED; no credentials entered or browser authorization initiated",
+    "releaseSigningUpgradeAndArm32Device": "NOT_TESTED",
+    "sourceSnapshot": {
+      "files": 527,
+      "sha256": "1b7c67b84b1a148f474c1b075eb8299e1f3257d86b44c6b212747f67809f47bc",
+      "scope": "Application main/debug/test sources and resources, docs/legal and root legal texts, Rust sources/lock/manifest, auth service, Gradle configuration, scripts and CI workflow; excludes local account/signing configuration and generated outputs.",
+      "algorithm": "SHA-256 over sorted UTF-8 path + NUL + file SHA-256 hex + LF entries (raw file bytes).",
+      "manifest": "app/build/reports/acceptance/source-snapshot.json"
+    },
+    "artifacts": [
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/anr-events.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/current-process-runtime-errors.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/device-layout-contact-sheet.png",
+        "sha256": "6d54da40d6aa7e93394b17acfeaccf25cc6a22d4ea8068d0545a29fd4f8352be"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-calendar-newest-1.0.png",
+        "sha256": "7d19357cb30ba3fd52e1641e03432454a305db585c8fe524d7d1d7ca2c5d1da2"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-calendar-newest-1.0.xml",
+        "sha256": "937eb15eed27b99b02c231c22f11b62465e489e4f5414e2ef22780e60701b9ab"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-calendar-older-1.0.png",
+        "sha256": "7d19357cb30ba3fd52e1641e03432454a305db585c8fe524d7d1d7ca2c5d1da2"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-calendar-older-1.0.xml",
+        "sha256": "937eb15eed27b99b02c231c22f11b62465e489e4f5414e2ef22780e60701b9ab"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-calendar-older-confirmed-1.0.png",
+        "sha256": "c7dbffc95b367e6b992d7a4a975f681414f2096e9f013507d9ed62b15da2345e"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-calendar-older-confirmed-1.0.xml",
+        "sha256": "c2e96ace761c5a63167195a034adf3a34cecb3bd709c05c24cc8f4d1f70f64e8"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-followers-zh-1.0.png",
+        "sha256": "dc64eeb28509504e5c6fa40ffc76ec9dea722caeac21532bb26ae411d89e0df8"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-followers-zh-1.0.xml",
+        "sha256": "f4fe38423ee255a45eea64965e0f7651a9b41e4eff63ae14b3837a6be1ac19c4"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-followers-zh-1.5.png",
+        "sha256": "fbde2ac72791e00c86db909e2e2bb845a9b097262206e7623dcdb40c3fbca7be"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-followers-zh-1.5.xml",
+        "sha256": "76311d1e3cc256ba5ef16e97a3079458367a5a5a0702afe0edae3dad3aa610d2"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-home-zh-1.0.png",
+        "sha256": "d0058ce5724f061b10cb72c4c91502ca409773afe4e47a2bbf3442147b24bf74"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-home-zh-1.0.xml",
+        "sha256": "8c45cb69e6c8f8b5eb741cd8866c95de3ac1aceec5f11383939299cecd256531"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-markdown-images-bottom-1.0.png",
+        "sha256": "8154fd250e0c40a6324c81b7ea9a6749e5ea18cadfeb15ae9b6974000101d0c1"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-markdown-images-bottom-1.0.xml",
+        "sha256": "e4ceac831db7d12af4e696394a3f0634ae3af1033636dd606d44b5f0568d34e2"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-markdown-images-top-1.0.png",
+        "sha256": "2dc293c04de499a2b643c7931019de432337c67dbe769ac822bcedd94686fa8a"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-markdown-images-top-1.0.xml",
+        "sha256": "0146271713d7d5af4f940a0db2156b41a97dfc9a4d62f8014b6e64c320c08324"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-native-code-reader-1.5.png",
+        "sha256": "009857403903a6f99ed5fa44d20b68f766b83cc948415beb9e71e353109da8fc"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-native-code-reader-1.5.xml",
+        "sha256": "e5af1fc1cb32893f1325a206669ea7af4db92ae8b267a0c07ed550018dcc76b5"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-native-code-reader-scrolled-1.5.png",
+        "sha256": "1b617ed1d8b75d14972993f4711492afae0a9c4eac92d4cdc825e9b88d6eaa33"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-native-code-reader-scrolled-1.5.xml",
+        "sha256": "904877c84076eace9fbead53df062145e7eef8e1436b0ff04642c85c93525161"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-native-code-reader-search-1.5.png",
+        "sha256": "4502c5d7fe6b4ba728318ed23f545725c78d06d1849da12cc05b42001136f45e"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-native-code-reader-search-1.5.xml",
+        "sha256": "580685cdf288ea397293c5af119006c73d5bb77f00858137c80c2dde98b30bcf"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-profile-zh-1.0.png",
+        "sha256": "ec6e155968ac459640305881c902e6969a85c475d47e2b6a0fa11ce06ecc3d60"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-profile-zh-1.0.xml",
+        "sha256": "f8ecb1560c98ece5f2f0b4274c2c97bab8c5f31346e6effebd886120539cc8b1"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-profile-zh-1.5.png",
+        "sha256": "e7b036e08f8aa9ea41a5ee1300f7b69ed637fe98ad0c78c89f7ab421a5c4ad7c"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/fixture-profile-zh-1.5.xml",
+        "sha256": "978af69855dc6375603578cf5a05bdd793c0d96877df02f3189e299b4ecca6de"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/package-metadata.txt",
+        "sha256": "eff268d8702f4ffe39c221d33bd04f20b99579062ce5788f2bf54ebfde812d6e"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-about-1.5.png",
+        "sha256": "3263e0fd6f3e97bf24a418b4120465592e11e2f1ec96d63cb6100a281fdc07cd"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-about-1.5.xml",
+        "sha256": "141b04daf08ef7bc5adc7589fae1ef105f3a8e9bc0e86833f006bae5621425cd"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-appearance-1.5.png",
+        "sha256": "b3269af860a9e20faf4e500797845843650db63ce9d2aad911691fe0da6567a0"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-appearance-1.5.xml",
+        "sha256": "786583b6b32709879dc8ab0f2cc1524e050df9337022a55ca3f5a94e22760039"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-display-scale-1.5.png",
+        "sha256": "4c4ba1fe5a45a402baf73dabfc72ff953d4e73db098059daa0cd50d823b9c77f"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-display-scale-1.5.xml",
+        "sha256": "76cb3484316ec816bac605ca0eddc2500d3bae91901e1d5d96dcde84d1f0e65c"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-github-sign-in-1.5.png",
+        "sha256": "6f2ca6ff87fead1e0df8150706ab2630a212f4d16b4f90a191c60cd3d698360d"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-github-sign-in-1.5.xml",
+        "sha256": "cc129cddf2524dc40ada80c2075f6b1ef5c8496ee68a24ec525b765850dbaf59"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-pat-1.5.png",
+        "sha256": "123db33574d2d6b51144b0ffc667cab7bde5953281e901fcda863dbc558c05ad"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-pat-1.5.xml",
+        "sha256": "e5c1bb9854c912a72c3392672b64d6faff4d97516f9749e5b9cd993230cc2e39"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-sign-in-1.5.png",
+        "sha256": "d143a4cd9aa825121a36fcdfceae716d667e7f9d34447b78f3c7f26796ee87e4"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-sign-in-1.5.xml",
+        "sha256": "f7492be0500e6cccff3549cad9135b7e1551f700ce1a68f6cc73712599de5869"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-token-bottom-1.5.png",
+        "sha256": "b09c1202de1bcb179265c616ec92fdbd1a2caaf555384daefde61e266b3acccc"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-token-bottom-1.5.xml",
+        "sha256": "d2cb9ec60aaae9a4043efdcdf376ab0cb52b2803d137e771fc4efd7407fa6104"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-token-form-1.5.png",
+        "sha256": "b09c1202de1bcb179265c616ec92fdbd1a2caaf555384daefde61e266b3acccc"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-gitlab-token-form-1.5.xml",
+        "sha256": "d2cb9ec60aaae9a4043efdcdf376ab0cb52b2803d137e771fc4efd7407fa6104"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-home-1.0.png",
+        "sha256": "547788a08674148715b8d424729b905a6c567be9ad48ed2bc1bc0da447a5db61"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-home-1.0.xml",
+        "sha256": "6f8fe54d9f1f52214c2ebfef86c3d5a8d4757c7f1a664aa6f86aadcbb7cbc113"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-home-1.5.png",
+        "sha256": "bd690f7c5ceb45d01f6a414e0749e9781d4742bc2c9a5234ba6c7518c08af2d0"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-home-1.5.xml",
+        "sha256": "713d0cc9a30a3c3ccb8f9602edd7403bd3b87354105735566a7b56f904e3b33b"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-language-1.5.png",
+        "sha256": "0f3868e1aec6f2050e823edde07da6c452bd1b68ecc427d594f5ab24a940eeb5"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-language-1.5.xml",
+        "sha256": "c3a4b0126e8b8e148687affef397e4c15ce733c3260d47d995717c6db4cb867a"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-privacy-1.5.png",
+        "sha256": "3fcb4bf950105491219dd16d060fd54de2e87baece8bd1523c6f04f75edd0717"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-privacy-1.5.xml",
+        "sha256": "4806432fa0c94993dc9421a806d3e6736e55709628d490dc7ef88b5fb9479463"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-profile-signed-out-1.5.png",
+        "sha256": "77a50371ed00b15d3642d19bd982705ee28a15800902e7d26cc62ab6f4ae7508"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-profile-signed-out-1.5.xml",
+        "sha256": "7460b8ad7bf74fd3a81a13132fff5275230ffff40e9f041923090cd2843847a8"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-1.0.png",
+        "sha256": "aaae6b07a311b7165b7a7055a19e839473d30650d96ca35cab34254e6d0b1c80"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-1.0.xml",
+        "sha256": "d4b45a51432e54ffb0a1a8169d95569410b0fb5cf1236753b818891d4f30e74d"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-1.5.png",
+        "sha256": "bc5862f7b5668f10fc81eb80ee43d28ce0db87bf56fc8074e725404db34d0675"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-1.5.xml",
+        "sha256": "3d56c6990e58072c9632fdb88ef9dbbf4f97db518ab1d7a7ba72122cc9f53565"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-font-restored-1.5.png",
+        "sha256": "038a00cdb62b65502c38d4dfb8fb10a32fb562bec768048b93d50ff7dd68bc39"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-font-restored-1.5.xml",
+        "sha256": "3d56c6990e58072c9632fdb88ef9dbbf4f97db518ab1d7a7ba72122cc9f53565"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-transition-frames.png",
+        "sha256": "962b0c151e3c0181ace70954aec77a72db4282c9d0d0ed6854de0a8713c626e1"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-settings-transitions.mp4",
+        "sha256": "bf83fcebe73492ad4b4236396249961a20c75d4e6f116e0bb296c5742b9ee6ae"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-third-party-1.5.png",
+        "sha256": "fb46a479be52774ff39d03e00dbc76b6774745bbb76bbc02bb9386983bbd649d"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/production-third-party-1.5.xml",
+        "sha256": "902ba3e6b44f286f1a86c666973e2cf6eca4558a0b0f724f30534420ccadca91"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/recording-decode.txt",
+        "sha256": "b36d010d89b31aabe76287bec633c23423fcf46849b28eba3f1b3bd9cffb839d"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/runtime-errors.txt",
+        "sha256": "04b5138bdb54a5cead31735cbf24ba15f5f516dfa186a9cca945d168715e7685"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/settings-recorded-gfxinfo.txt",
+        "sha256": "f1e93449e9b04288f173a13b1b644c05cc4541b176c93a1f799d7c62c199a1f0"
+      },
+      {
+        "path": "app/build/reports/acceptance/emulator-current-2026-10-22/settings-unrecorded-gfxinfo.txt",
+        "sha256": "f804cd2be29a7f67a5bbb48d3056967de7c85a63de82d7ec9eb911385ffabd9b"
+      }
+    ],
+    "matchesCurrentSourceSnapshot": false
+  },
+  "settingsRowVerification": {
+    "newTests": 3,
+    "initialTests": 3,
+    "initialFailures": 1,
+    "targetedClasses": 3,
+    "targetedTests": 34,
+    "scope": [
+      "Wide glyph summary remains unellipsized and clickable",
+      "320dp,font1.5 wraps and retains56dp target",
+      "RTL inline label/value ordering"
+    ],
+    "harnessAndImplementationCorrections": "Initial missing test Settings import fixed; Layout constrainWidth/Height extension imports fixed. Initial direct measure reported paragraph width larger than its placeable due text intrinsic sizing; bounded intrinsic widths are now used as exact constraints, without weakening overflow assertions."
+  },
+  "historicalReport": true,
+  "supersededBy": "verification-2026-10-24.json"
+}

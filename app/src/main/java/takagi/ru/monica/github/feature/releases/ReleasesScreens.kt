@@ -57,17 +57,23 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import takagi.ru.monica.github.component.githubCollectionSurface
+import takagi.ru.monica.github.component.githubCollectionPadding
+import takagi.ru.monica.github.component.GithubCollectionDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 import androidx.compose.ui.graphics.Color
 import takagi.ru.monica.data.DesignStyle
 import takagi.ru.monica.github.design.LocalDesignStyle
@@ -92,13 +98,17 @@ import takagi.ru.monica.github.component.GithubPagedListStatus
 import takagi.ru.monica.github.component.GithubPullToRefreshBox
 import takagi.ru.monica.github.component.GithubSectionHeader
 import takagi.ru.monica.github.component.GithubUserLink
+import takagi.ru.monica.github.component.githubConfirmedAction
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubAssetInput
+import takagi.ru.monica.github.domain.GithubActionKind
+import takagi.ru.monica.github.domain.GithubActionOperation
 import takagi.ru.monica.github.domain.GithubRelease
 import takagi.ru.monica.github.domain.GithubReleaseAsset
 import takagi.ru.monica.github.navigation.GithubWebUrls
 import takagi.ru.monica.ui.components.MarkdownPreviewText
+import takagi.ru.monica.ui.components.MarkdownImageContext
 
 @Composable
 fun ReleasesScreen(
@@ -110,52 +120,111 @@ fun ReleasesScreen(
     enableAssetAttachments: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    var dialog by rememberSaveable { mutableStateOf<String?>(null) }
-    var formId by rememberSaveable { mutableStateOf(0L) }
-    var tag by rememberSaveable { mutableStateOf("") }
-    var title by rememberSaveable { mutableStateOf("") }
-    var notes by rememberSaveable { mutableStateOf("") }
-    var target by rememberSaveable { mutableStateOf("") }
-    var asDraft by rememberSaveable { mutableStateOf(false) }
-    var asPrerelease by rememberSaveable { mutableStateOf(false) }
-    var attachTarget by rememberSaveable { mutableStateOf(0L) }
-    val busy = state.isMutating
+    var dialog by remember(state.fullName, state.viewerAccountId) { mutableStateOf<String?>(null) }
+    var formId by remember(state.fullName, state.viewerAccountId) { mutableStateOf(0L) }
+    var tag by remember(state.fullName, state.viewerAccountId) { mutableStateOf("") }
+    // File picker consent and streams are intentionally not restored after reconstruction.
+    var attachTarget by remember(state.fullName, state.viewerAccountId) { mutableStateOf(0L) }
+    var readingAttachment by remember(state.fullName, state.viewerAccountId) { mutableStateOf(false) }
+    var attachmentReadFailed by remember(state.fullName, state.viewerAccountId) { mutableStateOf(false) }
+    var repeatDeleteRequested by remember(state.fullName, state.viewerAccountId, formId, state.canManage, state.journalReady) { mutableStateOf(false) }
+    val busy = state.isMutating || readingAttachment
+    val writable = state.canManage && state.journalReady && !busy
     val attach = state.pendingMutation as? ReleaseMutation.Attach
     val outcome = state.mutationOutcome
+    val uncertain = state.unconfirmedOperations
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val currentState by rememberUpdatedState(state)
+    val currentAction by rememberUpdatedState(onAction)
+    var pendingAttach by remember(state.fullName, state.viewerAccountId) { mutableStateOf<ReleasesAction.Attach?>(null) }
+    val editorForRepeat = state.editor
+    val repeatSave = githubConfirmedAction(
+        title = stringResource(R.string.github_actions_repeat),
+        message = stringResource(R.string.github_release_repeat_warning),
+        subject = state.fullName,
+        enabled = editorForRepeat != null && writable && editorForRepeat.accountId == state.viewerAccountId,
+        confirmationKey = listOf(state.viewerAccountId, editorForRepeat?.releaseId, editorForRepeat?.tagName,
+            editorForRepeat?.title, editorForRepeat?.body, editorForRepeat?.targetCommitish,
+            editorForRepeat?.isDraft, editorForRepeat?.isPrerelease),
+        onConfirm = {
+            editorForRepeat?.let { editor -> onAction(ReleasesAction.Save(editor.releaseId, editor.tagName, editor.title,
+                editor.body, editor.targetCommitish, editor.isDraft, editor.isPrerelease, editor.accountId, true)) }
+        }
+    )
     val picker = if (enableAssetAttachments) {
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             val releaseId = attachTarget
             attachTarget = 0L
-            if (uri != null && releaseId > 0L) {
-                val fileName = uri.attachmentName(context.contentResolver)
-                onAction(
-                    ReleasesAction.Attach(
-                        releaseId = releaseId,
-                        fileName = fileName,
-                        label = "",
-                        contentType = context.contentResolver.getType(uri),
-                        contentLength = uri.attachmentSize(context.contentResolver),
-                        open = { uri.assetInput(context.contentResolver) }
-                    )
-                )
+            val accountId = state.viewerAccountId
+            val fullName = state.fullName
+            if (writable && uri != null && releaseId > 0L) {
+                readingAttachment = true
+                attachmentReadFailed = false
+                scope.launch {
+                    try {
+                        val attachAction = withContext(Dispatchers.IO) {
+                            ReleasesAction.Attach(
+                                releaseId = releaseId,
+                                fileName = uri.attachmentName(context.contentResolver),
+                                label = "",
+                                contentType = context.contentResolver.getType(uri),
+                                contentLength = uri.attachmentSize(context.contentResolver),
+                                open = { uri.assetInput(context.contentResolver) },
+                                expectedAccountId = accountId
+                            )
+                        }
+                        val latest = currentState
+                        if (latest.fullName == fullName && latest.viewerAccountId == accountId &&
+                            latest.canManage && latest.journalReady && !latest.isMutating) {
+                            if (GithubActionOperation(GithubActionKind.RELEASE_UPLOAD, releaseId) in latest.unconfirmedOperations) {
+                                pendingAttach = attachAction
+                            } else currentAction(attachAction)
+                        }
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (_: Exception) { attachmentReadFailed = true }
+                    finally { readingAttachment = false }
+                }
             }
         }
     } else null
 
+    LaunchedEffect(state.canManage, state.journalReady) {
+        if (!state.canManage || !state.journalReady) { pendingAttach = null; dialog = null }
+    }
+    pendingAttach?.takeIf { writable }?.let { action ->
+        AlertDialog(
+            onDismissRequest = { pendingAttach = null },
+            title = { Text(stringResource(R.string.github_actions_repeat)) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) {
+                Text("${state.fullName} · ${action.fileName}")
+                Text(stringResource(R.string.github_release_repeat_warning))
+            } },
+            confirmButton = { TextButton(onClick = {
+                pendingAttach = null
+                if (writable && action.expectedAccountId == state.viewerAccountId) onAction(action.copy(repeatConfirmed = true))
+            }) { Text(stringResource(R.string.github_actions_repeat)) } },
+            dismissButton = { TextButton(onClick = { pendingAttach = null }) { Text(stringResource(R.string.github_cancel)) } }
+        )
+    }
+
     fun open(kind: String, release: GithubRelease?) {
+        if (kind == "create" || kind == "edit") {
+            onAction(ReleasesAction.OpenEditor(release?.id))
+            return
+        }
         dialog = kind
+        repeatDeleteRequested = false
         formId = release?.id ?: 0L
         tag = release?.tagName.orEmpty()
-        title = release?.name.orEmpty()
-        notes = release?.body.orEmpty()
-        target = release?.targetCommitish.orEmpty()
-        asDraft = release?.isDraft ?: false
-        asPrerelease = release?.isPrerelease ?: false
         onAction(ReleasesAction.DismissMutation)
     }
     fun close() {
         dialog = null
+        repeatDeleteRequested = false
+        formId = 0L
+        pendingAttach = null
+        onAction(ReleasesAction.CloseEditor)
         onAction(ReleasesAction.DismissMutation)
     }
 
@@ -165,62 +234,62 @@ fun ReleasesScreen(
             onAction(ReleasesAction.DismissMutation)
         }
     }
-    val editorKind = when (dialog) {
-        "create" -> ReleaseMutationKind.Create
-        "edit" -> ReleaseMutationKind.Edit
-        else -> null
-    }
-    if (editorKind != null) {
-        val editing = editorKind == ReleaseMutationKind.Edit
+    val editor = state.editor
+    if (editor != null) {
+        val editing = editor.releaseId != null
+        val editorKind = if (editing) ReleaseMutationKind.Edit else ReleaseMutationKind.Create
         val failure = (outcome as? ReleaseMutationOutcome.Failed)
             ?.takeIf { it.kind == editorKind }
             ?.failure
-        AlertDialog(
-            onDismissRequest = { if (!busy) close() },
-            title = {
-                Text(
-                    stringResource(
-                        if (editing) R.string.github_edit_release else R.string.github_new_release
-                    )
-                )
-            },
-            text = { Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.verticalScroll(rememberScrollState())
+        androidx.activity.compose.BackHandler { if (!busy) close() }
+        GithubDetailScaffold(
+            title = stringResource(if (editing) R.string.github_edit_release else R.string.github_new_release),
+            subtitle = state.fullName,
+            backContentDescription = stringResource(R.string.github_back),
+            onBack = { if (!busy) close() },
+            modifier = modifier,
+            actions = {
+                TextButton(enabled = writable && editor.tagName.isNotBlank(), onClick = {
+                    val operation = if (editor.releaseId == null) GithubActionOperation(GithubActionKind.RELEASE_CREATE, 1L)
+                    else GithubActionOperation(GithubActionKind.RELEASE_CHANGE, editor.releaseId)
+                    val save = ReleasesAction.Save(editor.releaseId, editor.tagName, editor.title, editor.body,
+                        editor.targetCommitish, editor.isDraft, editor.isPrerelease, editor.accountId)
+                    if (operation in uncertain) repeatSave() else onAction(save)
+                }) { Text(stringResource(R.string.github_save_release)) }
+            }
+        ) { padding ->
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp)
             ) {
-                OutlinedTextField(tag, { tag = it }, enabled = !busy, singleLine = true,
+                if (state.journalUnavailable) JournalUnavailableNotice()
+                val editorOperation = if (editor.releaseId == null) GithubActionOperation(GithubActionKind.RELEASE_CREATE, 1L)
+                    else GithubActionOperation(GithubActionKind.RELEASE_CHANGE, editor.releaseId)
+                if (editorOperation in uncertain) ReleaseOutcomeNotice(state.fullName, editorOperation,
+                    onCheck = { onAction(ReleasesAction.Refresh) },
+                    onAcknowledge = { onAction(ReleasesAction.Acknowledge(editorOperation, state.viewerAccountId)) })
+                OutlinedTextField(editor.tagName, { onAction(ReleasesAction.EditEditor(editor.copy(tagName = it))) },
+                    modifier = Modifier.fillMaxWidth(), enabled = state.canManage && !busy, singleLine = true,
                     label = { Text(stringResource(R.string.github_release_tag_field)) })
-                OutlinedTextField(title, { title = it }, enabled = !busy, singleLine = true,
+                OutlinedTextField(editor.title, { onAction(ReleasesAction.EditEditor(editor.copy(title = it))) },
+                    modifier = Modifier.fillMaxWidth(), enabled = state.canManage && !busy, singleLine = true,
                     label = { Text(stringResource(R.string.github_release_title_field)) })
-                OutlinedTextField(target, { target = it }, enabled = !busy, singleLine = true,
+                OutlinedTextField(editor.targetCommitish, { onAction(ReleasesAction.EditEditor(editor.copy(targetCommitish = it))) },
+                    modifier = Modifier.fillMaxWidth(), enabled = state.canManage && !busy, singleLine = true,
                     label = { Text(stringResource(R.string.github_release_target_field)) })
-                OutlinedTextField(notes, { notes = it }, enabled = !busy, minLines = 4, maxLines = 8,
+                OutlinedTextField(editor.body, { onAction(ReleasesAction.EditEditor(editor.copy(body = it))) },
+                    modifier = Modifier.fillMaxWidth(), enabled = state.canManage && !busy, minLines = 6, maxLines = 14,
                     label = { Text(stringResource(R.string.github_release_notes)) })
-                ReleaseToggle(stringResource(R.string.github_release_draft), asDraft, { asDraft = it }, !busy)
-                ReleaseToggle(stringResource(R.string.github_release_prerelease), asPrerelease, { asPrerelease = it }, !busy)
+                ReleaseToggle(stringResource(R.string.github_release_draft), editor.isDraft,
+                    { onAction(ReleasesAction.EditEditor(editor.copy(isDraft = it))) }, state.canManage && !busy)
+                ReleaseToggle(stringResource(R.string.github_release_prerelease), editor.isPrerelease,
+                    { onAction(ReleasesAction.EditEditor(editor.copy(isPrerelease = it))) }, state.canManage && !busy)
                 failure?.let { ReleaseMutationFailureMessage(it) }
-            } },
-            confirmButton = { TextButton(
-                enabled = !busy && tag.isNotBlank(),
-                onClick = {
-                    onAction(
-                        ReleasesAction.Save(
-                            releaseId = formId.takeIf { it > 0L },
-                            tagName = tag,
-                            title = title,
-                            body = notes,
-                            targetCommitish = target,
-                            isDraft = asDraft,
-                            isPrerelease = asPrerelease
-                        )
-                    )
-                }
-            ) { Text(stringResource(R.string.github_save_release)) } },
-            dismissButton = { TextButton(enabled = !busy, onClick = { close() }) {
-                Text(stringResource(R.string.discussion_cancel))
-            } }
-        )
+            }
+        }
+        return
     }
+
     val attachFailure = (outcome as? ReleaseMutationOutcome.Failed)
         ?.takeIf { it.kind == ReleaseMutationKind.Attach }
     if (attachFailure != null) {
@@ -233,27 +302,30 @@ fun ReleasesScreen(
             } }
         )
     }
-    if (dialog == "delete") {
+    if (dialog == "delete" && state.canManage && state.journalReady) {
         val failure = (outcome as? ReleaseMutationOutcome.Failed)
             ?.takeIf { it.kind == ReleaseMutationKind.Delete }
             ?.failure
         AlertDialog(
             onDismissRequest = { if (!busy) close() },
-            title = { Text(stringResource(R.string.github_delete_release)) },
+            title = { Text(stringResource(if (repeatDeleteRequested) R.string.github_actions_repeat else R.string.github_delete_release)) },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(tag, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    stringResource(R.string.github_delete_release_confirm),
+                    stringResource(if (repeatDeleteRequested) R.string.github_release_repeat_warning else R.string.github_delete_release_confirm),
                     style = MaterialTheme.typography.bodySmall
                 )
                 failure?.let { ReleaseMutationFailureMessage(it) }
             } },
             confirmButton = { TextButton(
-                enabled = !busy && formId > 0L,
-                onClick = { onAction(ReleasesAction.Delete(formId)) }
-            ) { Text(stringResource(R.string.github_delete_release)) } },
+                enabled = writable && formId > 0L,
+                onClick = {
+                    if (!repeatDeleteRequested && GithubActionOperation(GithubActionKind.RELEASE_CHANGE, formId) in uncertain) repeatDeleteRequested = true
+                    else onAction(ReleasesAction.Delete(formId, state.viewerAccountId, repeatDeleteRequested))
+                }
+            ) { Text(stringResource(if (repeatDeleteRequested) R.string.github_actions_repeat else R.string.github_delete_release)) } },
             dismissButton = { TextButton(enabled = !busy, onClick = { close() }) {
-                Text(stringResource(R.string.discussion_cancel))
+                Text(stringResource(R.string.github_cancel))
             } }
         )
     }
@@ -265,7 +337,7 @@ fun ReleasesScreen(
         onBack = onBack,
         modifier = modifier,
         actions = {
-            IconButton(onClick = { open("create", null) }, enabled = !busy) {
+            IconButton(onClick = { open("create", null) }, enabled = writable) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.github_new_release))
             }
             IconButton(
@@ -296,24 +368,25 @@ fun ReleasesScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
             ) {
+                if (state.journalUnavailable) githubFullSpanItem(key = "journal-error") { JournalUnavailableNotice() }
+                if (attachmentReadFailed) githubFullSpanItem(key = "attachment-read-error") {
+                    Text(stringResource(R.string.github_release_attachment_read_error), color = MaterialTheme.colorScheme.error)
+                }
+                state.unconfirmedOperations.forEach { operation ->
+                    githubFullSpanItem(key = "uncertain-${operation.kind}-${operation.targetId}") {
+                        ReleaseOutcomeNotice(state.fullName, operation,
+                            onCheck = { onAction(ReleasesAction.Refresh) },
+                            onAcknowledge = { onAction(ReleasesAction.Acknowledge(operation, state.viewerAccountId)) })
+                    }
+                }
                 items(state.items, key = GithubRelease::id) { release ->
                     ReleaseListRow(
                         release = release,
-                        isBusy = busy,
+                        isBusy = !writable,
                         onClick = { onOpenRelease(release) },
                         onEdit = { open("edit", release) },
                         onSetDraft = { draft ->
-                            onAction(
-                                ReleasesAction.Save(
-                                    releaseId = release.id,
-                                    tagName = release.tagName,
-                                    title = release.name.orEmpty(),
-                                    body = release.body.orEmpty(),
-                                    targetCommitish = release.targetCommitish,
-                                    isDraft = draft,
-                                    isPrerelease = release.isPrerelease
-                                )
-                            )
+                            onAction(ReleasesAction.OpenEditor(release.id, asDraft = draft))
                         },
                         onDelete = { open("delete", release) },
                         onAttach = { if (picker != null) { attachTarget = release.id; picker.launch(arrayOf("*/*")) } },
@@ -356,10 +429,10 @@ private fun ReleaseListRow(
     var menuExpanded by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxWidth().githubCollectionSurface()
             .heightIn(min = 56.dp)
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(vertical = 13.dp)
+            .githubCollectionPadding()
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
@@ -473,9 +546,8 @@ private fun ReleaseListRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 13.dp),
-            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.55f)
+        GithubCollectionDivider(
+            modifier = Modifier.padding(top = 13.dp)
         )
     }
 }
@@ -533,6 +605,36 @@ private fun ReleaseMutationFailureMessage(failure: ReleaseMutationFailure) {
     Text(stringResource(message), color = MaterialTheme.colorScheme.error)
 }
 
+@Composable
+private fun JournalUnavailableNotice() {
+    Text(stringResource(R.string.github_actions_journal_error), color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ReleaseOutcomeNotice(subject: String, operation: GithubActionOperation,
+    onCheck: () -> Unit, onAcknowledge: () -> Unit) {
+    Surface(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+        color = MaterialTheme.colorScheme.errorContainer, shape = GithubExpressiveShapes.container) {
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(stringResource(R.string.github_release_uncertain), color = MaterialTheme.colorScheme.onErrorContainer)
+            val actionLabel = when (operation.kind) {
+                GithubActionKind.RELEASE_CREATE -> R.string.github_new_release
+                GithubActionKind.RELEASE_CHANGE -> R.string.github_release_change_operation
+                GithubActionKind.RELEASE_UPLOAD -> R.string.github_release_attach_asset
+                else -> R.string.github_release_remove_asset
+            }
+            Text("$subject · ${stringResource(actionLabel)} · #${operation.targetId}", style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer)
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onCheck) { Text(stringResource(R.string.github_check_latest)) }
+                TextButton(onClick = onAcknowledge) { Text(stringResource(R.string.github_actions_acknowledge)) }
+            }
+        }
+    }
+}
+
 private fun Uri.assetInput(resolver: ContentResolver): GithubAssetInput {
     val stream = resolver.openInputStream(this) ?: error("Unable to open the selected file")
     return object : GithubAssetInput {
@@ -563,23 +665,32 @@ fun ReleaseDetailScreen(
     modifier: Modifier = Modifier
 ) {
     val release = state.release
-    var removeTargetId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var removeTargetId by remember(state.fullName, state.viewerAccountId) { mutableStateOf<Long?>(null) }
     val removeTarget = release?.assets?.firstOrNull { it.id == removeTargetId }
-    if (removeTarget != null) {
+    var repeatRemoveRequested by remember(state.fullName, state.viewerAccountId, removeTargetId, state.canManage, state.journalReady) { mutableStateOf(false) }
+    val writable = state.canManage && state.journalReady && !state.isRemovingAsset
+    LaunchedEffect(state.canManage, state.journalReady) {
+        if (!state.canManage || !state.journalReady) removeTargetId = null
+    }
+    if (removeTarget != null && state.canManage && state.journalReady) {
         AlertDialog(
             onDismissRequest = { removeTargetId = null },
-            title = { Text(stringResource(R.string.github_release_remove_asset)) },
+            title = { Text(stringResource(if (repeatRemoveRequested) R.string.github_actions_repeat else R.string.github_release_remove_asset)) },
             text = { Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(removeTarget.name, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    stringResource(R.string.github_release_remove_asset_confirm),
+                    stringResource(if (repeatRemoveRequested) R.string.github_release_repeat_warning else R.string.github_release_remove_asset_confirm),
                     style = MaterialTheme.typography.bodySmall
                 )
             } },
-            confirmButton = { TextButton(onClick = {
-                removeTargetId = null
-                onAction(ReleaseDetailAction.RemoveAsset(removeTarget.id))
-            }) { Text(stringResource(R.string.github_release_remove_asset)) } },
+            confirmButton = { TextButton(enabled = writable, onClick = {
+                val operation = GithubActionOperation(GithubActionKind.RELEASE_ASSET_DELETE, removeTarget.id)
+                if (!repeatRemoveRequested && operation in state.unconfirmedOperations) repeatRemoveRequested = true
+                else {
+                    removeTargetId = null
+                    onAction(ReleaseDetailAction.RemoveAsset(removeTarget.id, state.viewerAccountId, repeatRemoveRequested))
+                }
+            }) { Text(stringResource(if (repeatRemoveRequested) R.string.github_actions_repeat else R.string.github_release_remove_asset)) } },
             dismissButton = { TextButton(onClick = { removeTargetId = null }) {
                 Text(stringResource(R.string.discussion_cancel))
             } }
@@ -617,9 +728,20 @@ fun ReleaseDetailScreen(
                         release = release,
                         fullName = state.fullName,
                         onOpenExternal = onOpenExternal,
-                        onRemoveAsset = { asset -> removeTargetId = asset.id },
+                        onRemoveAsset = { asset -> if (writable) removeTargetId = asset.id },
+                        canRemoveAsset = writable,
                         removingAssetId = state.removingAssetId,
                         assetRemovalFailed = state.assetRemovalFailed,
+                        notices = {
+                            if (state.journalUnavailable) item(key = "journal-error") { JournalUnavailableNotice() }
+                            state.unconfirmedOperations.forEach { operation ->
+                                item(key = "uncertain-${operation.kind}-${operation.targetId}") {
+                                    ReleaseOutcomeNotice(state.fullName, operation,
+                                        onCheck = { onAction(ReleaseDetailAction.Retry) },
+                                        onAcknowledge = { onAction(ReleaseDetailAction.Acknowledge(operation, state.viewerAccountId)) })
+                                }
+                            }
+                        },
                         modifier = Modifier.align(Alignment.TopCenter)
                     )
                 }
@@ -637,8 +759,10 @@ private fun ReleaseDetailContent(
     fullName: String,
     onOpenExternal: (String) -> Unit,
     onRemoveAsset: (GithubReleaseAsset) -> Unit,
+    canRemoveAsset: Boolean,
     removingAssetId: Long?,
     assetRemovalFailed: Boolean,
+    notices: LazyListScope.() -> Unit,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -658,7 +782,8 @@ private fun ReleaseDetailContent(
                     onOpenExternal = onOpenExternal,
                     onRemoveAsset = onRemoveAsset,
                     removingAssetId = removingAssetId,
-                    assetRemovalFailed = assetRemovalFailed
+                    assetRemovalFailed = assetRemovalFailed,
+                    canRemoveAsset = canRemoveAsset
                 )
             }
         }
@@ -668,6 +793,7 @@ private fun ReleaseDetailContent(
             modifier = paneModifier,
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp)
         ) {
+            notices()
             if (!expanded) item(key = "summary") {
                 ReleaseSummary(release)
             }
@@ -678,7 +804,9 @@ private fun ReleaseDetailContent(
                     onAction = {
                         scope.launch {
                             if (expanded) assetsState.animateScrollToItem(1)
-                            else listState.animateScrollToItem(3)
+                            else listState.animateScrollToItem(listState.layoutInfo.totalItemsCount.let {
+                                (it - release.assets.size - 2 - if (assetRemovalFailed) 1 else 0).coerceAtLeast(0)
+                            })
                         }
                     }
                 )
@@ -705,7 +833,7 @@ private fun ReleaseDetailContent(
                                     )
                                 )
                             },
-                            renderImages = false,
+                            imageContext = MarkdownImageContext(fullName, release.tagName),
                             maxElements = 160,
                             modifier = Modifier.padding(20.dp)
                         )
@@ -717,7 +845,8 @@ private fun ReleaseDetailContent(
                 onOpenExternal = onOpenExternal,
                 onRemoveAsset = onRemoveAsset,
                 removingAssetId = removingAssetId,
-                assetRemovalFailed = assetRemovalFailed
+                assetRemovalFailed = assetRemovalFailed,
+                canRemoveAsset = canRemoveAsset
             )
             item(key = "bottom-space") { Spacer(Modifier.height(20.dp)) }
         }
@@ -729,7 +858,8 @@ private fun LazyListScope.releaseAssets(
     onOpenExternal: (String) -> Unit,
     onRemoveAsset: (GithubReleaseAsset) -> Unit,
     removingAssetId: Long?,
-    assetRemovalFailed: Boolean
+    assetRemovalFailed: Boolean,
+    canRemoveAsset: Boolean
 ) {
     item(key = "assets-heading") {
         GithubSectionHeader(title = stringResource(R.string.github_release_assets))
@@ -753,6 +883,7 @@ private fun LazyListScope.releaseAssets(
                 onOpenExternal = onOpenExternal,
                 isRemoving = removingAssetId == asset.id,
                 isBusy = removingAssetId != null,
+                canRemove = canRemoveAsset,
                 onRemove = { onRemoveAsset(asset) }
             )
             Spacer(Modifier.height(10.dp))
@@ -855,6 +986,7 @@ private fun ReleaseAssetRow(
     onOpenExternal: (String) -> Unit,
     isRemoving: Boolean,
     isBusy: Boolean,
+    canRemove: Boolean,
     onRemove: () -> Unit
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
@@ -925,7 +1057,7 @@ private fun ReleaseAssetRow(
                     tint = MaterialTheme.colorScheme.outline
                 )
             }
-            Box {
+            if (canRemove) Box {
                 IconButton(onClick = { menuExpanded = true }, enabled = !isBusy) {
                     Icon(
                         imageVector = Icons.Default.MoreVert,

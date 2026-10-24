@@ -107,6 +107,9 @@ interface GithubArtifactOutput {
 enum class GithubWorkflowRunAction { RERUN, CANCEL }
 
 interface GithubActionsRepository {
+    /** Credential-backed implementations verify this numeric account when building each request. */
+    fun forAccount(accountId: Long?): GithubActionsRepository = this
+
     suspend fun workflows(
         owner: String,
         name: String,

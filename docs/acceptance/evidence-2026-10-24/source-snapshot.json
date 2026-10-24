@@ -1,0 +1,2662 @@
+[
+  {
+    "path": ".gitattributes",
+    "sha256": "01e45b5544c54ae096e80e42ed6b143de2cf95ccd733b4ef449f339dadb50537",
+    "gitBlob": "4421d0e26d814ab46963e013b1b3c5c61d093280"
+  },
+  {
+    "path": ".github/workflows/verify-client.yml",
+    "sha256": "992caba1c7f93ca0c57f499ff0cbbc4d1ad71b1fc49031c344667b56ae957042",
+    "gitBlob": "151855f646577dbeef62c507d9b03d0ceaaf11b6"
+  },
+  {
+    "path": ".gitignore",
+    "sha256": "85cb301f66cbaf6e91b7e39cfed583d60973759cbcef2b12fa0223c7573a3b5c",
+    "gitBlob": "82bc5e75f2d42a31802bcf3c12bda699010eff0f"
+  },
+  {
+    "path": "COPYING",
+    "sha256": "230184f60bae2feaf244f10a8bac053c8ff33a183bcc365b4d8b876d2b7f4809",
+    "gitBlob": "f288702d2fa16d3cdf0035b15a9fcbc552cd88e7"
+  },
+  {
+    "path": "LICENSE",
+    "sha256": "c5c71b5b87a7c4268cbcd0e395dee153747feace9b24a797bdddba1ac11096a8",
+    "gitBlob": "0a0558f811942549b0bdbd7a8a6884e6451d48ce"
+  },
+  {
+    "path": "PRIVACY.md",
+    "sha256": "4e729f82e38332e9cf64e6b9a23bb50c1b44d86055761d6b841c7a97fe208ce7",
+    "gitBlob": "6f74d2e65a401bf7b90fd6705459546422335d1a"
+  },
+  {
+    "path": "THIRD_PARTY_NOTICES.md",
+    "sha256": "bed9b8a8ed4f0ff95f6625b3e2bfd4e503dc11802b2e368b71af685bbd715cfb",
+    "gitBlob": "70a354922b353be8750e1c16dc60f6387228c467"
+  },
+  {
+    "path": "app/build.gradle",
+    "sha256": "4fe50e8f213a3e2d8776d762ad8fb275c18bc356e533e3782d739274fb48c667",
+    "gitBlob": "f0eeda557cabdb9de82fad80c74b0d70910fa229"
+  },
+  {
+    "path": "app/proguard-rules.pro",
+    "sha256": "65537b6eeb27fa97a3fd917a4fd5600a22a9953725ba948574c9b44344e04b40",
+    "gitBlob": "f1f2a27196063da6965db9df29afcf23d07ad27e"
+  },
+  {
+    "path": "app/src/debug/AndroidManifest.xml",
+    "sha256": "21b7df45b51a06d6b17ad31884746f7e612ca24744e56f16fc2344f859c432ab",
+    "gitBlob": "b63bfd26d38d01cf3b35d3415144c1c8e06bf67a"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/BrowserLoginSample.kt",
+    "sha256": "e2a098d29e4c2a7a39ce8c883c9173f7136ff6a5678cc76f6c8b620747c3ed2d",
+    "gitBlob": "ce12d7efb58c783a4d2f1374ea15cff09a9ff954"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/CreatePullRequestSample.kt",
+    "sha256": "e66eaba891fce275982c779546bb543f46016905c57bd1e78b842b1c0c4c0473",
+    "gitBlob": "f380e81669f1a045df1026b655294d3eeec68849"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/DesignAuditActivity.kt",
+    "sha256": "2fcc378cc9b6fe160beb891b697724d39b4338def83410df725d56fa62f45a24",
+    "gitBlob": "923b0509842be39ab14ebd06632cb0711d095173"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/DeviceCodeAutofillSample.kt",
+    "sha256": "596a84c79833b0f2f450d343201e26cfb88897350865f7ccba67c06f21f8d322",
+    "gitBlob": "84fdd780fe634f8d2ddf7cdc8668eac8adb4f958"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/DiscussionsSample.kt",
+    "sha256": "6534c011070473c6b330518fd3ea69c672c965491d449f86b503ed50b4fd87bf",
+    "gitBlob": "8dd651037748c09c7776dceeca45e3603f30eac4"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/GitLabAccountsSample.kt",
+    "sha256": "6ed70f3436612375d52db698f76fd3e924b3d50d8adde3b6104b9f5afb48b05d",
+    "gitBlob": "c0422b2e8e74571016f0f2fbfc174c75d56e51bf"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/IssueTemplateSample.kt",
+    "sha256": "c359c6611afa5e893da5ab5a9a7c42aca06399242a6bf4d9ec977e60c664a02b",
+    "gitBlob": "cb01b4c5feba83bb07b6fdcb5ce3665c9757a9d8"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/LargeScreenSamples.kt",
+    "sha256": "f8099b3c78292f10b3b06068ccbf5706be631933ff0e2bcf5d4e441ff488489b",
+    "gitBlob": "19e5b299a2da419d884aed17891753ffe4eecaa7"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/M3eDetailSamples.kt",
+    "sha256": "c32740a66a1c24819df7dedc9273ac2a9848f8b9e4d3631b59ae8b5831241bd8",
+    "gitBlob": "b980441e33e7bf6400197e566b7cfbf80e999626"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/M3eWorkspaceSamples.kt",
+    "sha256": "75dae3c862b6faf03288b03d7466052002eccb63774d6488118c65f506d0322c",
+    "gitBlob": "31d90f02be577cae0cea7e91ee49daf8e53254a0"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/MarkdownImagesSample.kt",
+    "sha256": "2bbaee1d88453740d74958f4729cd0f277be56f6dd076362f3b41e35d075df2e",
+    "gitBlob": "5d9911d7c245671bb87bcef173cdb250931bdaae"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/RepositorySafetySample.kt",
+    "sha256": "223c9de919bd3220479b677182d70953ba3a389174448e72c816b40f0a8b53da",
+    "gitBlob": "78d3604f036aa660c8e67dbfe476c9053547ec3e"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/RepositoryWriterSample.kt",
+    "sha256": "aed18f9cf18008b8f7ab02214d5538f17604acd958eff5661e9a9cbc5255f461",
+    "gitBlob": "e33f1bf2d9b548a7bcf20087f91fcf0d36ca93d8"
+  },
+  {
+    "path": "app/src/debug/java/takagi/ru/monica/debug/StoreReaderSample.kt",
+    "sha256": "6fa225a2501746d8b779ab4a9124f3c6360594a15b53cc117159740e88114ed2",
+    "gitBlob": "36ba542101124a63255bc31c5a0ea826b12a7ddc"
+  },
+  {
+    "path": "app/src/main/AndroidManifest.xml",
+    "sha256": "2b2cdd64bfd6b79b983b2b6c1d32ad5d581ff8e5d22f4d07d4889d811e19b4e2",
+    "gitBlob": "214db8ee428523aa09fc9ab905ba0d3dd69982ab"
+  },
+  {
+    "path": "app/src/main/assets/github-device-code.js",
+    "sha256": "81e30986ce92959d2ef38f875f27153a61b337f09f62c9621a1ba9195d42a45e",
+    "gitBlob": "a6011d2c81a658f8bd24130176122542683a2565"
+  },
+  {
+    "path": "app/src/main/java/androidx/compose/animation/SharedTransitionCompat.kt",
+    "sha256": "1d873752de70dde9ddb04520cea6a87d380bcb6c14e2cdfc2bc9cf15fada49b1",
+    "gitBlob": "4f76b6c03689aaf9269a6bd791d99e205bc20f83"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/EtoileActivity.kt",
+    "sha256": "87afb563bd7f07965e6ce2c2269e8c1c22f48ead3b7b9682b11b9e748e22d751",
+    "gitBlob": "ced7ee49fb3e7ef60dcb61ed415be7b19b74be65"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/EtoileApplication.kt",
+    "sha256": "d46b91dec5a2501c6c061b5eae49c93fe0dd7ecc3af6c5d92d92a33ce9050950",
+    "gitBlob": "719d16dcf9eb7a64a35650e6d9673fc556f3b24c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/GithubApp.kt",
+    "sha256": "9f150ad369a39db2f548120b58b67889943e5c3861fbeed82990e928ee5034b6",
+    "gitBlob": "f592152fe022060ef32f3235d410d807ea252299"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/data/AppSettings.kt",
+    "sha256": "35fd4f42af99fa54d4163dda63cd79a75b0402af19fd1c031238873a7605fe6c",
+    "gitBlob": "3143026f5b8d3b58f8062ee323af040340783ec6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/EtoileGithubApp.kt",
+    "sha256": "e9d348d8e7111b3e0e2632423a4b7259a1693182a9448e3f5dbe4e4be6ffc073",
+    "gitBlob": "dcf7da118427ba5617108969b23995e1af202132"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/GithubAccountNavGraph.kt",
+    "sha256": "8d41c14157b30abb60f77fd8acaa8a3b0f01efff611bebae7170356615425264",
+    "gitBlob": "d7eb6f559131a7b652fa9c2741c2c684546ee7e9"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/GithubActionsNavGraph.kt",
+    "sha256": "da9a79fa03ef62e303ba706f2f655aebfbd987e1ab5022a4fb645d089dfd627b",
+    "gitBlob": "d3f8de473a2a517d1c50cf69624f249544c6a926"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/GithubConversationsNavGraph.kt",
+    "sha256": "d39237e5e6cb5b470f1f395c46c8e2971e2b2a52a7d02b3d1cb596137d6e6fda",
+    "gitBlob": "43a26aefb961a0058eaec856674e3c32fd863c49"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/GithubNavChrome.kt",
+    "sha256": "524e1d45cac3e029a3d42d3ad0a9c79fe3ecf0d0aef3275c9db73e170d734443",
+    "gitBlob": "f256eb62bed1160888073880fd452c920c00b2b8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/GithubNavScope.kt",
+    "sha256": "8d14e042495a24f1c63a836a9e126cdb879bc4ce95122957ce4fa3deb8969e07",
+    "gitBlob": "0e416d92685e20f85a34c4cdb3e9a9d116bde724"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/GithubRepositoryNavGraph.kt",
+    "sha256": "c8e0921cef73f4faef816545dfed758a4b12821d2e2cbfb2f9eca48295ba48dd",
+    "gitBlob": "49de65e12165e9c53353b5d5f0b3083db75da2b2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubActionConfirmation.kt",
+    "sha256": "9ff30d1ea5c9ed54a3d905e73be0cb411d9b83282d439786ddd2bbe1b0c113a3",
+    "gitBlob": "f64e1141ed9357d4acfccf57505e0a4ef0e30823"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubAdaptiveContent.kt",
+    "sha256": "a91e781ff528ca83dfff6cd21c2ca0f628936a64524366afedb729ec16cc4ccd",
+    "gitBlob": "7fe7e006ae975e50e751b1b00fa6790894d36f2d"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubAvatar.kt",
+    "sha256": "4eafde2f33762a5be5a4165971d9fc0095668844ae39f0ef439664044c5855ff",
+    "gitBlob": "4f3ed0979d01fa870578bb1e494df0afbed2650a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubCollectionDesign.kt",
+    "sha256": "d6785596e5a6f7fafb94e993d5e6e330ed8adc523590988ca5ea4dc8884feb9b",
+    "gitBlob": "6e93cc31b8b6c171f41720c7c12fc3d029c072db"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubCommentEditorScreen.kt",
+    "sha256": "237023fddc893b90e5d10c601a5ee201e72dce845485429814b4006b5c788e07",
+    "gitBlob": "d66343fcc8f4bb365641511964919383c49340e4"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubComponents.kt",
+    "sha256": "3d1ffad0e712ad2b2cec02547930bde9d191551ffa76ab14d188aaa5ce3bca57",
+    "gitBlob": "f9307d885335733f0d830f348c8e4fa71297d999"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubConversationComponents.kt",
+    "sha256": "ed220eb7ef9e527fbcec348d7a83dd8f1fe140c39a39ac53fe40a2095adb8af9",
+    "gitBlob": "e91d494918abb5932ff4faf3944a645e89b13d77"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubConversationContentEditor.kt",
+    "sha256": "b11e15be9050ebb76a774e6fdcb8240a59c93977c7bed15ca7b7cb9273a02646",
+    "gitBlob": "98ded892d6eee8c924874727e655dc87800120d4"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubFormComponents.kt",
+    "sha256": "7be1eb31228a253f146433280fc908c7ddb2348eb797ec5d9249750b5b8522da",
+    "gitBlob": "e50d88c47366661094cc8f739a3baa6e90bbb3f2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubHeatmap.kt",
+    "sha256": "7dad1c68fa3b4f39f172aa590523cdae325432db2e14672ae146c4d1fef12aa1",
+    "gitBlob": "71612f866f093bc9c0f9cb3d517de30cbe3c4d4d"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubHomeComponents.kt",
+    "sha256": "fe90b64439037e891793e4aecfad8ca0c52d210195cc380aa64c493c33d063ba",
+    "gitBlob": "fd77aa5d5ff31ac70f406fe1606e382ccdfa9057"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubListControls.kt",
+    "sha256": "c7b83893985e7bbbcd897dddb096e52385016480f26206b3afabb4de235a715b",
+    "gitBlob": "1ce73746d3adcb624fe1a4b82cf2f3ba7e82172a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubMetadataEditorSheets.kt",
+    "sha256": "2ee4c035b9284ddba34bbf1e843d0004acab1e8e89fd7571845fbdc70740e1f3",
+    "gitBlob": "9e750e3ee4dab28f6b544befd075640dd89ebe7b"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubNothingComponents.kt",
+    "sha256": "85b9df8261d6945b26b03e1143f0bdfe4659a67ec4c7ac28bd49fd2a305f3f5c",
+    "gitBlob": "ea0909fc4307b12b332ddb92a68ea4355d05f4b1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubPagingComponents.kt",
+    "sha256": "3cb8bc2a26596d68e6612f99651f39f89a52ba38702f65da6d3f1f0ff9dd2e74",
+    "gitBlob": "1f14a9efd40a4f36262a531c5c6c9344ff5def6d"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubPreferenceRow.kt",
+    "sha256": "12d75d2a430c403ae66464060b5f0d786dfae34a5fe23ccad6b8e7346fa82a3a",
+    "gitBlob": "621d518c15fc5fee1affa6c02ea8772ee0640137"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubRateLimitComponents.kt",
+    "sha256": "f704a22d9a362e1fd8731200954093b6dfe6e20ca8528408a486e2fe4b7a14cc",
+    "gitBlob": "c4b434e5650a8446936580b83a5b405eb3c35905"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubRefreshComponents.kt",
+    "sha256": "7368193096a15d431c74196b065d306a10d1a7773179c8abd8a5b24d24b0a6fa",
+    "gitBlob": "dc5efad5e8ee0afcccfb090e1ac03b303bdccc66"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubSearchResultComponents.kt",
+    "sha256": "cfbe0182b55fa6152ba4ba2c0d440adb257c77f9b608c491a576212043908b78",
+    "gitBlob": "ff8d267bc3900787cf0991851d4f686be035e44d"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubShortcutGrid.kt",
+    "sha256": "e67d36e989e481e958c5aa79194d5b752aef7ab90dc154afda276a4ff7b1b3f2",
+    "gitBlob": "fd9492c48e9e2ccc28071cbc185435bfbfaa4889"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubSkeletonComponents.kt",
+    "sha256": "11644d677f913f3f52ad66787d03f1df6220d9322103118952bf1dad20ee5bd7",
+    "gitBlob": "e065c5cd5225ad7de0b52d93ead502fcbfd34f1c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubTimestampComponents.kt",
+    "sha256": "2366402e6d0c5039a50fd0adc998192d575fe72da6eafb64e7c907f3e99f39af",
+    "gitBlob": "3f96e3aeeae40ac95bc4864ddcd4876ec4ece6a6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/component/GithubUserComponents.kt",
+    "sha256": "55f740c373d78df78373f2d7048edce6f154ca41a2d737638f4cdb3577727f5e",
+    "gitBlob": "cbc20621247b34a0f2f6415ec16b03934a37dcf6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubAccountApi.kt",
+    "sha256": "d3763712f908de5a8b67357b61700fb78a67d0a157cbac9d30503ab8eba839eb",
+    "gitBlob": "6aa024e01178088857d03227fc944ff0e0e858f8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubActionJournalImpl.kt",
+    "sha256": "31fcfbe6526faf2853cdf6936d81da48a4a0d2fdeac79cc1204f370b8c46cfe2",
+    "gitBlob": "2a885b6076c0fdc579361f87545fe408d6735397"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubActionsDtos.kt",
+    "sha256": "4884691379d581ac82cd91cd23b52c88144f7fe9542a9233958efaa596333bca",
+    "gitBlob": "56bf8317689be73d9bce32f3a5af1629f5ed4eb3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubActionsRepositoryImpl.kt",
+    "sha256": "b025409a8c2ed413338232f5a6020bd9bffebaeb45345749042e943d72e572e1",
+    "gitBlob": "72aaf871f033dfc6745b982aa1b8c9077924d3eb"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubApiRepositorySearchRepository.kt",
+    "sha256": "f9da4e69f57409f28e0818ef1e3e2223e99a411197235f0d0bce745581331334",
+    "gitBlob": "f03c8c8cb957b108873ae7b07ee75ea6521a05af"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubApiTransport.kt",
+    "sha256": "28bb87cb886d134548bd397a4138a5a5c49c5ca76a077e10b90efe5e009e6a73",
+    "gitBlob": "8f7779eba489c488b61ae0d235a35841ef9ad737"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubApkInsightsStore.kt",
+    "sha256": "9477c8c5974cee767223095dc2c587402ca3af44b7f4454a6e99f26a6d9f90a6",
+    "gitBlob": "aedd6cc02bf14d35f06740503ec88be8c1bf129b"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubApkManager.kt",
+    "sha256": "8bb1786df9742635bd0148028e97a442dbf22c2bd5481df05fbb827110819078",
+    "gitBlob": "89017137dfa41b9f36f5af589f5e4c9530608190"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubAuthRepositoryImpl.kt",
+    "sha256": "6b55a8d55b2f565de48e4b612bb40f5f07bb10569ebd2549194c3680a0ce7551",
+    "gitBlob": "0b1947ecdfb0d63672cfd64d7a19d2fc7af57220"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubAuthRequest.kt",
+    "sha256": "b4f27093dbf05d6bf743ba53e71633078dcdbf636c66c85b93406ad18aeaa38b",
+    "gitBlob": "509c2b038d3d735e6ced7007b14b561cfad51178"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubAuthServiceClient.kt",
+    "sha256": "03fbc4cb9d1a47f81a61f8c85df680140fc59085b1616182138cb22d6a91a495",
+    "gitBlob": "5f8d4a3c23c864e0fbf54c4fe23397f04871172a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubAuthenticatedRequests.kt",
+    "sha256": "6965ff52ba004e6222c8b1015296ff290738acb684fd33213723c562d1a2bec2",
+    "gitBlob": "4cb05015f68dc5141686aee55371e5efe53dfd3e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubAvatarRepositoryImpl.kt",
+    "sha256": "4aabcf78401c20d6d9fdcc5ce451f51e608186edfcddc14bd0a77f15599b8354",
+    "gitBlob": "7f43be5ea771cabb82463ca4f3ef04f3caf1da7a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubCache.kt",
+    "sha256": "e19aefc5c876f46533cf3cdfb7ac5cdabb5ba1bd2ecd668847fd918b9fbd7241",
+    "gitBlob": "36d1e0417980dc6fb4211b387c654801b1ada2b5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubCommitDtos.kt",
+    "sha256": "be026783212fe7e77d7e3ff8e269d79c33a1e18370e813c548b2da875ccaf6ce",
+    "gitBlob": "6383c97f858bfa05d569c4d1f6b66364b87d4cae"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubCommitsRepositoryImpl.kt",
+    "sha256": "60ac719a13a2de01e12bbc8f403caf46470a2f07a0f2c93fe5ec0e199fb4a9c1",
+    "gitBlob": "4a25392e927fd501144553e50b679f48fde9df2c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubCommonDtos.kt",
+    "sha256": "02fe3cc1870818e217ef183ebb98343df488371dfc961852eb3747c5777b5d40",
+    "gitBlob": "4575f7f8ae476d80d149c6dff99fb6b8002fe78e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubContributionsRepositoryImpl.kt",
+    "sha256": "e9d3d2bdec42918cb5c58436943df126f986baa4c64556401443d2dc5e956b9e",
+    "gitBlob": "f1de91ed9c45da59046ae774b1b4e7a14beb0ef7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubCredentialInterceptor.kt",
+    "sha256": "5984293e40be8bb47fcb2210a5e42ce8b1f67d6943e9d123ae73215304d66edd",
+    "gitBlob": "ab016e208b75f3c9a5d205f4b59e7a04e128b0cf"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubCredentialRefresher.kt",
+    "sha256": "d44b93f136e42836420d5b61a546f166d2b8f71f6ca9dd8074d3e1f5ce967a94",
+    "gitBlob": "2a2c8aac9e0bb39ac46e71961b318ac3b888b0c2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubDiscussionsRepositoryImpl.kt",
+    "sha256": "df916955176fc44628a5cec15528f580e2478eb80f79d35d9ef6b132e14b3b63",
+    "gitBlob": "c8871330e2981772c1cc32669a752901f907e9a3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubFdroidIndexRepository.kt",
+    "sha256": "63faabbc3234333e9438e338f05917a90371c1b40e5968264263b5bcfa92c120",
+    "gitBlob": "6c170fb3d425fad671f57eaa32a8d62c4aaf1f71"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubIssueTemplateParser.kt",
+    "sha256": "cb1c2cb3804a3c96a5f07c52b6b4217f37345e6ef1d964f04d20556f9be3817b",
+    "gitBlob": "8754d655bc684c1ce64e4a6f623a064020399047"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubIssueTemplatesRepositoryImpl.kt",
+    "sha256": "02eaae8e613223d6c77e77f0deb31f1fbd937d5c628f633c940a449f1908f3f7",
+    "gitBlob": "d3ae00f06e1cbb48406604f7aa0413174f339255"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubIssuesRepositoryImpl.kt",
+    "sha256": "09addd4f1511a33681adb161388dba3fedf50c41678d8f741aab5e8c754c9da6",
+    "gitBlob": "38c3e5b3d7e5c1f24646407b05c5ea4df0f302e7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubJournalledAction.kt",
+    "sha256": "b2b0d34e661c9d400a3418fccf78caf1b212a62ffa856afd3a3d8ec9c3c549e0",
+    "gitBlob": "82d0daf777488e8e9bed934c4af3068427b1714f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubNetwork.kt",
+    "sha256": "773bb8fb81cebd570cdbea8efa8b083fa1da9c51e934bbd1500b54babf2686c1",
+    "gitBlob": "9400537788597116a72699a3e6da3e7636100645"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubNotificationsRepositoryImpl.kt",
+    "sha256": "f33ddd6d32497ca7ea6c66a8141e999d4c579bbcc5609416ad5a96ba03fa6350",
+    "gitBlob": "0db94e8443a6f32c4e9f708486a7f1e0f527562e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubOAuthDeviceAuthRepository.kt",
+    "sha256": "0025b6d7a7e43aff2bd14e5c1faae28ca43a1fc43082e4b63ee8080215a129e1",
+    "gitBlob": "82bcf8cd0da4528c43aa77aa05dadd8b817c5a53"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubOrganizationsRepositoryImpl.kt",
+    "sha256": "7a9f4375ffc996aed7e123555544ca38b1ecaba56870006676b3b55b142f91ea",
+    "gitBlob": "247a9f09340becb2716f531bc3a4019ecfe35ea6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubPagination.kt",
+    "sha256": "f8b8486b7ff3684b5f3fd734a2d66b427cb42028344795218323766d06458d2e",
+    "gitBlob": "2ebb9ecba6f231d478f47bb95d833cbf896e713e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubPublicUserRepositoryImpl.kt",
+    "sha256": "f2da046fcda0e119a553f8e1f6f40f21a1f19a55eb2dafa9c1fc9a9c6b8236ba",
+    "gitBlob": "b73451049cdb8204fa8318b52731ab2fcb9788f5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubPullRequestTemplates.kt",
+    "sha256": "d612daa180dde2484c4b83369b09286e810f4d225fab3b6126b1a2b0edc74c9d",
+    "gitBlob": "2819e7ebd6b6094177ab264cd898d39f5f23f03f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubPullRequestsRepositoryImpl.kt",
+    "sha256": "137081415060e4cb4dec71765363833716f3e6be77f2e70e435239fa16c4df62",
+    "gitBlob": "1179bf848c7d3ea991dc28c5af53fad91a62bc9e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubRateLimitStore.kt",
+    "sha256": "b4d85b5db3e50ebd8dc75dec6e4d6464ff22817440f09d306f4f9a367715aa25",
+    "gitBlob": "275c1758e53ae236c25f717c33a9cc7546c1badf"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubReleaseDtos.kt",
+    "sha256": "95d1ca038b5d6bda93c382c9cde3896ffa0b62e4605332e66c677f2ff8c50bf2",
+    "gitBlob": "4d32f53ad2e4ca91a25bf81c00916d5df37eb6f6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubReleasesRepositoryImpl.kt",
+    "sha256": "b0635d67fa7ac7838dff1fe08cd6dfdec151057250b5dff9c440270c710dbc09",
+    "gitBlob": "1a0847194f0477ba2d8b50a1f7113e3f399ebe7f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubRepositoryActionsRepositoryImpl.kt",
+    "sha256": "4c498cb640f4b96752debe7f06377954488369ad563a31b8cd8cdaac082a2a40",
+    "gitBlob": "62904be5d3f64c3f8404f8fdf7766c5c52a52b40"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubRepositoryContentsRepositoryImpl.kt",
+    "sha256": "5eb6c397bf41a9bcff5ae98b5cd30a173b5834f750ad1c4b5c5c8d828727fbef",
+    "gitBlob": "0ddd9e8b41aa974082c71f67afa36f3b73a23111"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubRepositoryDetailsRepositoryImpl.kt",
+    "sha256": "922ee890b533bfc3214f5528942fcb6f61973c24a8621323750355cc69142d88",
+    "gitBlob": "795b18c33205c2e996d0dfed9c54bee5a678c361"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubRepositoryDto.kt",
+    "sha256": "457517a307100b73bc7c75b1fab11dbd4d946e16c5dfec940f093eec61154ce4",
+    "gitBlob": "20df7701733cbd7b579e86acbc82e068d27351a2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubReviewThreadsApi.kt",
+    "sha256": "a55c4c0bb20a209ddf83512cbbb439033ab5230b952c797fd474ee830a9a6abb",
+    "gitBlob": "c896702775efab27ff32d986504b8f12e86fb8ce"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubSecureTokenStore.kt",
+    "sha256": "2ccb9202d36b31781f7c47b983e868bcaf63bc9ecf9c0cd935ce087ac804f2e7",
+    "gitBlob": "ab54bbebe84bd1a89e65084062c694e617cfce48"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubSingleUseBody.kt",
+    "sha256": "dfce6e4ef495db968214144b2d41aa4277d445a73120d2ffd9dca12c0cb4c333",
+    "gitBlob": "8c99085d47c27a50bbc56d5506de6d8c157d807e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubStarsRepositoryImpl.kt",
+    "sha256": "06edaf18bbd289a048125fdda0b1f9e0afad6b8c360f3f587a4305d94fce7ef1",
+    "gitBlob": "c925fcf08a2a3af6893a3ecc213e44ae7bd12146"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubStoreSourceStore.kt",
+    "sha256": "84c5d159d83a34b0466f2db2d7405237cb7ec4a3c84c5b30bc3c453999ce739d",
+    "gitBlob": "569c6240d61be97329202e1542f5e9d854e1f53e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubTokenExpiry.kt",
+    "sha256": "b68c93cb9f33dd352a7c3f6f318c30defa813123d2f7b21b3fa01911917f4a2b",
+    "gitBlob": "fda2b5eead562f60751cb173759b2756c908968c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubTokenRefreshRepository.kt",
+    "sha256": "1d18699d7ba77126b5e69b86d1095807993297f725b03d984c46dab992f4dd3f",
+    "gitBlob": "2353fb7ffe060cfca8c72196711bb5ae9f4b28f5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubUserRepositoriesRepositoryImpl.kt",
+    "sha256": "0c8665a24e98a9d8150d0297b62603a255e3b3c88f85c32a24240380bc8fe27d",
+    "gitBlob": "0a506778193401ad90332df1d1de02b1a79deab7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/data/GithubWebOAuthRepository.kt",
+    "sha256": "802b9b72d7af81bf62699dcb7b91412e77d3bf6e07e82d213a57e6f02fa4b293",
+    "gitBlob": "3aafe6609940fee6dcbffcf31d8cfac349755839"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/design/GithubExpressiveDesign.kt",
+    "sha256": "0a00f003c016a3c25b739facc616aa3660520e6380268616f3c19572e43ba70c",
+    "gitBlob": "e948b451f0afb7fd1cfc4db61221973990390b01"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/di/GithubAppDependencies.kt",
+    "sha256": "874579930f15e4b6ac9d78f7c188c19c06175253a4a9e9e9df8e9a3900b21ccf",
+    "gitBlob": "e991b1bb7fb2b806c1bd70b16da8ea4d501b8ee5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/di/GithubConversationDependencies.kt",
+    "sha256": "94c0c912237f646dcc8dd4d18541fb682bfef879ef8ef1eeeb0f13feebede302",
+    "gitBlob": "41c03afb6965317544295063f7dd43eac0dfd1e0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/FdroidSource.kt",
+    "sha256": "b7b94d838defc0b568e53b06c6051554cd03e16cc9ce1d59a436785edaae47e4",
+    "gitBlob": "4ccde6b06f3ee8964e9596ac1a86f79ea62a532c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubActionJournal.kt",
+    "sha256": "f9a11ba62dbf238b042161aa5a744fae4c1bd525ebc4639ea481fb302cdf2aed",
+    "gitBlob": "65f884e430c3c9f1117dbdb981db6657082c696a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubActions.kt",
+    "sha256": "16b03b97be528e0b02b330e10a686aad4cff1d4deb620fbab146dcf243d2a7e3",
+    "gitBlob": "f458e87f8d58a575e7a57b79a3460b8dbdb4f1d1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubAvatar.kt",
+    "sha256": "8624fc76d8e52f8599607edb941996aeff296a5d5ff537305db69a00b257a71c",
+    "gitBlob": "1ffa2d48cbe8d3cedfac01e9b41c1b71571d34a9"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubBranchComparison.kt",
+    "sha256": "55d24076124cf2286f06731c4caebcff66b01d2a9676868e5ba7008fe9b154e6",
+    "gitBlob": "5d2ecf54cebd417fad558f7960ca6488d1efe9b1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubBuiltInIssueTemplates.kt",
+    "sha256": "49a139d374ca34c9df927eb03181725ce78a63ab1352137b08dd5d20749bd041",
+    "gitBlob": "38e7d4cfa11a84ef77d5169eae2cc2b96dfcf822"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubCacheFallback.kt",
+    "sha256": "0407b946172b7c34ea56fe542b85514c1d231711faf0af0f72f8df578672f64c",
+    "gitBlob": "2f96129bde184e2f94abda95fc4d1f60f5cb6d35"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubCommit.kt",
+    "sha256": "50969831d494b5e41b148e78815ecab991989325011db3f55b9c60780571a6de",
+    "gitBlob": "a81c91f16e3e71c82ab431aa85686f862a64d38e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubContributions.kt",
+    "sha256": "106729d0313ff17376eb56505d777d0456417680fae425288361761a66ecc68d",
+    "gitBlob": "f25b87020a2208d7f3479c1830cf239d4f7fd7be"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubContributionsRepository.kt",
+    "sha256": "336e6b2961c6ca5a1a93f438e9027b759e00473a6d41fc17695d5485e8392cb3",
+    "gitBlob": "8f1cd439b8303c5510dbd6692892935dab7c8950"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubCreatePullRequestDraft.kt",
+    "sha256": "960a8a78e21ff5bd62a04ac4202678677f3839d8b13f394bae2f8de228addd81",
+    "gitBlob": "84479480c6025e28c211f34d68f4597d6e635f99"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubDeviceAuth.kt",
+    "sha256": "382dfe47dff5c2db469110c7bf7375a4391235d2fdf99c42b4a00c9b6d12f7ba",
+    "gitBlob": "3a8b301d574922e2824d1ff2448a3be3b9cec583"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubDiscussion.kt",
+    "sha256": "e70afa94a1bcfe3964a433eccfe00b46187f9a140c764cde8e365b486a036d9b",
+    "gitBlob": "370ac7c83703bf73acd754714d13f6628fa760b0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubFileWrite.kt",
+    "sha256": "9d7a0278218d06d7a2599825bacf62593877121b55a09f65a7cd3e08d97e844f",
+    "gitBlob": "3b7e54501406c2ae76459440d988f5afcac5585f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubGitRef.kt",
+    "sha256": "9d48ed22b87c7c67975939494e7dbd1491eb078a8463a7e067fc0530d24aedd5",
+    "gitBlob": "01d9ad17d8f980a2ff7c3b5e7f9ddc681797fee3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubIssue.kt",
+    "sha256": "42d839531f397033a9410a61f428eaee4ddefa3618e2920167d33a0eac0aea3f",
+    "gitBlob": "e429de5cb8b3ec859b8ca00f06ebe1c81337b96e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubIssueTemplate.kt",
+    "sha256": "2beb035dd6f2b918d35aaad452600c675bc32c7c0e33c87961d9785b071d2132",
+    "gitBlob": "bfc6a9807a3127f0b4f8161c669432935cd8c995"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubListQuery.kt",
+    "sha256": "10ede2133d8c35aa622e13c9df77e497bf3d05804563c333af5a9d91e8387280",
+    "gitBlob": "37257457d141687958ab80ff36bb68bd7c57c6cc"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubNotification.kt",
+    "sha256": "abb6fb9f8b87aca0b9f46683915b4bb25a2b63cf145e97ddeac88f31564eaf66",
+    "gitBlob": "19bd1950b50360dbda216d308045a07fc1cde125"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubOrganizations.kt",
+    "sha256": "1accbed5a432f850f42b5546cc710230341f4f20a6d96766d8478dfd0ff37a81",
+    "gitBlob": "bd343606121434c04218e02d78bf4042bf150952"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubPage.kt",
+    "sha256": "7125da478bdc1b0f7eb6c7b1be57609e6569a6018bef1c63ddc92b89200322a9",
+    "gitBlob": "cef79628015e3257f9e8a4bd12026336aa926945"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubProfileAchievements.kt",
+    "sha256": "5f0101c76b4551f41f79ba627be5657e4ba92a5bcc05cd21d7292e333784a331",
+    "gitBlob": "77468d0f7f87bab99194c389761700254e30cab7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubPublicUser.kt",
+    "sha256": "12c1dedabe09e1ae0466f3ad9b837a843b9ac38ce154facd8e1739fef8284454",
+    "gitBlob": "61b69da4e2992d484086bf60c4a1112279ebee97"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubPullRequest.kt",
+    "sha256": "ea896480475c9620c844dd0ee3746e2f3d49b62b7784968906818c9dbb31b091",
+    "gitBlob": "881c9cb9e11200dd66b462462271ce16559d0e8a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubPullRequestTemplate.kt",
+    "sha256": "64685e583e5506f26f05d82038ae7f5fca2511640b754927fc34f0be8eef1207",
+    "gitBlob": "67fdeb7f752a6d6d37700f5ebff43901f8b6487f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRateLimit.kt",
+    "sha256": "6c6967e7f96a4c60fb2393a30af1fe3aaa187235e2839c036400a169b829aaa4",
+    "gitBlob": "3f1effa006b6f343aa9d397960c1a890b5d78877"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRelativeTime.kt",
+    "sha256": "2f69677ae0419ea2e801d2a15f7fb4a849e5e5e0490cd22bb3a76c38872f40c0",
+    "gitBlob": "9c19ad6dc75fb750773d3f0cdda656cccd10e941"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRelease.kt",
+    "sha256": "ee8030db48a38267aa8724e690730533f6bfa34dd2034711c9ca9c99595dd352",
+    "gitBlob": "ed12e6e45220f8dde6604a5d09f23f806fe345d5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRepository.kt",
+    "sha256": "f62e5a7f6ab393599fe0a3eeb366bacdc81b54a4b9909504c89dd7d0c48918d4",
+    "gitBlob": "9de7ad4c633a86bdd87e5e5246be4be8e18627c3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRepositoryActions.kt",
+    "sha256": "d374e5361cd105fc0a28a1a092247b85544bdece7506bac28d0d67b01f5fbebd",
+    "gitBlob": "db98e9f4f71888f8033f39ab7acd58a0ab46cfba"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRepositoryContents.kt",
+    "sha256": "90bc82c0b7723e44a855957f202ec62ca1e6e099dfea14dc12d4a8ce75f3b922",
+    "gitBlob": "75a341936726817da064de5b9678df513dae4190"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubRepositoryDetails.kt",
+    "sha256": "476d399e18720dab39fa67950003b44cedf846fd1788cccea4f846166561518c",
+    "gitBlob": "533f72ebe3fd9fa4c133dd568105eab6adf52e66"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubReviewCommentReply.kt",
+    "sha256": "1adfc9c0382d7849b3bdc0aeeba983133216423cfb64f9362cc4d108a4a621ef",
+    "gitBlob": "672518ace1dcacc12f8a91d4a166daa2ca029687"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubReviewWorkspace.kt",
+    "sha256": "be2720ac935bceb15b9d395df98efb390c2a793dc34d8e34187616e551300f3d",
+    "gitBlob": "e829b01c05cdb0b36e52b27ce975c4202475b7e6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubSearch.kt",
+    "sha256": "422f41c15bb15369ba5de1c6d04ad2788ed7c5b0296bd1303b62ae5284f28692",
+    "gitBlob": "266455c0921be16a6629f20b6128ba9fd168edab"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubSession.kt",
+    "sha256": "1e87e9339391dfe042a4ffd87ab2bbba1158d149bfda9f5f8b62cd2c9dd29a19",
+    "gitBlob": "e94d099a63f9d170602378345e43eeb503553fa8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubStars.kt",
+    "sha256": "2a9dca4637c084c1a34e2c480112d9464db079daa0f6a43fe4cb8276a06c4e69",
+    "gitBlob": "e77c74a0370cce3484e5f17b847f5e5561be5aaf"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubStore.kt",
+    "sha256": "d58d336c888f61b572aaee01b0c8bf3cb3c2927e9e1b0bfe7dca2aad63088f3b",
+    "gitBlob": "99713d2b6504fb41a8c6f907cd713973cce66f08"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubUserRepositories.kt",
+    "sha256": "8e83827b7f6ebae0a1e1461bdcde4bf812f84954d526d5091a406908521b82f3",
+    "gitBlob": "c94b7340f8f39c4beb981b27efd73ef4b45cf507"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubUserSummary.kt",
+    "sha256": "297a6733efad19ed9780e9ff8edfd5f731eb73426ed56efe66d3f41472ed223a",
+    "gitBlob": "0b7937960112d9095867ebbc6a46c16e49d03a51"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/GithubWebOAuth.kt",
+    "sha256": "813025577ea9bae9baa7acec2410cbf44ca40ef2dd5b56786ca7c474bf0c2a8d",
+    "gitBlob": "218cb5ff87578afae28b04cfd1887692bd01ace7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/domain/StoreReleaseResolver.kt",
+    "sha256": "4da4b4c2288a443d14b4eebde528791d33ca7494c8aac6a2568d6a222f40bf71",
+    "gitBlob": "e41a3b609d18ba70f5c680afb97faa3ce848a99f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsDetailComponents.kt",
+    "sha256": "fefabe4f5aebb1593c47f078fd8e6d84ef19def2e3ec8ae833690bd7856f8420",
+    "gitBlob": "3f2a01b31f71094c4df473f537e0fda9b94c4050"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsDetailViewModels.kt",
+    "sha256": "c9283abcac4b03a96d5e07311f90a4a467ee8f649f675a4d90df45929651c9a1",
+    "gitBlob": "b017c9be1e21e441b0975e75a575242f3be249fd"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsListComponents.kt",
+    "sha256": "539b34c53dff68d3acf942cd2eb6c1e12f76c6d588523aaab50bd99d001d6495",
+    "gitBlob": "517bb8626fe802feeacf17e90923be78e105ddad"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsListViewModels.kt",
+    "sha256": "1346df7a200868e6b2c9cabda6c2dd3bd1a295e3b57821b1938704e4935c263c",
+    "gitBlob": "1d0e8a1d27898f8cf517518e451584429fea9307"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsLogFormatting.kt",
+    "sha256": "1b3bd0b2a06f7e82b8cffe99fe9167d26c57f233c57d1a31957e9d9bde696ecc",
+    "gitBlob": "9aeb07134ca33f3063c1d75eedf8f936d49487b0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsOutcomeNotice.kt",
+    "sha256": "614e9ec649b6009062390183e7a1551c52b31e6996ce8151825a9adaf397b29f",
+    "gitBlob": "160265f9998fbe08a8e3b965dd33e77106590797"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/ActionsScreens.kt",
+    "sha256": "d91bf7d516f81523e9c46a5b46d491d113bf4fe5a11c397889b57431d79db689",
+    "gitBlob": "859a70a4967bb213f9d3a0bd2fd71691d1bd0590"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/actions/WorkflowDispatchInputs.kt",
+    "sha256": "016f582caef355af21d7d559c5c81c81aecfb04009f6dd6cc1876fcad1c8953e",
+    "gitBlob": "06ee21f6aa5ebb311904c068dd0f665fa0e570fa"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubAccountsScreen.kt",
+    "sha256": "dcd4ecb890c205f34dc8d01ddc4cb5caf8ec607076b63a52c2c3318490c2825f",
+    "gitBlob": "56f4c33ce6a025115cee9812f45e565794db1622"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubDeviceCodeAutofill.kt",
+    "sha256": "70f62d86c44b6e14950f3e834d7e6452036fbddbe07732d50a73d18b466888e9",
+    "gitBlob": "398ff302b536a812d22af201f6b08dcd930c6fbe"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubDeviceCodeNotification.kt",
+    "sha256": "3bb21616e72b4a55dccd15db35171c6898ba869518be9063bc6971fe24e6e086",
+    "gitBlob": "166a5d3c766c5b32e1de974f726ceb0cfb2c6a7c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubLoginWebView.kt",
+    "sha256": "e7f591cdf3853adc82145b8632127e317d4956808c5f16537829553a5fad8f94",
+    "gitBlob": "3dfbcc6a4239458743e5f22ca879d52808261bc1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubSessionViewModel.kt",
+    "sha256": "687159b1e1f412a0c18cbd167e84d4c6b2c899fc81cb42f1aee151bbd0cde097",
+    "gitBlob": "805d382c8fdefe50dd7e269b0e4b2cafce76a87b"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubSignInBrowser.kt",
+    "sha256": "7e6e15b9990144493850d0e88bc01532d53f0422644cbbe6ecb7a1ae26943e85",
+    "gitBlob": "af6bec219c9f2a155113609c1af66785e5149724"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubSignInBrowserPolicy.kt",
+    "sha256": "64c4596cd7c84345c294b10a3a9a98cf96e7bb2eb2ba0d5c449ad4e15c7537c4",
+    "gitBlob": "3f9dcc7a0ae19bd033899cc288f51d94751717db"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/auth/GithubSignInScreen.kt",
+    "sha256": "217ba39848cd157c7ee95c9a093716e38af1ca41f638ff3873db649bfb63d45e",
+    "gitBlob": "3a86f1781adc24dce3a94c3235557d4da079bb25"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/commits/CommitsScreens.kt",
+    "sha256": "95eb12a3a3790515e1437afab71665bb279d3a102aae4adf8c1d453a6d6ead1e",
+    "gitBlob": "2def6d74deb217a4748bf0d0f802b663d81a546c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/commits/CommitsViewModels.kt",
+    "sha256": "a7851825ba08ebb471f65de5664d4e8239f9c1b54b7b4cf6bd20510780149ab7",
+    "gitBlob": "27ca9e7aa80a0056792289258607667e14e5f52c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/copilot/CopilotPlaceholderScreen.kt",
+    "sha256": "5404d2547ce5589b10477da50aa7a18be9d2e0cd6a52273c85e821ce83fe9970",
+    "gitBlob": "a30634a6d24585708d3988311bc83506f8c8817a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionCommentActions.kt",
+    "sha256": "15be0109b9cbb964855742e9f86d342d6604d1fd71028c258d349d22e2606d69",
+    "gitBlob": "d88346d5e70a0bda82bbbaac39936e5663777bbb"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionCommentsLoader.kt",
+    "sha256": "a9d03cde8e6bc9a175db93cd9060bc07496fd283495fef2a21bb2eff661be287",
+    "gitBlob": "4eeb672141bfe10a580b0ffa141586e5f078182c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionDetailScreen.kt",
+    "sha256": "56fc2383ffc5f107d2bedf95da4628e69c2bc83defdb2b9bbc217e015e222f4e",
+    "gitBlob": "af184bcabaecf9f1dd147e648ed4e8f298c58909"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionDetailViewModel.kt",
+    "sha256": "98f3a5af77f223f00bfc9d701ed9c53744280963752656f012328ba38b0661bb",
+    "gitBlob": "211c082f4837e87b4c9e7f39c0f4364aa2a3996f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionReplies.kt",
+    "sha256": "34a183333dd11e515109005664c58016c33ae1b00d2a75900285c8be46e00cac",
+    "gitBlob": "e0de3ef7e1a5881a92147a4e0d3ed90cc4edcad5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionSummary.kt",
+    "sha256": "e13c97e8aa1b5db1654d76656b9d5e4911cee4e969a54a3bab3f5946c8e4070c",
+    "gitBlob": "ff679467b2553b5b49d8574a4bfca4db57cffcb6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionsScreen.kt",
+    "sha256": "ac4e19c5379707187d83e81dfaa8ef959e371f7f38b7ef2c6f1ffb4d2e71309f",
+    "gitBlob": "c16b8ebba3efaa70174115d10313c748329a16d8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/discussions/DiscussionsViewModel.kt",
+    "sha256": "8b01c78747fc15fc9407825e455fe0c08f8b9d190673d3310fcbbe604460dbf1",
+    "gitBlob": "6c33efd5521df375f09c85cfeffe16db24e1d4a7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/explore/ExploreFlipScreen.kt",
+    "sha256": "0d458578a52b788585dc0b802c82e8b21c9b92a9b7fe0bce93d9da399b112934",
+    "gitBlob": "b3abe054af63c38f8637a34f13f8f9a8ed4bdeda"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/explore/ExploreScreen.kt",
+    "sha256": "d7f6b95eaabef881161a3f4580120079051a02cc792b2db0b1f4328abf771483",
+    "gitBlob": "cc5d1e40b0d7408e06d4c7823ea6c8f6a7c931b6"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/explore/ExploreViewModel.kt",
+    "sha256": "ef148c50beb527c5ee1c539c42aec5421464ef3dcf9eb1036536507286b35b61",
+    "gitBlob": "b77f766446cdef4bb9288ab7f8900e7727116987"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/home/HomeScreen.kt",
+    "sha256": "b5c2841b91566ebc075414beb3c40575bde2cc50d182bd65139fc827414f5ca0",
+    "gitBlob": "3580edbdef1bbbff543fb6d0ea2b1d453158271b"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/home/HomeUiState.kt",
+    "sha256": "d9efdf78754a7b2e9c31ba4f67533ecccf3ea037f8b9c0cf5c576f02a0a2780b",
+    "gitBlob": "c7872f7592e9b9d197e2b1374010228a90823351"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/home/HomeViewModel.kt",
+    "sha256": "45c25d7d48cec2647bd310a568478ac6cc95355d44432a7455fe797a206eff2b",
+    "gitBlob": "24ae9cce7d4ecac0d9d84947cdcae68f4e95a616"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/inbox/InboxScreen.kt",
+    "sha256": "8d1d2ee4144ca1c844d118eceb94d5dcdf1be4626cda989974eb925dd1cc497c",
+    "gitBlob": "b707483f48f6897d4ed4fe5d32f0066802314779"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/inbox/InboxViewModel.kt",
+    "sha256": "1fd5a46c1b403c9907fdccbe8ea1f8f471d670be69d7ce2774a0e7821567f625",
+    "gitBlob": "e0765b8cc71a397d7e2b809cc347e9320e18f782"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/issues/CreateIssueScreen.kt",
+    "sha256": "a34dd98521275a1c135c3f74a0202e94de8b82a41daa4a814b0b696238b918b1",
+    "gitBlob": "baccc64393f166c91f50fad9744347a36f7b5f72"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/issues/CreateIssueViewModel.kt",
+    "sha256": "fcb341a47d143fe85ca3cc138d72244e1f0f7094c5407986650e6e14c63165c7",
+    "gitBlob": "422fbe4f0c2a072d13a7d6770c2603f703886918"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/issues/IssueCommentActions.kt",
+    "sha256": "fb972fd1e62f503a209ef71a236aeeabdcbd23027e75c27072a51391d0a940dc",
+    "gitBlob": "90a8aff2201038a4da2544629fe66e43ce5f392f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/issues/IssueTemplateComponents.kt",
+    "sha256": "5bebff621e970e442df442b3ffef2412a26689f1e3b04a42e9a22b616d813619",
+    "gitBlob": "68a6782f0d518e520ee1472952ae215b334deb57"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/issues/IssuesScreens.kt",
+    "sha256": "671e339c4917d49951923a0fb815433bb697fec66895c3b706614bc31ec2de4a",
+    "gitBlob": "9f8c7725f87e5461d16003d439e4319c83c01445"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/issues/IssuesViewModels.kt",
+    "sha256": "bc3b6d880e1319d26a51d3f5109fd988d404c7287011c2d5981bb760b3a26d2c",
+    "gitBlob": "e446ebfbcdcaad91786162278e0818328e067ade"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/mywork/MyConversationsScreen.kt",
+    "sha256": "4f56b99d2e9abaa6e484b3c1e2f774dbf18eaebe20b600f3d31f62cf9eaba4fd",
+    "gitBlob": "d67a093dfc2dc241659ca46fbc1a3a5017506720"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/mywork/MyConversationsViewModel.kt",
+    "sha256": "ff93036b5881d9943f895557d84d91eb71d02d94f8e620f8b60b9e5cbe4c6f36",
+    "gitBlob": "2cc5be971301606377c77690b11f6cf44dd16944"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/organizations/OrganizationsScreen.kt",
+    "sha256": "3a92895af62db4ba9c0b26ebf867d211d9da749705f438abb55a9dfeb662338f",
+    "gitBlob": "9cde3d9952a8b6961be5dede6ee17ccf46582064"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/organizations/OrganizationsViewModel.kt",
+    "sha256": "45a5f51c99ed9f1e7ec4e31901b9e7217ffef2c3e067ae25a296953c397bcb95",
+    "gitBlob": "2734883d2cf403ba4c6205d77b1c16698cf89461"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/CreateRepositoryScreen.kt",
+    "sha256": "7d37108545ad10fe8f0b5637df7b43fc8342b36bdb933bf5c0c5d8f8f072cfa1",
+    "gitBlob": "6ab0fe83828ca699ce2168aff9e27f1b8f25f36d"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/CreateRepositoryViewModel.kt",
+    "sha256": "4709a547a6f97a40601958774727b33fe9fbf58d3504e4ae90d2ca824b13a370",
+    "gitBlob": "a9a65d96ade0e49cc6ce0ab6929d89c0c90570be"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/GithubBlockedUsersScreen.kt",
+    "sha256": "1d17ec28fe5b09e2ebbfa440be65efbee2b542ca2ef5af30c5c11ecd7bf60372",
+    "gitBlob": "24a4d67a3141fd814e87d8514d0a5d38803bef01"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/GithubBlockedUsersViewModel.kt",
+    "sha256": "4aa64458f1795717b3e07f0c460e895a4b73fa6a226a298a0c78a470d0f0c553",
+    "gitBlob": "102b030ceb48cdd09702d9a5757887f2d3085682"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/GithubStreakCalculator.kt",
+    "sha256": "ba3dde5f09bf4f3f2eb80221ecf28d3e2041ef484a98152ad9db5445f8c8b890",
+    "gitBlob": "c7a528c785eee2a03ac73332506c52705fd5cde0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/GithubUserConnectionsScreen.kt",
+    "sha256": "5f1a8d9a1906afcff44d24c4ab7050fdd42c7a2ed81827abd61be7dd73376730",
+    "gitBlob": "f5fbd410609914267cfb8b2e4c8000aa80f893ea"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/GithubUserConnectionsViewModel.kt",
+    "sha256": "23cf597ddc8e2e1964d216a410ceed863e70e3a2e75a046c4d2f33e5d368077b",
+    "gitBlob": "dd88c6ec3e3a0c384564a85cee4076a5e11abd54"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/ProfileScreen.kt",
+    "sha256": "ba236836e1440174ebfabdda453ad7e3cc3b4af4c19370fb0ed3844e8ecb692b",
+    "gitBlob": "503389925484c8a5ce408141911b8103ae1407a0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/ProfileViewModel.kt",
+    "sha256": "0f6e2bb7c3b39966b82acb979743933ae2539bdd05baa8209ddab4c50c300274",
+    "gitBlob": "e35cba6333510768e51c887ec8d58a117aa35aca"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/PublicUserProfileScreen.kt",
+    "sha256": "da1dec03aba7470477349bc1f3e48c30bacc3ce4b4516c7112d700ff4b8aa6ee",
+    "gitBlob": "45534c3c1a45f9205e5df880d902fa1ea45bf54f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/PublicUserProfileViewModel.kt",
+    "sha256": "fc766dd880fa527b30cca10480c27078ab017439cf79a987cb56d9917d26fdfe",
+    "gitBlob": "e3d70dda5ee9777d03ffd4149297d7f50fe59b40"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/UserBlockFailureText.kt",
+    "sha256": "e82e2eb2d622e301ad20f3bf24a22d09a4d6e95f87ca6cef21dd94e683e753be",
+    "gitBlob": "4288f87dea5143cd9383ac0b113b7ba0e49c6868"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/UserRepositoriesScreen.kt",
+    "sha256": "38d5e70f3dad4f778890c4245b223e3582f7e2214fcd4047765f05e6acbba676",
+    "gitBlob": "eb2e0d04de72ffaf3fe06880306a2167cfe9f4e4"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/profile/UserRepositoriesViewModel.kt",
+    "sha256": "c81b70d5f8f151f15138cb66bca8866dc0cc94f36ddd1c19c200173d23194a03",
+    "gitBlob": "5cd9ea1ab251e449bf7adc1353cd30ac2da0a559"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/CreatePullRequestScreen.kt",
+    "sha256": "84d21a4898ea022492359d06aae60559ba1a25ce867c65f238a811f35dd0d0b7",
+    "gitBlob": "10446d70e7828de12da27f487f860ee85cf148c3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/CreatePullRequestViewModel.kt",
+    "sha256": "6e3e849dde6b730a03f37882ef017f56970c71f1db7c2a82220f3610ff74a734",
+    "gitBlob": "47f92b3007e6d873df30f0554ce18bef6a02f2b5"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestActivityComponents.kt",
+    "sha256": "2b06f7f4740c3a16761daaa8113263d3132a342cb4f9a31a72b9fc1937c324d2",
+    "gitBlob": "75cf5f28d56c389b255e3bf81ea1d7c6e6420479"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestDiff.kt",
+    "sha256": "b329b2c561cd90ea1d9a710e4902703f11c994634ef13abd4dcbeb4956dce74c",
+    "gitBlob": "ce0cccde2a8d658130cad0d2cbc02e67264bc1c0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestDiffCard.kt",
+    "sha256": "e59f9d39ec00aee52681ce271cd81f34299a3bbd1ea75d4385bdacf11f1916ec",
+    "gitBlob": "77c266c1e25f32cfd86e9f593defa834c2d88255"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestOverviewComponents.kt",
+    "sha256": "171059609bb6191202907d6302c3ceda56da8153b74d1b41cc906284942439fd",
+    "gitBlob": "4684743f335598f5fbb45a0350946321c1b26858"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestReviewReplyState.kt",
+    "sha256": "6522d28f7cc45234c957a9bd2d7c15540af95851e870eba3f9854e2bd05d2639",
+    "gitBlob": "b93fdf160e15b6e38840088d8379d2dc3c626814"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestReviewWorkspace.kt",
+    "sha256": "bccfcacaecc03dcb2c775fa8224eeb5bab7d8570e75c6901a040c6eede1ce972",
+    "gitBlob": "4f4a68f381bafd4363cfe6f7c75418ec1f73a386"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestReviewWorkspaceScreen.kt",
+    "sha256": "504734b07815fa73be0f2b96cc22ea9fdc036ca3b406cf0d7606b0fe5a2f6b9c",
+    "gitBlob": "4e97db9abc750055d78e1ec57e13f2140b9d2462"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestReviewWorkspaceState.kt",
+    "sha256": "ff99fc8c2922f8dc7ae9451a85bcf4575ba78c7aca3425a3cda8c9340ce5efed",
+    "gitBlob": "f17bf93c9054038be1d8d4cf6f4ef70a9cc329db"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestsScreens.kt",
+    "sha256": "92c5758b5c0a181e6b259e8b7b8b103cd90d15909cd301c6cf8708421a513bc2",
+    "gitBlob": "108c5c35b97537b55d4a39cecbcfd085fe350a92"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/pullrequest/PullRequestsViewModels.kt",
+    "sha256": "8dc376c23b1fc8e0fe5f804c1640139fe049705ea1abd3dd5ae89e030f310fed",
+    "gitBlob": "83051a6f33ea483b72f5e02ae40f1ba4ece9b642"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/releases/ReleasesScreens.kt",
+    "sha256": "d1c1886c14d627b8a01ab239dea51ba21307bc181f97a76296f8e94eaa0941bc",
+    "gitBlob": "97778887561388f6c53dc5d747a4afb98eda1941"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/releases/ReleasesViewModels.kt",
+    "sha256": "8729e7176a60f90f1172060dd5b0270d515861d7b487645300a49098d2e94db9",
+    "gitBlob": "bcafdb37a27c0329d4a0924b48d1e12db0727034"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/InviteCollaboratorScreen.kt",
+    "sha256": "4cba5f08207469764e22d5780ff23419e9cd171520c01c94e16451758d5c5591",
+    "gitBlob": "ea82367823b5897458a90200a9a299b9857c5453"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/InviteCollaboratorViewModel.kt",
+    "sha256": "f044a0940b6ef8e0048ae6541b2853fd0c11be4d93f92cb883664edf70a2c514",
+    "gitBlob": "42542670c3e3f194c74fd7b691b0e4ca5adf81c0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryActionControls.kt",
+    "sha256": "71f96d6bd8829549c6e95eefc845d193b7c484bd2239f270534a4690f4d34427",
+    "gitBlob": "e00b9203c69d34e95cdf1ac2dd0cc38530896626"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryAdministrationDialog.kt",
+    "sha256": "561f6a042fc81bbfbc52c85e3262ad5ffae25a6496703c12a50f9eec8e010068",
+    "gitBlob": "78891dea260627a98af24954afd10fa662be0cab"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryBranchesScreen.kt",
+    "sha256": "daa8976bfc0b3cef3be61b946df3166a53c60da3728b6510eaf168d59b3b6675",
+    "gitBlob": "15c980835795f569e3d6807e04b4704ef93542e1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryBranchesViewModel.kt",
+    "sha256": "f686af54092b7c6da9d05fa1e4ad96d75d7d30200c598cd32969d1cfdb1862b5",
+    "gitBlob": "2f132b291df4538398d3d0a66c50f374ec07a9e8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryCollaboratorUi.kt",
+    "sha256": "2dc70ec98302060124d95de461a138b48a7db6d2d4c002665ffe7e0d61995dbd",
+    "gitBlob": "cea8cf61bd9c6e1775a0db453fb0f6929b4c170a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryCollaboratorsScreen.kt",
+    "sha256": "778b05b54af8a7f102b42e36e7d87d5c31034f694924c380d12bb6f86e407fb6",
+    "gitBlob": "a7b2c20492661b7990ef8f2a9bbf08c9117d172a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryCollaboratorsViewModel.kt",
+    "sha256": "1098ae5291a90c3a2655457fd035332030a5ec89a76ba03bcae74e5622d37047",
+    "gitBlob": "7b4e115a9c206752b92ce8507a8713a8b192d7e0"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryCompareScreen.kt",
+    "sha256": "7a95b09fd33922edbcee020fb103fa219cbd9043ad57b7efc85210174de9f604",
+    "gitBlob": "1add0edabaa3518987460e8406db21e2f3ca773a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryCompareViewModel.kt",
+    "sha256": "3f0a8e83fd1d5014f3af46a2b7975cea191fadb6509ba1a06ca7da47405012d3",
+    "gitBlob": "d4d5b45afc0d39390c3f59a964d5f0f12be98f0a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryContentsScreens.kt",
+    "sha256": "b304b5ae0a208c091f8ceee94c753735ed9cfc4e0fcdd4fa9e3e02fdb0f9221a",
+    "gitBlob": "230c568cf074bc6ffccc55de7998660d12c8fbd2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryContentsViewModels.kt",
+    "sha256": "9b85ff5ff2be38c4b9cfc0cf6fdee9c317a7ffa386bc7df81eecfc220e8f92f2",
+    "gitBlob": "fd602a54cc7104aecf759da0c8206e78b3489732"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryDetailScreen.kt",
+    "sha256": "7747929d52e7d4c6a6566ee39f215270245a8589112e60cfd841c8eb055ee630",
+    "gitBlob": "3366f76925ae344f0b10d581f5b3ac98f34ef14e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryDetailViewModel.kt",
+    "sha256": "99d8d045ae67594bb19ece04f72b7f64cf59f57ffec1c7f1eaf78e977b453970",
+    "gitBlob": "f3d0aea7ed1537882d2a3bbfa42e8b72c39bf412"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryMoreScreen.kt",
+    "sha256": "e1b62e572759172557c94da65f4dd563fd0b0898070a528f4c0e71bdfa74e515",
+    "gitBlob": "fe24ba1e047b8c765b67021df194d1be48dd24f2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositorySessionResult.kt",
+    "sha256": "7d3fd443980e3a012246ae51d2ab8ecfcabb32c86cdc478932b15aac9c7f2816",
+    "gitBlob": "b811e798d7b51697c84ed52a4382278e08d00e58"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryTagsScreen.kt",
+    "sha256": "b3636c410c454c609fa28dd577297e2e47e1b7e1075abb7af67f850902af6c10",
+    "gitBlob": "ecd8a48caa8340d5af5bd20626470300f4b537ae"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryTagsViewModel.kt",
+    "sha256": "c76a82f1369415231e8c11db9546150e413032d107a9b6db725316cbf8ebddf1",
+    "gitBlob": "7fc4b2a451ef6830bee8431753971da39ba79e50"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryWebhookDeliveriesScreen.kt",
+    "sha256": "93c0497dd711a594887f1e8d323116a95db003f1d5818603dbb0d88bf8f7d2a7",
+    "gitBlob": "4ab0e89b1ab1ce543c5b13b23af9496f16ed3f4e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryWebhookDeliveriesViewModel.kt",
+    "sha256": "b93bbb2f51ae39154b7a6ece510193d5ac0b8e5ae56cab63f0e21238c6c68a88",
+    "gitBlob": "18621a62a8fb86cb7b7073e0e359f52ab4ade4cb"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryWebhooksScreen.kt",
+    "sha256": "87813af92a4ca3ed8026688309f9b0e11d74ffa79cd2a2e976b7d5f2d155ded5",
+    "gitBlob": "5396d8debf8548aae8f0a1732ac2a36cd7a13a1e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryWebhooksViewModel.kt",
+    "sha256": "a1aebf8506ac0d3049a8860d86914b82444294b89f3cdc371aad0734bb2fe075",
+    "gitBlob": "5a384337ef30828d0201f576497fb831f396d141"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/repository/RepositoryWriteFailure.kt",
+    "sha256": "14bbfac06251179cda412b1d1cddd8af342eab02fd80446219ca493f1e2e1fa0",
+    "gitBlob": "1deb744c21cd7c1b50175f2a863f566b9633129c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/starred/GithubStarredScreen.kt",
+    "sha256": "2868a0b5df9fc182b0bd76a732889b1abb71acd28537d43a78c1f5fb4a86fa56",
+    "gitBlob": "c7e29e9261b5fbbe9534deddd5632c4528c90f81"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/starred/StarredViewModel.kt",
+    "sha256": "f3b8246932dd08bafc08bc8f123eada0ab877c3c5aff372c9d22c5dee8942868",
+    "gitBlob": "d2577fc16fcfd667ff8e4a62faca98a5ee60d2f8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreCatalog.kt",
+    "sha256": "d368e012695a347194e36538aec6ad6fdecc50c8aa9bbba9b7281df6b1d411fb",
+    "gitBlob": "80a9c8fffac503f315dfe10de47f0542d6cc60e8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreCatalogFilter.kt",
+    "sha256": "36bafbc2bdf23b56198143a40232c46ea398cc3b9ffce2ca25e4d91c7dd37554",
+    "gitBlob": "2bb393fc9a99a30fcf55d7702ab7efc0ee070661"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreDetail.kt",
+    "sha256": "a0e8d6285c3f938c0ea3cc0bbc82e703dd8b7747567f4cb36e69a8e5e90b560e",
+    "gitBlob": "7e08ee732a4530ee3db0c7ce21bbdebbb48516ed"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreReaderMotion.kt",
+    "sha256": "ec4059ed1875e3da1d7a5328cc0a378d2a4a76df73a1960c9f2e63a1d9df0598",
+    "gitBlob": "7a51bb1c3d2d39c4860b59288e36caa820e2dcda"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreReadingScreen.kt",
+    "sha256": "c8e717f3c7c1c8e47a29d44f17b587d159a4cba2fbfe827d2ac4e359545052b2",
+    "gitBlob": "e65602e8125e4d0c942dfd174356d8d07ca8231a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreScreen.kt",
+    "sha256": "b6b797dc5752a4a04613d96a2703f94766da7f3fae01b15e2245d14d7cb36bac",
+    "gitBlob": "cfbdbe4988bd579e64c1163f20e8ee7f4b9ead95"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/feature/store/StoreViewModel.kt",
+    "sha256": "1ffa972b3e3bf4c7417af9097e6f14cf3558697f21e6cee3e4be176539004490",
+    "gitBlob": "3ee091d0cf1c7d7af0f60c968bda474ad5126681"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/navigation/GithubDestination.kt",
+    "sha256": "9b190a84f05c584366c73576a71607f4aa1f521828ec752fc37c666e0d8101d9",
+    "gitBlob": "c06be31339aa27fef20c67e67d7cc4f2119be6b7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/navigation/GithubLinkRouter.kt",
+    "sha256": "c915f3ae0295611bcbf27b869a09e8cd1994645b0eee80cf1fc6cd072904ddce",
+    "gitBlob": "e6a4561838e8beee7e9ab4374948978c8cc1e68a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/navigation/GithubLoginNavigationPolicy.kt",
+    "sha256": "fe1c676eb44c8a59a65043b20a8ff38ea2ef66a79fbac5a25c5a578a3bf1f63c",
+    "gitBlob": "94504544e3b3e6faa9896d2a81ea16837f34c4b2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/navigation/GithubNavigationTransitions.kt",
+    "sha256": "3b51afb7054d8a58257ad0970028e254e30efefaea197fcf47636046e7099779",
+    "gitBlob": "db167cd4baea33f6c6c90b4ae4e53233ae3b7fe7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/navigation/GithubRoutes.kt",
+    "sha256": "41a8e60698e530bfc3097e2519f39a51e2235cd9413f3b6351a0d72e6ba235e6",
+    "gitBlob": "9f318fd384b673642f0b37c5c43d8beb29b1a635"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/navigation/GithubWebUrls.kt",
+    "sha256": "270939ab6ec8ca01949d1e3b702619230ac0ea05897e92fd5f159eb017fd709d",
+    "gitBlob": "a8dd521e3666e6be83b922b8121b7d6b69f9289f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/reader/NativeCodeIndex.kt",
+    "sha256": "9d616aafe83a3ad7f849060cc0c99b5b021766b9060e8306bd04258c0d2ed799",
+    "gitBlob": "044dd69d9c17947c13416f770dc889a2a52ae199"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/settings/GithubAboutScreen.kt",
+    "sha256": "75458703cbb5fb5a316937646d7e33a36db08ed8a5a4dae8414128e5ab073396",
+    "gitBlob": "14df15f0d1cc2977f4db2af6fe7a220b33500df9"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/github/settings/GithubSettingsScreen.kt",
+    "sha256": "e86499d01bd36f5d136805400cf9983e3562ebd26fcda0afb82e708f253415ba",
+    "gitBlob": "ac31c91a49ee26f884abe012a33acdc322f03fa7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabApiClient.kt",
+    "sha256": "609e0435fb11a6dbbda942f6f06a7fb64a275266bf4d1ab4d53cb5ab1cf8d5b1",
+    "gitBlob": "19ba615f712c24511afbe7e796c108247514e534"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabAuthRepositoryImpl.kt",
+    "sha256": "af5ee20eb78d2d67bfcd181e421d28aea7708d5b7083b2571eb1b58a7f198fbd",
+    "gitBlob": "b6c764cbd3f205455dd84514bb268c3475d136a8"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabCredentialProvider.kt",
+    "sha256": "ecdf8419b774b86a17ec759d108e3ec3f34028b15ca5cf2648efde9dfb3cbac0",
+    "gitBlob": "2b6289718728520d3410296a4b5c6d72c8ff4e8c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabCredentialStore.kt",
+    "sha256": "2e3ba0aaf4a49fcebdecfc06fcea38ce20c0eac8878ffac1e03b1e30dcb6e075",
+    "gitBlob": "5c273652dedad7f6d58376bdad00f73dd48768ad"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabProjectsRepositoryImpl.kt",
+    "sha256": "21f9866955022d6e88736b56729d17fe3180efe15d89ad8e179e1bac493f58b3",
+    "gitBlob": "b77ae3da2368829a593e58b4e46e47b6e4b2fa16"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabSingleUseBody.kt",
+    "sha256": "b5f5ca8aecd057bbceafccf0f4311d77eac0cc9b807c2bbebc4a12e6e63ea1a3",
+    "gitBlob": "9ffd00c040f537c9ffc822dde5dd0ac15a4b7b89"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/data/GitLabWorkRepositoryImpl.kt",
+    "sha256": "1559df75420724c5447a4696bcb4f8ec7ab67aabdd93ce3dfd71252e0d220e24",
+    "gitBlob": "4177a4233f837c7d67e5690d4b80ce13b2d3343c"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/domain/GitLabAuth.kt",
+    "sha256": "19de794f4d1e74bec13ca29544a9482ccb370ea03f14ff62fc200554812a849e",
+    "gitBlob": "1a5ad9cfa53b47deaf06b5113079be1e94d848e3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/domain/GitLabProjects.kt",
+    "sha256": "94f0eb99521359326c85f0eb7d732e51f0fe70b686847b0d91ffe895063898f6",
+    "gitBlob": "f755a442f59438bb1029b228d06893fe1bafc401"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/domain/GitLabWork.kt",
+    "sha256": "f16e9c358a40470b3cbd9811a36a87f672f80840a88bb4db9b6958df66d075d8",
+    "gitBlob": "55facecdec7a10ce41835e5227cc7b11da154288"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabAccountsScreen.kt",
+    "sha256": "e011ae449975146fe1efc360f010c0c17ada5bc4e3ccd7f4584c866103956ba6",
+    "gitBlob": "2ec2e86abc2724f73ae30bf86e54ab79975b972b"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabAccountsViewModel.kt",
+    "sha256": "2ac78d9aa8a20d52b6cc8171bb7f45a85d93ced4d53fea28364e1ea89b35229d",
+    "gitBlob": "d8846d1ea408144759ff09c74e27e531dfceb789"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabConversationScreen.kt",
+    "sha256": "858176a2fea496542858bd6f2e983ab4c9a08ee6563888456312d2de2ec677d7",
+    "gitBlob": "48ab3b786a609e92fa8ecc42e97865d03813db90"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabConversationViewModel.kt",
+    "sha256": "e299e984adc517d3ceba61f18db4ba4e6306268763657d0526310771c715e849",
+    "gitBlob": "60ba7e4acd0728f7fdb0676c04ce4cfa7f9ab914"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabPageRefresh.kt",
+    "sha256": "1bd0d74e47a787ca497c2098ca11ade6378180f04d233347810723f3f994931e",
+    "gitBlob": "2b081805329ca92f177dec21dda0e4e165124541"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabPipelineScreen.kt",
+    "sha256": "f71183945993835d9cde53f05ee1bfc284cf1c176f59920ed3141ab2de67d77f",
+    "gitBlob": "7112043e44017f803a67bf72816bd3be01cfa63a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabPipelineViewModel.kt",
+    "sha256": "9f337fbbdd86447c44635ae1791d8a001862479832f4fcfc98f068376e4cc480",
+    "gitBlob": "bd964c0af82909d07c95bba5c2bcbea5fcad7f0e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabProjectsScreens.kt",
+    "sha256": "34f457de1a130c932ffc1bbf6458c8b34ab3b171593b3e22bbe35a428b1671cd",
+    "gitBlob": "ebfbd51d468db7584a30b65176423fb080c883c2"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabProjectsViewModels.kt",
+    "sha256": "6aa563bd637e900a3ce8351ee79338f46c301e57d66aeee6ff7af79fcfdff6e8",
+    "gitBlob": "1a35af7837535f5831a49b3b057e48f7dc8f76d4"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabSignInBrowser.kt",
+    "sha256": "303f94a32e3f30597d323c6dda199faead86aa3501032be748ee247897790f8a",
+    "gitBlob": "e76e8820a08771fec08ccce901947582e2c9d65a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabWorkActions.kt",
+    "sha256": "791b7c271442f9bdecb4807aea2cfe1db54e1edb434755c0d5c712c41e4acb7d",
+    "gitBlob": "99b9393a8f5cbe7fbc6058bb7dc819b38ec71eb1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabWorkComponents.kt",
+    "sha256": "4352d58e0007b9193296c6c0d573ca324af51d70f439d36b819966dcf356d733",
+    "gitBlob": "71f0ce5809aa8f3ef05ec649c2c18c3372f6d752"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabWorkListScreen.kt",
+    "sha256": "784933866e8328f6a7ad45889fe8ed73e9915ab7bf6cbb96f49c497a3db28cb0",
+    "gitBlob": "1c31c996ac0c80ab5e528f4907a48d12d2913c9b"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/feature/GitLabWorkListViewModel.kt",
+    "sha256": "e40725698a47fa278df9a5bd854142a6d8cc476f1c8284883955e6fad571b4e0",
+    "gitBlob": "5a5a143fe8042243d02a76e6dcd1538db7dd6a8e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/navigation/GitLabWebUrls.kt",
+    "sha256": "b7d6f2594312f968d982213f42dc22cdb13141699de613d208a5b2a053166490",
+    "gitBlob": "d4f3cda82c24b6cead5780ce1989593d6ef2ffee"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/gitlab/navigation/GitLabWorkNavGraph.kt",
+    "sha256": "0330933ea814973f7d57d7bae0a25f916031397266ab515407273f57c925a3f8",
+    "gitBlob": "da4c55e7ea85129b6d04b48e151902ce8e9f8dbe"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/base/BaseMonicaActivity.kt",
+    "sha256": "e4bc39c8f9d2bcf07ceed65c3d205a4fceb9f546c0277856a623ace9bfa97aae",
+    "gitBlob": "abb1c38af6bffe00147e5d70404ee577c4db71bf"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/components/MarkdownAnnotations.kt",
+    "sha256": "4ef9abc03c2aadb4775a9f9820e61870fecfa901a33280b9f821d85c9615d064",
+    "gitBlob": "8f1d396e9c3f836e6db2f5bfd24a0626444e67e9"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/components/MarkdownContent.kt",
+    "sha256": "bb1a0f61df01303c19e3b50baa59ebe783d24a28b347e8360adab72c29aa4e9e",
+    "gitBlob": "f1a3b001f5a78d3272c4b99d54152361260230c4"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/components/MarkdownImages.kt",
+    "sha256": "f33e5b68976ad4e314608a09476ec5c3459ba2d2373ce42e80c66b7bcff993a5",
+    "gitBlob": "f3ba3af94008bf8b9beae2d38d1bbca643dca0d1"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/components/MarkdownInlineContent.kt",
+    "sha256": "5e88e3c171b6c96ceccfb4f276cba5e31e1376d84d23f021b7734b852539347f",
+    "gitBlob": "e6fa63dfbd1fe1080c4b983d99354aab5d3d54f7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/components/MarkdownPreviewText.kt",
+    "sha256": "5b43bb8276641e30c584b7595554b860d8bca77317677532b8477f164f9a6aa0",
+    "gitBlob": "dc38b3943121afbedbd628435d49fdf0ad0cdcd7"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/components/MarkdownReadingStyle.kt",
+    "sha256": "91c655e9a2a9b64a64c4d7ffce92667d081d5d5996d82036f0a6aeb783cc8b1e",
+    "gitBlob": "5dc212e09a6c57016607e91263773f3e6b312145"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/Color.kt",
+    "sha256": "5e9f2a734a613805e954edc9b05ce0f48241e2587393fe2d4c5b6aae533527e2",
+    "gitBlob": "7099d4da4839c5146137d0d272d7758b9b3ecbde"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/CustomColorSchemeGenerator.kt",
+    "sha256": "655c1d5c67c7b357c4033c89b167836481d8976a0bca1f8a774669acd4aff80a",
+    "gitBlob": "c8d7c9fe314daf68f563db00f421611e8d48d8c3"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/EtoileOverscroll.kt",
+    "sha256": "38a2d18cc66e8e15826f8e375cf288a12a0a80a4edced24defc04b06a9013fdb",
+    "gitBlob": "703fe6479a2513102e15ee6fdfe9c3110115841d"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/ExpressiveTheme.kt",
+    "sha256": "be952a0653ac533d63e217718e0a59247951c2c1b4c6905ed78bd783e21ca0db",
+    "gitBlob": "d82f0448a35a5a33e9b03a60f1ae7befb7407614"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/MiuixBridge.kt",
+    "sha256": "5dfb93f53a5e809dc1c5f6f4904e11f15ed8150fae4aeaef43da3f6b26917a99",
+    "gitBlob": "41a6f82597b887c9b6de6422bd6ae3dfbf27e9df"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/NothingTheme.kt",
+    "sha256": "7237475995c4ca090d36c8ae6dafde8a6cf4b8a524c96d13829429fd64237ba0",
+    "gitBlob": "c9d59c84347b8e9ac72808896e7cfb2d6c19e57f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/Theme.kt",
+    "sha256": "33d5c7dc671fe17d20e76e10742bea45fad2d34d462d82b8768820296a031dfc",
+    "gitBlob": "29783069e0e856a148b60a15470b6b88401b691f"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/ui/theme/Type.kt",
+    "sha256": "a46de8dbd8147b424bb3dfeb55f69b48b48db065b74195a25d11b99513a1459c",
+    "gitBlob": "7ef6b42bce01cf7df9642071a2715bbf8d68b54a"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/utils/DisplayDensity.kt",
+    "sha256": "252194cd80522605391ba006b8dc8e05b9b90d918a59f7c33dfdc59cccc53fe7",
+    "gitBlob": "9912c7c6eb55bc364ee3b90a11728b83166c1819"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/utils/LocaleHelper.kt",
+    "sha256": "3cb7624ed153663d07b9287f4c35ad3c8b130cada174cd687a5de2cf3287b7f6",
+    "gitBlob": "3084080c7f4d6214cbf4dedc784800821979c50e"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/utils/ScreenshotProtectionUtil.kt",
+    "sha256": "503e2804f4db011174a4fbdc5dec0c2421eab6df752d86f43211f3a243799478",
+    "gitBlob": "ad13566a356ca48bad14473f914a93c7e24d7230"
+  },
+  {
+    "path": "app/src/main/java/takagi/ru/monica/utils/SettingsManager.kt",
+    "sha256": "6ea362f6f963522ee157ce55bb0621d8de424b4fb3074c01fd9258fb23b760b3",
+    "gitBlob": "7a236bffc17336544c84c9f720fa1b30093b957c"
+  },
+  {
+    "path": "app/src/main/res/drawable-nodpi/monica_launcher.png",
+    "sha256": "32622b5145ee1e539be3d318c23575bdff6a1a4477f56aab6ff9f5f5e36d213c",
+    "gitBlob": "5995a44e4b90464b85d5ab787ed7e6b9ddbde066"
+  },
+  {
+    "path": "app/src/main/res/drawable/ic_login_key.xml",
+    "sha256": "6bac98d058b340b57fef617f446977dc536fe09292e760fb781e364785e84e22",
+    "gitBlob": "aff89152c95a4f3f843ea403537bda89fbe6be17"
+  },
+  {
+    "path": "app/src/main/res/drawable/monica_launcher_background.xml",
+    "sha256": "88453a45cd41ff4e150c5cd803bb13d2fe6534868b15318f959232e3a56e5118",
+    "gitBlob": "978e8b4626a0a02af6e3e7b070bf67ac5904cdb1"
+  },
+  {
+    "path": "app/src/main/res/drawable/monica_launcher_foreground.xml",
+    "sha256": "18a29e8a90a7b6a47b736d5ea5c03e535afcc4fd2711f32ce6bdd33cbdec50d5",
+    "gitBlob": "ec7acf9d1e7c72f0c74103607b37a271e1962a98"
+  },
+  {
+    "path": "app/src/main/res/font/doto_variable.ttf",
+    "sha256": "6f4fe7d37853b91df3698daa84cde2dbe1c9695d88c986e6510134910337d426",
+    "gitBlob": "ed8f0db9fb890c570b558941201d1504483f5ebc"
+  },
+  {
+    "path": "app/src/main/res/font/google_sans_flex_display.ttf",
+    "sha256": "162954e06ede0f78ec2e4aba3a4868230acb54125e835fb3ff1b9417255d1b56",
+    "gitBlob": "a640bb13049a39c318acbe6c2908373dc06a07fb"
+  },
+  {
+    "path": "app/src/main/res/font/google_sans_flex_metric.ttf",
+    "sha256": "b9e82232c1f557df1cd3896231ca62ad49d893c855b76420f54074dd71c70dcb",
+    "gitBlob": "f4d76ea123eb512c7cfa56d35da8e69bc9406d2b"
+  },
+  {
+    "path": "app/src/main/res/font/google_sans_flex_regular.ttf",
+    "sha256": "1a5608fc557dca87bbe97ccba8974a5ac99fc87346a8745fc83d5ea06486f99b",
+    "gitBlob": "4343f796a18580bec8a4ff8648fe00963066238f"
+  },
+  {
+    "path": "app/src/main/res/font/space_grotesk_variable.ttf",
+    "sha256": "acad6de1fc93436f5c0f1f4137751ef04f1aea3063e7036535970ffcfbd79f72",
+    "gitBlob": "a1b2e6c26093066510a31147e7aec9abdc8d6c5e"
+  },
+  {
+    "path": "app/src/main/res/font/space_mono_bold.ttf",
+    "sha256": "405e73d41afb7e5906efce206a326af5c956f38e255f35421c260e861e599c59",
+    "gitBlob": "2c4f2682f915d988e7314544ff7c9e38c8c733f5"
+  },
+  {
+    "path": "app/src/main/res/font/space_mono_regular.ttf",
+    "sha256": "95837e182baeeada83368f7748db28357f0a1b75c6b84ff7065b5edf933c8e18",
+    "gitBlob": "1cfa3653dc8ddb7aa9f4ef1c9c581e9516137e6e"
+  },
+  {
+    "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "sha256": "74e96db0f29ce62d07553c51f542908912c8c31b215fa1b84166bc857c1fda8b",
+    "gitBlob": "1bcaee252d2aa2e844882c10fdcf2a9f825f2eae"
+  },
+  {
+    "path": "app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml",
+    "sha256": "74e96db0f29ce62d07553c51f542908912c8c31b215fa1b84166bc857c1fda8b",
+    "gitBlob": "1bcaee252d2aa2e844882c10fdcf2a9f825f2eae"
+  },
+  {
+    "path": "app/src/main/res/mipmap-anydpi-v33/ic_launcher.xml",
+    "sha256": "ead23a8c59f416dcc7a89cb23777aeff8cc7d9e324b4609422da57538388f549",
+    "gitBlob": "6b6f6019faebef78db9b26e397099cccd0561698"
+  },
+  {
+    "path": "app/src/main/res/mipmap-anydpi-v33/ic_launcher_round.xml",
+    "sha256": "ead23a8c59f416dcc7a89cb23777aeff8cc7d9e324b4609422da57538388f549",
+    "gitBlob": "6b6f6019faebef78db9b26e397099cccd0561698"
+  },
+  {
+    "path": "app/src/main/res/values-ja/strings.xml",
+    "sha256": "f1f6f9cb68eadfcfd0396a26a55e3b070ec0d500e0d3baa537c1b7938666357e",
+    "gitBlob": "34d9755c470af5f6fd5dc95073806f41db130e3e"
+  },
+  {
+    "path": "app/src/main/res/values-night-v27/themes.xml",
+    "sha256": "f989281402d36a28f4d866e5acb2b523c15878308e35fb8be8a903c26e1f61d6",
+    "gitBlob": "280a5c4f349b8ea6460ed63cd3154c0896d55ea7"
+  },
+  {
+    "path": "app/src/main/res/values-night-v29/themes.xml",
+    "sha256": "e5cffae21072cb7c34b07ddc059587b8987007d17c820dd6203b803578d540e5",
+    "gitBlob": "f852ebd476c581b9a5f280a65ce18ab6b3bb8826"
+  },
+  {
+    "path": "app/src/main/res/values-night-v31/colors.xml",
+    "sha256": "6ff7672ad6f735dfd64564dfc20d8ec6d756743255124652c15100e15dd4efb3",
+    "gitBlob": "7ea80876e09ddc63c617c0b145c8f425bf102f4f"
+  },
+  {
+    "path": "app/src/main/res/values-night/colors.xml",
+    "sha256": "1354be8595fb84aa7f7a787ea6c033cd7083fe98b6fe9e9e8ef416263be97770",
+    "gitBlob": "db8e58e0a01aabd3b516701cc520487c10ecf2ef"
+  },
+  {
+    "path": "app/src/main/res/values-night/themes.xml",
+    "sha256": "b505dc01a59448aaab6269be780b35cda5b830a823faa48f124f1556afb2ddb6",
+    "gitBlob": "23c701483620621e13a459f14b3b2d3a3916f01a"
+  },
+  {
+    "path": "app/src/main/res/values-ru/strings.xml",
+    "sha256": "d98f58f70e591a7235843cec6512bc506a66b4c259ae8a492e35f38ab95f1b21",
+    "gitBlob": "cdcd810a0c5505c818558068d68c9d4ab026800b"
+  },
+  {
+    "path": "app/src/main/res/values-v27/themes.xml",
+    "sha256": "763cbf1722f465a50612faed81d2593ab2b8c02b470d8d3e6ff2a79ef98035e5",
+    "gitBlob": "ed9579c910e5ecac9d57bee75801dfa81d4929ba"
+  },
+  {
+    "path": "app/src/main/res/values-v29/themes.xml",
+    "sha256": "3397b56688d3c46d1f8c7bd766a4d44192662384e2ce9cbf3bb60b208a5f5843",
+    "gitBlob": "67bf298fe4b1cf287e8dc32a27c1feb095fd4986"
+  },
+  {
+    "path": "app/src/main/res/values-v31/colors.xml",
+    "sha256": "407a2adb25ae63901ffccbb1d0be8b5af2fb8e0ac5e0144f0f87d1335d9b2ce6",
+    "gitBlob": "6de195dec9490f0d2d7b10736efe73721c2770fa"
+  },
+  {
+    "path": "app/src/main/res/values-vi/strings.xml",
+    "sha256": "aa9ec85c1eeac39969e85c6ba46878ca7f28ff6568ed650d51c4e2c20176e649",
+    "gitBlob": "2b291dfa8b078c266405ab53c2a199dea732aa36"
+  },
+  {
+    "path": "app/src/main/res/values-zh/strings.xml",
+    "sha256": "6520a4690e3b71d6bc5e738bb59d2dc1e7b3b30e6831daa445ed5570fdfe3b20",
+    "gitBlob": "9f62f90860374c6f90e671944d0af97c75ecd0be"
+  },
+  {
+    "path": "app/src/main/res/values/colors.xml",
+    "sha256": "ba80c857a3fc68078e0c82ad24d218003fc42a493be20954b58225d8755ab4d4",
+    "gitBlob": "d58f36f603e0a95554e4d88ca0824a9dc32a31a3"
+  },
+  {
+    "path": "app/src/main/res/values/strings.xml",
+    "sha256": "afc866960eb7c34dd4520afb3f12961e8f1a836808e303360b8ff02537e1e3c9",
+    "gitBlob": "c48f66491a212cdba842c474cb0aebd235502324"
+  },
+  {
+    "path": "app/src/main/res/values/themes.xml",
+    "sha256": "66c07f4d04fcd0e3c1d7399bfba284bf93848a0fe3830ed7fc5470ca00bd9690",
+    "gitBlob": "0c1c9d61b646381e82f2887885e48bfdebc18854"
+  },
+  {
+    "path": "app/src/main/res/xml/backup_rules.xml",
+    "sha256": "ee573d8ad432cfb5e29fc2f8d43845089769dd0051e447276ce5cd6d58404367",
+    "gitBlob": "ef5ebc288b07022ee62939346e732470b2ea082e"
+  },
+  {
+    "path": "app/src/main/res/xml/data_extraction_rules.xml",
+    "sha256": "57934636749cc07e4c7f95f1b88a73f7e19b4f80d9c025e76509bb79fddd1f92",
+    "gitBlob": "f8c3128a758bd0b2c4ef7ed65669d26172e236d6"
+  },
+  {
+    "path": "app/src/main/res/xml/file_paths.xml",
+    "sha256": "3857d0f0b43c608ba0f25882a098d296b0cccfe57edac8863a5611419a90c669",
+    "gitBlob": "828ce8b598a1fadc7dca61896832fcdd91a1504d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/GithubApkParserTest.kt",
+    "sha256": "fa6ea5d594364d485ff032aefc5cb3123892bc77150e386ae3ec6abdc9f4c9da",
+    "gitBlob": "0dc16876b930df99a463bf8142c5061ed499b2b5"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/GithubStoreSourceTest.kt",
+    "sha256": "1ad9a741538e05f8cbb0af9481648b02bd021e215487041fbbb18a847a0d5bb2",
+    "gitBlob": "40e5c94066355eea1cad7912fb73cd62156ba08d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/GithubStreakCalculatorTest.kt",
+    "sha256": "a0029795a9931d901757035c4dc37ac7355795f2f7739fe7ffa5b59722d9d643",
+    "gitBlob": "0f8265218f03748300aaab7e1024f68c7c935489"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/StoreReleaseResolverTest.kt",
+    "sha256": "46fb60884127af0df96e7a5e50337d3796174cd6f0e8eaea7244bab5b5d7570d",
+    "gitBlob": "0746323ea36556b7eaae589cf689ace5c554d46e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/component/GithubActionConfirmationTest.kt",
+    "sha256": "f9813942d8b014add607ed956539481fcb55698c4626f1f5381d8411826909a3",
+    "gitBlob": "3ddfcb2b20ce8b5cf68901677476ed11a1c974d8"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/component/GithubAvatarTest.kt",
+    "sha256": "d0e4bd5b0c968806113d7415a8a7c89ccd5e965efae404047d0683ccaecda34e",
+    "gitBlob": "307d3b6330530cc0e34a9ce59f9332039ae47917"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/component/GithubPagingComponentsTest.kt",
+    "sha256": "987a2eb5d48846b4aaf4d42f02d7dcf86860489127d65a46720c80f0f3bcbd64",
+    "gitBlob": "70bb864d8436e80ec0ef1b72c40831740834e1bc"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/component/GithubUiArchitectureTest.kt",
+    "sha256": "719b0df8ad277f411320d359b57219ee4e8db64dff1290d7c84db43f8d43ab83",
+    "gitBlob": "42e32d0aecfb9601af2ee1169163d54f34f64bab"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubActionJournalTest.kt",
+    "sha256": "b97a028b04c16d3f84b2fcc78b590e77dbafb9b18f233c0c084990ab080a1798",
+    "gitBlob": "0e3b33bd211ba4aee950f31c6e5e93be15d83495"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubActionsRepositoryImplTest.kt",
+    "sha256": "3eb18d074c2792debe4ae19795e5df0730117fe58c32314ef0c390b93633daa0",
+    "gitBlob": "ff2fda2425c1bedf533405d7e65aded0b0f94c9d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubApiExceptionTest.kt",
+    "sha256": "1346fc8c712fef2ea50187b301f4ec89cc7ba2d78711d9a987501f5ba3e47f0c",
+    "gitBlob": "4d8cbe0762b44064345a798a624457bb3d1a0b2e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubApiRepositorySearchRepositoryTest.kt",
+    "sha256": "bf634d2d567a8b909d03e31b1892590aed2027967ab57dc26cc3e104b91230df",
+    "gitBlob": "9b92ee4c938167d96786fdbdbc2b50d19ac287e4"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubApiTransportTest.kt",
+    "sha256": "4391011cafb5759967382a9b4ffdb4fc7244b5fbca5fd81c68bb390ee0677797",
+    "gitBlob": "f5855b34c4c42b129a921ec8627ac24be39f19b8"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubApkManagerTest.kt",
+    "sha256": "83f5786a9eb088e9f70ea39e37004a3be8bf7c492bd0d4f133dd029e34918f3d",
+    "gitBlob": "189dba6e0df009dd71669d998c36a164ed52d208"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubAuthRepositoryImplTest.kt",
+    "sha256": "b6f8ab41ebe50a0b3c749b13eb0a64ad5e04637467598a31cb07d8192c685b3c",
+    "gitBlob": "44b4ba029668492f1dfdfcb1beef72f88bf8a967"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubAuthRequestTest.kt",
+    "sha256": "baa73a47d74c3b67e82f999eeae036005f8b7623fe4cc0a9345d80f49f50612e",
+    "gitBlob": "d3f2bd6e1f87982ff7df30dcef6169c07a6840fc"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubAuthServiceClientTest.kt",
+    "sha256": "32e83a288babda84abb5c558aa41d9c63c34c3b5d313c3ebf71494d10699a45e",
+    "gitBlob": "8e3c42e50061e5051ad412a4207b029a14a03673"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubAvatarRepositoryImplTest.kt",
+    "sha256": "20b1b92affebae1bd2d71eea7e3d18c5af95b89a0238b8c67425469011a8c2be",
+    "gitBlob": "d00ecd039affe3f6309c15d2553d4879062256e2"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubCacheTest.kt",
+    "sha256": "7b8cd13d3a22511c16f902802ac081345f7d9355a60fc63e3dda0cabef134487",
+    "gitBlob": "001fe779c7b76fc605f2dd4404fbd6023c63a84d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubCommitsRepositoryImplTest.kt",
+    "sha256": "4e87f2fa652840440d7613dcc9b33d4567f27b20799c6020a8c099850de6b722",
+    "gitBlob": "97c8fcaf436831f1249272520e1a3b7874ca51a7"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubContributionsRepositoryImplTest.kt",
+    "sha256": "beb21ab928c7cfb4af4a088bef72e84151fbc0e281626700012077ddd83fbddb",
+    "gitBlob": "6a96c4a9cd7f225c995f97e21243e49149b35821"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubCredentialRefresherTest.kt",
+    "sha256": "025b277a89d7cb52710556a48e722503a3a10e1c2dbe3cceecb4655836b7dd43",
+    "gitBlob": "057ac97784d74289afac2804fa571d9f78e1c950"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubDiscussionsRepositoryImplTest.kt",
+    "sha256": "41cc640f1dba5a4e0d42e4e20c4eed926e89244ac7eb85aaaea8ad806f8cbca4",
+    "gitBlob": "3848780ef596aa51a417c161371b923e1fa6e59c"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubDiscussionsTransportTest.kt",
+    "sha256": "e1af2d198ff0c7bc92fadd7e84472f4f4a6a8a0cde049be0da9cf46704abdaf9",
+    "gitBlob": "ad6ad23678d6e5ea439113b657b4407c1d8a68f1"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubEncryptedStoreInitializationTest.kt",
+    "sha256": "ae466c63eae17148794719d898f2e642ba34173199f53aeaa4841e970802ad62",
+    "gitBlob": "3f01ea4b749ac528eb3b14475e619b02b7aed623"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubGlobalSearchRepositoryTest.kt",
+    "sha256": "df3aca27bf179ea43b209fc59742ff7e6c3249c9e60b5719bca004ae08f9f947",
+    "gitBlob": "cd1feee99edad6a65e7bd2767ebd168fdf1b396b"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubIssueTemplateParserTest.kt",
+    "sha256": "5bb9d228f9fd30e6e32062af8ad750caa45c5db5f43fffa03382de8ffa2c34da",
+    "gitBlob": "c5fd5f5590c9c1f7df400a50ee01ea61d5d29fe8"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubIssueTemplatesRepositoryImplTest.kt",
+    "sha256": "9fad3c8a6937852c487f8e6d6e4882428e89fb20707d5708345951011b94072f",
+    "gitBlob": "300898e92b7555ff46bd58e783f6433127f5326d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubIssuesRepositoryImplTest.kt",
+    "sha256": "52882668e5fbbaa22c666e5017fd10add45ebc41e919a752562002fe240c259a",
+    "gitBlob": "c884d57bc3c23844a25221bb12b5ad71944b99c8"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubMutationTransportTest.kt",
+    "sha256": "c4de15c411ba111178b9b30f2f946a75eee68c9330458d16c87acd0f43c8dc21",
+    "gitBlob": "c95d852cf272792f25b64b13bc18df7a102828ca"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubNotificationsRepositoryImplTest.kt",
+    "sha256": "acd33b7e2da708941584789dcc1dfc43cb6b23f07d23594619ab985c655073b3",
+    "gitBlob": "f35975c292c6fa6041cbfbb556c85c8a1800f1e5"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubOAuthDeviceAuthRepositoryTest.kt",
+    "sha256": "7d2409379a2c087c0c2bfa7668938a4e13b3cd501f832d195c0a9f99d957bbd7",
+    "gitBlob": "e0803a9a1f614f98fb21ca1c70acfbcaaa5efd29"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubOrganizationsRepositoryImplTest.kt",
+    "sha256": "453a05f118bfa32e78f9e17309209e8e3aadc14bba49d7cce3e8368488599bcc",
+    "gitBlob": "2063861e358573f53eb4a314c6c6d4c2bbf649be"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubPreferencesActionJournalTest.kt",
+    "sha256": "9d72f8e8369b0e1c61f864590ae7fa43aa940f30e2e873b59270531959c05598",
+    "gitBlob": "7f4602cd86c0a0a9f0b3a320aae93dc41deab1b4"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubPreferencesStarLabelStoreTest.kt",
+    "sha256": "470d93934e7b2cb301713cb0d4ac721b1d4154a84bcafd38c023189449674476",
+    "gitBlob": "864a0c5c559561d1efd47af5cb9d64b521b7c803"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubPublicUserRepositoryImplTest.kt",
+    "sha256": "7fb02e0998f012cb077d97e85029b85fa868063ef30ba340253ece730b83b3df",
+    "gitBlob": "86f58f9aa5193db58eb5506e34b3a1748ae3a3c6"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubPullRequestTemplatesTest.kt",
+    "sha256": "94774cdbd29eb05767e26000f081388a335d38062315b2dc2371eec365f3f066",
+    "gitBlob": "99353f1fe3a9005838f20749c98251e3db7b2a47"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubPullRequestsRepositoryImplTest.kt",
+    "sha256": "59bcffb6d279720afab55603fb8935f21b1b271fe74a993d08071eb2902ac9ad",
+    "gitBlob": "9f504b598d512052122044c6db53963352279ccc"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubRateLimitStoreTest.kt",
+    "sha256": "38cb810d38d567fb3c933cdfff3d45f56ac7c9e138478df39c51043a262324a6",
+    "gitBlob": "8d02161cde8f85932d83216abd08f95a504f111e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubReleasesRepositoryImplTest.kt",
+    "sha256": "6b2622dfcdce38c040b36f3c789d0d3f10eb7a389e4503a6b8c21f1a7bbfe37b",
+    "gitBlob": "76766c3f7b0f6a6fc4a5dcf998a6b7337d842921"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubRepositoryActionsRepositoryImplTest.kt",
+    "sha256": "3ec22299a0f286359f5c757454fb38098e75de11f1ed15c2c4af37d01f3227c7",
+    "gitBlob": "1e9650b501d62fbf41ea3ff68df58980802b0059"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubRepositoryContentsRepositoryImplTest.kt",
+    "sha256": "da82b602d88fd54f57e43f94a93a5931dcca4d479ca6fb13e4131a6c9f77abc1",
+    "gitBlob": "3ce971e0f2fc5fac6bc9f3802bf20229195d0443"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubRepositoryDetailsRepositoryImplTest.kt",
+    "sha256": "008c1e8a880b72ab1705fa3ce47eecaac72694abb9307e3be5cd21afe2e3ece8",
+    "gitBlob": "12e5ee3562f2d5f7efaa10758dff7d2987bbb8a7"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubResourceAccountBindingTest.kt",
+    "sha256": "2ca4f353077585b008cbc3ed31ae9d73e38495924ae8cd10c12f52705a8cd92d",
+    "gitBlob": "04615abfef1c8ad67a5328e63a345e1193b1f24a"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubStarsRepositoryImplTest.kt",
+    "sha256": "8dc4a81cfe9a3caebe64a503f287c72ee0cadcf3dcbe9ece677028c7c0f06a7f",
+    "gitBlob": "c1f3851853ad2afb4f159aca88a7d7919a4a8a69"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubStoreSourceStoreTest.kt",
+    "sha256": "587997b3795862ff7ced503ce0c270b75aced7d2791d8416ec74676d49d097bc",
+    "gitBlob": "818c83d422fe0de2665d217e07f84abb4a2da449"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubTokenExpiryTest.kt",
+    "sha256": "bdffc5f9dc207d81d6e02cc42e8fcab8deaac9a981b3f0018fecae4424d0865c",
+    "gitBlob": "ff899b441ae840498093e12af9f000f4e74f135a"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubTokenRefreshRepositoryTest.kt",
+    "sha256": "d0a2f280f65c763f843d581da35afffd6c88c978687566c7aa09d2f15160eb47",
+    "gitBlob": "02a190ed2b7c7796295949a147400bd5279e8265"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubUserRepositoriesRepositoryImplTest.kt",
+    "sha256": "4af027d1f38b0d1a27066ce27b985d74edb5488355de104769af3dc3da7d02a1",
+    "gitBlob": "a4cf00e539a58e7c1b6fc5489f16f309be26808b"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/GithubWebOAuthRepositoryTest.kt",
+    "sha256": "39ea7c4076e5ea13c231dd420e01dcd57324e2cd2e71670b452f28e2070c02a9",
+    "gitBlob": "17771a08bad5996a5134c218c5692d4f248d071f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/data/TestGithubCacheStore.kt",
+    "sha256": "6f9d1d29799aa080b02359ce0d175e0d2bd06eb3ccf26412f15994b8931d9fb6",
+    "gitBlob": "f3d3011bfa5c62b5725976e2d4b73701f4cf9a2c"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/design/NativeDesignRenderingTest.kt",
+    "sha256": "2dbe2105cc2a3848b298dd688f8dd532f15d43f9d00e61456ac3905b1aabfcf6",
+    "gitBlob": "26cb7f0e4d650d5673c05daffea1fdc60b6ee767"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/design/NativeMarkdownImagesTest.kt",
+    "sha256": "1afab257e3f33f363a9b5503d5b37e8e8d56813ff525141edca5495647cf1221",
+    "gitBlob": "6e31146df4df115cfdc42d37e4e4fae22c79cc24"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/design/NativeReleaseSafetyTest.kt",
+    "sha256": "116bacb5d475f434ce16a93aac396c48845b5279ef9cf52ff44e298d8d5bd7ac",
+    "gitBlob": "176965ed6a5c9b5fe80f74a31358cca66b7ad147"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubBuiltInIssueTemplatesTest.kt",
+    "sha256": "be0feb96fdc373ae22454b1d6f47424cc27175f90dee3bf580f7896a95ce0036",
+    "gitBlob": "4bb2aae644d557030babc6e788d3b52732e8809d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubCollaboratorInviteTest.kt",
+    "sha256": "7f3498735405d6bddfe6e41fdb619b298706a06fa8db4c4c6cc02be27bbee6d4",
+    "gitBlob": "e7019cb1b82048e9fdf3186f9e6e29f583a25220"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubCreatePullRequestDraftTest.kt",
+    "sha256": "2e0150f145006c5caa90a4e264bc14cd45be7e37a66f6b0056d8981d3a74881f",
+    "gitBlob": "8adae99c99190d7e193ee2807252705da3e2c959"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubDeviceAuthTest.kt",
+    "sha256": "1297de306a6e75bfc376e3fe18fc627032f9b6bcca04001b0859063b473de055",
+    "gitBlob": "79971ecd57dae8cba520f3440d53f95ae6a12e02"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubDomainArchitectureTest.kt",
+    "sha256": "633bbe1319c1732a6d23a00a9104dd5c923e95306404a671bb2abf24a0bbdd5f",
+    "gitBlob": "e19177ebd76ecd0da4383a62a94776707ab43f5c"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubFileWriteTest.kt",
+    "sha256": "10d5a3e2b5cb776027f87e1c5f52da2c891aefd6d098fe03a5f89d769ad2ffcd",
+    "gitBlob": "860e19cbdea593d396321b2a1bcefe0ccc3e0c6c"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubGitRefTest.kt",
+    "sha256": "f421b8cfa8ea3df48d27329d704ee6e3c4ea871e1565cdfc0c30bfdf179bd6ea",
+    "gitBlob": "ad181e4c94c52c3d8d21a7dbfa7fc982b119d152"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubIssueDraftTest.kt",
+    "sha256": "53147eb13f17989f3a4d594472459de3c796755b8f174c538b93d3c3642ef9fb",
+    "gitBlob": "b60ec8a0ee0ec6c546a662effded119425f94588"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubPageTest.kt",
+    "sha256": "6c250f90ccd452a8a26c42be58f5e709420536a924202c1f5f4c8ee5ffc3f91b",
+    "gitBlob": "567f8d73c89c482325408542f29b7c6905ba9254"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubPullRequestReviewDraftTest.kt",
+    "sha256": "59cc626e877611dfcf16a98d06d66aa040099fb416a8a0542fc4aa8d9c7e4b96",
+    "gitBlob": "4dd135cb5a8d08165c450ad30d7564b1907f8680"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubRateLimitTest.kt",
+    "sha256": "978b2475813426bfb47c72222a6363ced580aeb27e0155f3dbc2c28a09da5c6c",
+    "gitBlob": "354859da8ba84487ec36a8e812158f8013e4a38f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubRelativeTimeTest.kt",
+    "sha256": "e5204de9e22b0bde013e70142496497ab607cd3dd5a9c352104b067038599bc8",
+    "gitBlob": "c4d00d8b4a1d68eb94c82ef0c0226a3d190bfb0d"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubRepositoryCreateDraftTest.kt",
+    "sha256": "d25ac7d39de87e9b4ac8cbe113806b957c1cbd0d5a1a20b4070a8507549b55f1",
+    "gitBlob": "48bdeb391103ab9bbaa61bc2f2dce417118ed0e4"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubReviewCommentReplyTest.kt",
+    "sha256": "e8dee5c21f3822820a9dda9a71f63a3b74bc6dc9eeabe1ad65b8b90ff327bbb8",
+    "gitBlob": "2bd148e6967e39a50216768efb65839c31eed28f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubReviewSubmissionDraftTest.kt",
+    "sha256": "f0965fb3faa382ea71039ba612df9a495c356f433869e7647e3e4ba52662d402",
+    "gitBlob": "e8c3a7334df1032fc9e2326ca334a83851bbec08"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/GithubStarLabelValidationTest.kt",
+    "sha256": "8a9d332207327242f2221c987614fdafcb5f1f873526229142de88de5f3ce006",
+    "gitBlob": "42dc66325fd275329836fe96ccb11832ba701985"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/TestGithubRepositoryDetailsRepository.kt",
+    "sha256": "d22acf2693ab9e5f059c58f0c1cd4da95a00db3e87c0d2e3058b5a86b209a980",
+    "gitBlob": "922be758e533fa5db773eb00290a21d876b22360"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/domain/TestGithubSessions.kt",
+    "sha256": "09e0692e0cc9d3a7ff7f0247004eb2052bfbd5128e42b06e7fcb4d46279d9834",
+    "gitBlob": "56fbdccb45e2ef428e43e86dee556813cdd7d3d6"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/actions/ActionsLogFormattingTest.kt",
+    "sha256": "890fb58841bd8123b04f75b2fd051c8bdcb080a6373679db54f616585ef8e58b",
+    "gitBlob": "061c765aca83a9a31a98dcb2106862a889d1cdb3"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/actions/GithubActionsViewModelTest.kt",
+    "sha256": "6d38549b9d8e2d0e9a2b2fed9e5177c294811661a63d01fa8366cd635e0bfb65",
+    "gitBlob": "79b06edaa8f86af752f2a149df241023e3f5c268"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/actions/WorkflowDispatchInputsTest.kt",
+    "sha256": "9d13c508dac188bfcc7c09c885c46003cad9931ceed26f674db6b4911d9214bd",
+    "gitBlob": "891ae61fcf045046bc80d40a566e2fe720d91a0e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/auth/GithubDeviceCodeAutofillTest.kt",
+    "sha256": "72db03ca10ac0ae3534b73e56574107cc056772f8ee5793623ea38686a04e5d7",
+    "gitBlob": "1cb327865edb0daa4ca26bedfac868052c6bb27e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/auth/GithubSessionViewModelTest.kt",
+    "sha256": "80efc9cea6790b542fde73dfbbcd8d08ca03e4e5988acf919d1ab799d4ddae17",
+    "gitBlob": "514d1d4856f089fc4b57cf2bbfbbb011b2dc06ff"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/auth/GithubSignInBrowserPolicyTest.kt",
+    "sha256": "b99bb0d80b340f9fdc0c14020ab2888b5b35f655246ba64be78b522469d540ac",
+    "gitBlob": "6c8161ef13ef3b2079e5c7d09ed8360ba1a51f5f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/commits/CommitsViewModelTest.kt",
+    "sha256": "f88daa70061b33b6188972825c71339b9a7d8415d987246e17ae6e533712fd3b",
+    "gitBlob": "210b092f969f769ccf5b05ed4b1da6793b939715"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/discussions/DiscussionCommentsLoaderTest.kt",
+    "sha256": "ff8073b04ee5615ea6ff85e5a8458812e72686a62660b9cca108ae11d80d4947",
+    "gitBlob": "d7532c66d24d54d96d7598212db46633dd410fe9"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/discussions/DiscussionDetailViewModelTest.kt",
+    "sha256": "4bc0013494e634a6a8aa9e82918a32ee2ffab6928e837a7dd0b80214bb0010be",
+    "gitBlob": "6cc11e0df00dbf338797b60f81667e1430b3b86f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/discussions/DiscussionSummaryTest.kt",
+    "sha256": "d9013600019e0171efd3b75a486e622cafc5f7e9eda67ba91a79b272bd2b9404",
+    "gitBlob": "59b28dccf7ac072c96bc2efac6dfc7783988114b"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/discussions/DiscussionsViewModelTest.kt",
+    "sha256": "d1599f6c0afc77362c40255b4ca00e1e7c62ad1362b61f214a194ef7e6518f71",
+    "gitBlob": "99fc5a72534ed13610af867231ebee60c72bb143"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/explore/ExploreViewModelTest.kt",
+    "sha256": "cb27d068aa7dd00d8fdc4f8ef990e5fbc103c1262a70769813516367fb9016d7",
+    "gitBlob": "50ccef2226817db5698c6f8a818b91d3bbc24035"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/home/HomeViewModelTest.kt",
+    "sha256": "c3f83acb85f0e9d81107e548ec9b8b5c7c2ca5c9aa1e810c6b5dd8c6686141c9",
+    "gitBlob": "dd7e70b788b7b893df8bb0409bb3515d93ba5e09"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/inbox/InboxViewModelTest.kt",
+    "sha256": "de6c127406ba5c7aeaf0e9b5062b8fdf6a3001708b92081e36e833a77f46621b",
+    "gitBlob": "0a0c8eaa2b3c9d97502f6e5adcc9a0476557a2bb"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/issues/IssuesViewModelTest.kt",
+    "sha256": "ce9766a6fe07790499ab53e341be33b6e29f0215eb9b957c61b86fc507e594e3",
+    "gitBlob": "b6baa69a9c3718e284d90313f1ed30f2ceadf312"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/mywork/MyConversationsViewModelTest.kt",
+    "sha256": "612d401194870bdd500712e05137231f7be0d1a95cbb186146313f6a7c90268c",
+    "gitBlob": "a308a05dffef622751516fa0253583c537daa671"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/organizations/OrganizationsViewModelTest.kt",
+    "sha256": "5aabec68bef6a88b26a32787dc7f91480dd198690728ab1e1d2c62900be32472",
+    "gitBlob": "4a4d3732a3538853ed7a4df21e8f7b9d610e3a8e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/profile/CreateRepositoryViewModelTest.kt",
+    "sha256": "3eaedaebc91cb2ed7a84bbad0b9516f9d3d4e3c8ce5f9b55c67804de2ea3e6e9",
+    "gitBlob": "8d096477fa7538ca68e105b090e0bfa41995e3ab"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/profile/GithubBlockedUsersViewModelTest.kt",
+    "sha256": "6e5ceecb5d5b42d6a1515ba27bb81714ff5fc3e69f5fc399baa424565447ccbf",
+    "gitBlob": "cba4df274271e0b4015cf657fae23a1c057f5638"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/profile/GithubUserConnectionsViewModelTest.kt",
+    "sha256": "e327a15d9426b28ff085a4e0ec623209a596659353894a31af5cb2b21ed3fcea",
+    "gitBlob": "ecb82693bdd7b8f922ddb439ffee4043521d9a59"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/profile/ProfileViewModelTest.kt",
+    "sha256": "2744a83ebf339c23afd6d6c39a3e6de9e73d3a772edfc17fbb23064258b3cc1b",
+    "gitBlob": "9dcff627fd251c1a617f27695093220be53f3d13"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/profile/PublicUserProfileViewModelTest.kt",
+    "sha256": "4674c65cd2527e6db9c077a61491ea23d314dba582bc9bbd54ce20f1a0ed5c12",
+    "gitBlob": "ee6fbae0169a2b1b6dfc0c3b4fc1e2f15b39a59b"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/profile/UserRepositoriesViewModelTest.kt",
+    "sha256": "370ba9ded0be1cfa03cec1e32a5b022fef557e44fca95d6da3dc05191f1ead54",
+    "gitBlob": "640544102973067da6790fbd4e503ef05fbea70f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/pullrequest/CreatePullRequestViewModelTest.kt",
+    "sha256": "63847930fb3eda39dae1a179be79614a2c34702f82de1af2804ebbbfdcd826d9",
+    "gitBlob": "bdeae2bbcb1b95d90d8502b872984ae7b963141b"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/pullrequest/PullRequestDiffTest.kt",
+    "sha256": "1901a3903ce0e64aa325645d69be1d3a2bd7e5bcac1e29fc5597161c29f68c2c",
+    "gitBlob": "36709f570cef7820f5e2a7c4df0d6bab107e7895"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/pullrequest/PullRequestsViewModelTest.kt",
+    "sha256": "fac7cc5ba05418c14b498b773197ea74ee53edcbc44e8fa644d08e8e7970f71b",
+    "gitBlob": "9d45452ddd2c7f33f99366eef526e426ebc1a6eb"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/releases/ReleasesViewModelTest.kt",
+    "sha256": "eff0f85085ae962cbd54c38aabe7f1e00c5a901ebe98a91cd76ab8384af02bcd",
+    "gitBlob": "b1c342bf6018be1acd53a43ba3d66eb096968fed"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/InviteCollaboratorViewModelTest.kt",
+    "sha256": "b0a9537b411bea3841d4586982c47a14495d20f0befc49cfc38217fca4346452",
+    "gitBlob": "35e29a76a6d855e54fa1d9eb3cf6b86d219f77cc"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryAccountIsolationTest.kt",
+    "sha256": "3d392a7e796d88930e5a99614a245ef8c2e08705349a8e183571b0982e2ec399",
+    "gitBlob": "8cd33bdc6f69babd33cd3c8c20049172b0b0a0ee"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryBranchesViewModelTest.kt",
+    "sha256": "915d6a92f098b3278733f7165f0b389491fb855e4312c358f0c84fc77348abdd",
+    "gitBlob": "9a342d5f9694ae8650ac60c76df05974fdf03561"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryCollaboratorsViewModelTest.kt",
+    "sha256": "8c298d4fc3bdbeb5fc03a3d151b7577e735c336991b811d9a4385ee66d8e20ac",
+    "gitBlob": "8394466784b55432c0562b64b69aadfbf9a32ea2"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryCompareViewModelTest.kt",
+    "sha256": "7bbc20d5ad324dd405bf1e31fb6072f747ea02a8c907552a3ed67ff0290bf3bd",
+    "gitBlob": "b0ad5c3d885683370e036862a505238b2035221b"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryConfirmationIsolationTest.kt",
+    "sha256": "e93c53f99651bab86584815f6d84a413a14121e50e1f7f6e21de16414f023790",
+    "gitBlob": "91928bc981d73dc5d4bdac7c15ece88b904e2fde"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryContentsViewModelTest.kt",
+    "sha256": "0b6101bec33cade5bd66308d79735c494fecc6a5b28650e4f190a09b41ab0129",
+    "gitBlob": "425ceb71b0e590b5872e1552d8b40faf1fdfa050"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryDetailViewModelTest.kt",
+    "sha256": "0adde679513c5188a9c31dc6514d5d002ae0bf429eb4cf78035fa480395ef30e",
+    "gitBlob": "8e4ba7865dd4d46032103fdb7b9898dd2c913f08"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryFileViewModelWriteTest.kt",
+    "sha256": "b110b420cf2f9b453092a29ee4e596dcf959953b6c2dc945a71edf6ee38c9ff2",
+    "gitBlob": "35b8f47b81e6fbbf29528b6c1349aa837065f299"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryTagsViewModelTest.kt",
+    "sha256": "4e823fb4d2e86e52cef399b5ca51eb709e9647d93bd3213a2522c406ce4ccf8b",
+    "gitBlob": "81fe3db9ad9e43a677448d1b99dd352aed9e88f3"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryWebhookDeliveriesViewModelTest.kt",
+    "sha256": "cfd7c25b24806b103a40e2d2dcb0586013fa2353bc99271fa1d87e2eae9f8dda",
+    "gitBlob": "979d6239eec2b683d7d4e3c43f24870d4bbf8a67"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/RepositoryWebhooksViewModelTest.kt",
+    "sha256": "0eaa456750990757b8e3aada89f9f86c30a225b46f38bc0a477a3e0efe6daeab",
+    "gitBlob": "f98bfee8e27dc5e88b6243745dad867f9ca51ada"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/repository/ViewerPermissionGatingTest.kt",
+    "sha256": "0ec46821b9611bf1f23b380408460ceede8646991de8220eab1a5a68d3931288",
+    "gitBlob": "ab4e86b119d02395c39ebe0c6986e41baa3d05c5"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/starred/StarredViewModelTest.kt",
+    "sha256": "fee40607a3e1521b269e36d34242a6d5e51211b926c180ba0484b9d57866f442",
+    "gitBlob": "877c19a9b4fdc9899670c346bed8b283aa54f3f9"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/store/StoreCatalogFilterTest.kt",
+    "sha256": "ffe92f7d97fdbcb0b0fa7706e27e9966f495540d1924b9d9fde9f226e8e05cee",
+    "gitBlob": "6711e053d53843e80d69084cb50122d8eb59b05f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/store/StoreReaderMotionTest.kt",
+    "sha256": "b1654465e7b965434ecd87dd93f0f997f1b6d983376211a54625bf10c4f472a7",
+    "gitBlob": "8747ee47e9bdec3894a857a13ddc5b2d84cbafcb"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/feature/store/StoreViewModelTest.kt",
+    "sha256": "ca5aded36037ea72b8609e9fec6ef5e7cc37c3a5a123cf36b540cf3220df0e28",
+    "gitBlob": "723cb8d37760d0d50b66ce0ea0b84e7d20d07772"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/navigation/ConversationNavigationFixtures.kt",
+    "sha256": "8eb075461dffe58e428dfcf7034d92fbdf59d5de7d89948102aab62927c0accf",
+    "gitBlob": "a7251ee654dd685694e690841d306c53ca97e092"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/navigation/GithubConversationNavigationTest.kt",
+    "sha256": "96b0f6703f51e847d74d7f053dde7aa580a3d978eb1dae23edd8643f73a14e07",
+    "gitBlob": "8da62dd17b55d00207cfcf5ae2e0b520336db2d6"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/navigation/GithubLinkRouterTest.kt",
+    "sha256": "1384c734cca24fd7dda2f2800531d2278e076a96f312344a295338fa57ff3fac",
+    "gitBlob": "e775a8081e967cf4da6bc70536d11c0cb4d9df3f"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/navigation/GithubLoginNavigationPolicyTest.kt",
+    "sha256": "5ff7f1430f89223a3b30f3b5bfcdec8e59fd0b5c3bd85805bb0e62d97d7bc3f2",
+    "gitBlob": "08ad02f978778e936626ccdce7ad87017312529e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/navigation/GithubNavigationTransitionsTest.kt",
+    "sha256": "f57e461004993f30e4104041a1559e2b439ae9b9bafa4d9f7d7b987474093150",
+    "gitBlob": "a0d4e64efd6320620820fdf5e7bdce1e78d74044"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/github/navigation/GithubWebUrlsTest.kt",
+    "sha256": "ee4231fc8f5bdb1b3e4b38c8b423582ebfacbea9488f52bb80bf489e117bb594",
+    "gitBlob": "321f2e01aae9f2f8a803e4a877ead9be1fd104aa"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/data/GitLabAuthRepositoryImplTest.kt",
+    "sha256": "d729790103df799401237fa868f499155092545522c32aa7edfd5bdcbc612114",
+    "gitBlob": "1eaa74b9663ccf970fa7bbaa769f67dc7cdab272"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/data/GitLabProjectsRepositoryImplTest.kt",
+    "sha256": "bb21cfeaf6a2dcd3ad3de8d1456f3280c3e45e1fbe8409bd6803480695de8f57",
+    "gitBlob": "e4b9568d1214884c3ee0527dfe894a81a75f0110"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/data/GitLabWorkRepositoryImplTest.kt",
+    "sha256": "14f8549ec124323e924de3a50ec6ee160f16b0b4cc50d0c77b217eaea7005ca9",
+    "gitBlob": "36589498c8d98cd29b7252683cad0b2254d3706e"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/feature/GitLabAccountsViewModelTest.kt",
+    "sha256": "fd48af8eec1670d95c10d64040361f8d90d70e5d9621cb83279ffbda5ae7b288",
+    "gitBlob": "c7ce564ef0f835781449ec96d3040913d58f11f4"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/feature/GitLabBrowserPolicyTest.kt",
+    "sha256": "f6ab0089e9b02cc07b6b459e29f77c9653a3a1582143beb8d49016190f94f45a",
+    "gitBlob": "7c4343e1c9364d5f9a4a586cafa22f66be9c9cd3"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/feature/GitLabListRestorationTest.kt",
+    "sha256": "fdc2718114958efb9d0c039b1dfd3d6395169de5161cc61f9f966e8a8bdfb655",
+    "gitBlob": "82a282fc98b45b7f7b9eecd4410cbafff93d51e7"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/feature/GitLabProjectsViewModelsTest.kt",
+    "sha256": "0acd810e92ee5a522ad09b39575275d571b11e8bcfbb6cfa5167537be683055b",
+    "gitBlob": "721dedf207fa4455bc2cbb869bd1553fff5c31e4"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/feature/GitLabWorkViewModelsTest.kt",
+    "sha256": "ba88676566230bb840f5be4412a40ae342c9ad780a7e25e110d89482afc70324",
+    "gitBlob": "20342623a7dab1fbe07be6ed2860cb2845192de6"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/gitlab/navigation/GitLabWebUrlsTest.kt",
+    "sha256": "db1a8cb4ac9e2f25c22214064cdd464348e941366efc8832fd4cefa61c716525",
+    "gitBlob": "9fc4315704266549f12a95059569609be621e6a9"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/ui/components/MarkdownImagesTest.kt",
+    "sha256": "ad588b994b3af985596d6f8f71dc02f930ef0560442298148f6d5bb676efb0bc",
+    "gitBlob": "c9f6b048dcdd7e4ec7fa3fb8eaa7640212700a13"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/ui/components/MarkdownRenderingTest.kt",
+    "sha256": "30ac9d58bff83b8344632a7385cea8fa575b0ca27536a8ece4986c45d6315012",
+    "gitBlob": "12ae362906a43a479d794edfeefd745dc553eefe"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/ui/theme/CustomColorSchemeGeneratorTest.kt",
+    "sha256": "ca494fab30e2b39f3b971ff3b12c65b3fe76daef13acb6e2af502c9b6bc99efd",
+    "gitBlob": "12b3a18a7709bf833cbc5dcf6bd54f0d6e50b0ea"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/ui/theme/EtoileOverscrollTest.kt",
+    "sha256": "b59ebe35b625289ef644b2b8048162c0edc69ea4528d301414e001fc0347b9f0",
+    "gitBlob": "4476b9cece168bc34475c5e46e51661af1c4f6df"
+  },
+  {
+    "path": "app/src/test/java/takagi/ru/monica/utils/DisplayDensityTest.kt",
+    "sha256": "2c82a6194cf8ceaf47307d2c62529e33e21c59dfc27f3e1ba07e0c9ea9510018",
+    "gitBlob": "6ab1ecff9d30a035934716e711d058b6ddab73a9"
+  },
+  {
+    "path": "build.gradle",
+    "sha256": "f58e50a3f62b3e69f1031f2ab0d8af2a93e17565da6cb5d18a5c00426c5e2813",
+    "gitBlob": "089ede0088fec8fd9b34b484d3882e72644a7913"
+  },
+  {
+    "path": "docs/legal/dependencies.json",
+    "sha256": "02db45100202002c3204be0d016b616e8aeac80d86607384b2daeafb0882a319",
+    "gitBlob": "467f050d7541dc27e49ba9d59371bc665f4f424b"
+  },
+  {
+    "path": "docs/legal/dependencies.md",
+    "sha256": "d03784fc53df021fade481fcdf44b82c13cabc0ac6730b2d753f364c8c4ac852",
+    "gitBlob": "c408576ac1c6810a2c60fddfc87e304de25cac11"
+  },
+  {
+    "path": "docs/legal/dependency-texts/01c266bced4a434da0051174d6bee16a4c82cf634e2679b6155d40d75012390f.txt",
+    "sha256": "dfe7d0a6134a17d3de7409762e08dc02133303912875cab40a74ba07a390f85a",
+    "gitBlob": "bb9c20a094e41b7632d63bcff20c0b4b95e80777"
+  },
+  {
+    "path": "docs/legal/dependency-texts/09f1f9643769494262b9cacec3852201242b9c819f7d5316c7530be1c9855f75.txt",
+    "sha256": "d29293778a7ec9f5bb95e2a7fe227e4672f628700f38ef7e2b147e4063338141",
+    "gitBlob": "0d673a7c937f2c2cf5feb9c6064e5da378baeb65"
+  },
+  {
+    "path": "docs/legal/dependency-texts/0f96a83840e146e43c0ec96a22ec1f392e0680e6c1226e6f3ba87e0740af850f.txt",
+    "sha256": "970813655a1bf777d2ead189cef71ab73ab92ce04dc864027d61a45de03e6728",
+    "gitBlob": "3b0a5dc09c1e16357459ddc9182a50f360f3cdba"
+  },
+  {
+    "path": "docs/legal/dependency-texts/143368af9701a24ebaf89fe5310ad8116ca71e8e99f17415c0dd893f6a256ae4.txt",
+    "sha256": "f1a513430778d6255aeee460e4478ef28318a991e6a2a053dd7925bd40cc9c03",
+    "gitBlob": "727834029f59b92d6efb33c499e0e341d72d8655"
+  },
+  {
+    "path": "docs/legal/dependency-texts/1d85bd754b04ceec93e98e890edd1fa3c6a22e81bcb32135806beeccefa51cd1.txt",
+    "sha256": "9f6e4e794da1c231279b3b62faa8f98aa2c1ef517cb4e4edf71a695ed20b649e",
+    "gitBlob": "2008402b8a1299cf118ea38e02116bfcc72e53c3"
+  },
+  {
+    "path": "docs/legal/dependency-texts/23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3.txt",
+    "sha256": "36516aefdc84c5d5a1e7485425913a22dbda69eb1930c5e84d6ae4972b5194b9",
+    "gitBlob": "31aa79387f27e730e33d871925e152e35e428031"
+  },
+  {
+    "path": "docs/legal/dependency-texts/378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397.txt",
+    "sha256": "29c9533fc9a32ee529e928bcb12308f0745d237fdea80d83c0258f23243d65d1",
+    "gitBlob": "39e0ed6602151f235148e6c08413aa7eda5b9038"
+  },
+  {
+    "path": "docs/legal/dependency-texts/3d4ada4e04d153d74f5bc4e5e6aebd12ef20077716529c36089dc07f14fd0dcf.txt",
+    "sha256": "5af13c9af4bbfaf4620cc9eb66067bc72a4b8ceeed076d699b42b91efe0b20b3",
+    "gitBlob": "f29f55ddd183788763036a4005c43c6cce68af0e"
+  },
+  {
+    "path": "docs/legal/dependency-texts/45f522cacecb1023856e46df79ca625dfc550c94910078bd8aec6e02880b3d42.txt",
+    "sha256": "1e77f061f290c4e10da650f23afa6751a56681228e98e2b6942eba3262e11ed4",
+    "gitBlob": "58fb29a12384e4a5f41a97bcfc7f6f9b2016903d"
+  },
+  {
+    "path": "docs/legal/dependency-texts/5ca77347e58205d3b543c04a9c5bdd11d20a9f3108a7b246640edffa999b5f35.txt",
+    "sha256": "da74ef264429628998a66313ff7c3d4d0d048390fdae1cb01993ecb8a1525a3b",
+    "gitBlob": "52039ea7e5734462f2989ef7f30ebbaf80fef949"
+  },
+  {
+    "path": "docs/legal/dependency-texts/6485b8ed310d3f0340bf1ad1f47645069ce4069dcc6bb46c7d5c6faf41de1fdb.txt",
+    "sha256": "705aaaaecefa087c187bd2eacdb01b8ac1c5ee95b1d5d04d8d7efe0363207df8",
+    "gitBlob": "39d4bdb5acd313c1a92dbeaa1c379aaf0596a315"
+  },
+  {
+    "path": "docs/legal/dependency-texts/8a9c58fbded5ea3474315e4a9824ca8b1486098a1a03e897e0b19419d5e1876a.txt",
+    "sha256": "8dbbde6f05f9dd8bc702d0463325e48632477fe707d30d00539e51a3ad5e3d4f",
+    "gitBlob": "94973fde8a57db93bfb1d098228cca78c1bd27b4"
+  },
+  {
+    "path": "docs/legal/dependency-texts/a8ad31b1c3f40dca5a84119351b8fa8ddc868edd77fad8a8ebf6d8f2d16fa4ae.txt",
+    "sha256": "47b3f8af497c63a097d97188fac5003028fc094759c9110a220e8493d34bdebf",
+    "gitBlob": "5c304d1a4a7b439f767990bf1360d3283e45d0ee"
+  },
+  {
+    "path": "docs/legal/dependency-texts/b30df9a48463d1c99c6a66cdee623b1b0832c3811d58a80b338268d71cea190e.txt",
+    "sha256": "c6d29327fcf863bcd8aa63ba14eda3bde7223adf7fb56cdbf5809cb5690b1014",
+    "gitBlob": "ac4f66ba2955c491a8c0715e49b9b4caf6f0d5a2"
+  },
+  {
+    "path": "docs/legal/dependency-texts/bb28c48e3e078166e91cfc2b6db7ffebb8a0973b9e23b3df060561292d8d69ec.txt",
+    "sha256": "94b9224462ffdd31fb184897c2e6c69dfc9f03f667d8e2a458ed57b302df4684",
+    "gitBlob": "d0381d6d04c77c78c42ae875f97d38483ba0c636"
+  },
+  {
+    "path": "docs/legal/dependency-texts/cb3b46a575dd9b39f881706288addc2e61e94c54658993da30cee083c0bb336f.txt",
+    "sha256": "15e1a5210c830063b58fb2221768c0058ece602dc066751ff859b12f57bf4c22",
+    "gitBlob": "39e30787bc3251d85cec46ecc0a929c84a0455d7"
+  },
+  {
+    "path": "docs/legal/dependency-texts/cb3c929a05e6cbc9de9ab06a4c57eeb60ca8c724bef6c138c87d3a577e27aa14.txt",
+    "sha256": "cd21295d750961984aba66182c488ef59db7b67e9777e8845d8cf17e8c694c58",
+    "gitBlob": "3303149e523a4cb762a54e2b73b67f2f3c105769"
+  },
+  {
+    "path": "docs/legal/dependency-texts/f5d724c5818010c61bff2e177f5b6452434bc054807522bf241940bca8b1d6b1.txt",
+    "sha256": "03b0665ea03640770c4990826c6553507b0f9239271a854a5de1717b0758ea97",
+    "gitBlob": "0b2f502e999b3bcf3b50bbe21f0f2cff8ef0df35"
+  },
+  {
+    "path": "docs/legal/dependency-texts/f7db81051789b729fea528a63ec4c938fdcb93d9d61d97dc8cc2e9df6d47f2a1.txt",
+    "sha256": "b87a64a8309bd6912a78d2f363fb3d33f2144cb167b7082a856c0edd3c9a24d2",
+    "gitBlob": "11f2842a303a7935740f7a1d09139b0b9c28c3b6"
+  },
+  {
+    "path": "docs/legal/dependency-texts/fea1d5bf3dd71605ce5d7d2ff695c1837e914c77195e523a86b5391716477960.txt",
+    "sha256": "1e1821d6051c9258740d458689103651a88477ecc6ae222b87bb3222cbb2b5d4",
+    "gitBlob": "74323882c4eeb6ce9f75f1f3269d212038f394d2"
+  },
+  {
+    "path": "docs/legal/fonts/doto-OFL.txt",
+    "sha256": "b5a4f9c286238c81ebda024bfd3de2092c143843dda6df1ff651aa432dd4da4b",
+    "gitBlob": "e0b8ec15325ee3a8500cf29df4c19e36372f180b"
+  },
+  {
+    "path": "docs/legal/fonts/googlesansflex-OFL.txt",
+    "sha256": "21a1169fd9400aa2efe3cb1d046f6cecd0fcaf7f023868166a602d180eca61b4",
+    "gitBlob": "aecc4ffb3d61e0016165109305c0856cb3da5d39"
+  },
+  {
+    "path": "docs/legal/fonts/spacegrotesk-OFL.txt",
+    "sha256": "b44f314dcf2bd2d1fe089e0828fcfe0443bda19ebfc8aca75beaf6cb25e9fe31",
+    "gitBlob": "ddbdb0d00f0be2adfbf6c5f5407106b393ddd9ed"
+  },
+  {
+    "path": "docs/legal/fonts/spacemono-OFL.txt",
+    "sha256": "a73c20d6b38329c23a89570c7e16373a9100976fef58deb5a8f2a867ee332496",
+    "gitBlob": "a72b0a7845bec3214559673ffeba60c816a21841"
+  },
+  {
+    "path": "docs/legal/licenses/Apache-2.0.txt",
+    "sha256": "3ddf9be5c28fe27dad143a5dc76eea25222ad1dd68934a047064e56ed2fa40c5",
+    "gitBlob": "d645695673349e3947e8e5ae42332d0ac3164cd7"
+  },
+  {
+    "path": "docs/legal/licenses/jni-sys-MIT.txt",
+    "sha256": "9f6e4e794da1c231279b3b62faa8f98aa2c1ef517cb4e4edf71a695ed20b649e",
+    "gitBlob": "2008402b8a1299cf118ea38e02116bfcc72e53c3"
+  },
+  {
+    "path": "docs/legal/licenses/jsoup-MIT.txt",
+    "sha256": "03b0665ea03640770c4990826c6553507b0f9239271a854a5de1717b0758ea97",
+    "gitBlob": "0b2f502e999b3bcf3b50bbe21f0f2cff8ef0df35"
+  },
+  {
+    "path": "docs/legal/privacy-en.md",
+    "sha256": "7039dca896f703be40064eba8d15f2260b8f60d3f9adbe215cb56a5aeb4cf431",
+    "gitBlob": "8d202e5a7573e9d861deb8dfdb6a46b86e7d2489"
+  },
+  {
+    "path": "docs/legal/privacy-zh.md",
+    "sha256": "1927fda50c68766d142814c8c308f71732972d9eed75d6d5985eff51092328c1",
+    "gitBlob": "0c55197b7e6a9bfb92f70ff6bafdc9461ee5dfce"
+  },
+  {
+    "path": "gradle.properties",
+    "sha256": "bd9e0f1f8527965bc1a24c2e95b13bb4662e20fe961874693c51e967bf54eb78",
+    "gitBlob": "29bedae64bc4f7cc6d7a05657196b4d8a4479c0c"
+  },
+  {
+    "path": "gradle/libs.versions.toml",
+    "sha256": "0b9e2896a3e033b6693e84b978b28b118fcc270651c094f9768c5b58a98f544f",
+    "gitBlob": "b740b2e9d4245c16bd2081b7b5d80626d6e2b40f"
+  },
+  {
+    "path": "gradle/wrapper/gradle-wrapper.properties",
+    "sha256": "5b76808f21345318f58a5ec7eebf2e51f3b0353ecd8ae4ac211cb5000427d060",
+    "gitBlob": "818c9ed58d3a2299eee1a48bb3f386b65046f771"
+  },
+  {
+    "path": "native/code-reader/Cargo.lock",
+    "sha256": "be178da2607eaf2dc7ad1e28f64a8a589a80d1cedbaa324ff4fbdb7326cbe5b7",
+    "gitBlob": "99dae5b2f349813b782c67a8038d88d99db1dccd"
+  },
+  {
+    "path": "native/code-reader/Cargo.toml",
+    "sha256": "a49a9917360c5b974930c133e5b4d7fe52d3510f19b1020a36f2bbc2e8203cdf",
+    "gitBlob": "182f75c712ebeb5005916e7eeccce06835893c6c"
+  },
+  {
+    "path": "native/code-reader/src/lib.rs",
+    "sha256": "6c3395c17edfdc462a8ce2e818bcdc419e0ca2955b6a1a876ecd68b0ffe7ceb4",
+    "gitBlob": "eb716ef32ec800cd2cc0d3c6c0e15ffefef01eea"
+  },
+  {
+    "path": "scripts/check-dependency-advisories.py",
+    "sha256": "93a468737718bad60728787156a0c08fc20f68126cc41d39ae51f9afae3f1092",
+    "gitBlob": "e51b1c5eeaa111cf0aacc2cca1d100e15502ae63"
+  },
+  {
+    "path": "scripts/generate-dependency-notices.py",
+    "sha256": "05c87b046a40e89aba31685b14568d74ba1079865c255872e60aaf95852b1094",
+    "gitBlob": "391041dad06a685e488fbb1a1596b352d55c5b19"
+  },
+  {
+    "path": "scripts/test-device-code-autofill.cjs",
+    "sha256": "05b3621129eb8589bacaf0c9b3e301d3fb0cb50f278b1a7f45f6222865f26f0d",
+    "gitBlob": "5392a79e12ca938baa244a86e173b5c690452463"
+  },
+  {
+    "path": "scripts/verify-client.ps1",
+    "sha256": "8ca943cf501803edc4482ff7b8485f93940a3d9a99b99bd190c753aeee10d182",
+    "gitBlob": "c5981f42e22fbf817dd9aee792d567250bca2ae6"
+  },
+  {
+    "path": "server/github-auth/README.md",
+    "sha256": "0719e5bf290d09e2345fe1c149eef81a5acf58c60a84686e9195a9558f8d9b31",
+    "gitBlob": "7e9c34464f985d4ea0709e7e89e95c5337c02e46"
+  },
+  {
+    "path": "server/github-auth/package.json",
+    "sha256": "b70837ddf6b428d4b3bca35d56aa59e45cf0b6c0f842f6865914670cdc371ec3",
+    "gitBlob": "631c23c420eae16435af7bb33d22b4115d9ef26b"
+  },
+  {
+    "path": "server/github-auth/server.mjs",
+    "sha256": "331c6b9227b4e6ff3a8636db14ea2071417e9ee843c17b5357cdb5f82c1d33d6",
+    "gitBlob": "26327258a47b3abfdc596e94dfc55fa55b672de7"
+  },
+  {
+    "path": "server/github-auth/server.test.mjs",
+    "sha256": "24e87aad469e46cb997cf86b0df0ab5aeba756ed0ce9660055cafee9777ffa6e",
+    "gitBlob": "64fbed3fe80428792769b59efe7b7950568c0da5"
+  },
+  {
+    "path": "settings.gradle",
+    "sha256": "952c8863c34036a6467286ebaf1f398a0d9f171510602d9927edc8e0a7e3e556",
+    "gitBlob": "5c1f4e6f8f5b734d47f96197ad9f1b6a263136e7"
+  }
+]

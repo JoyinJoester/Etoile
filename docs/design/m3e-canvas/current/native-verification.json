@@ -1,0 +1,23 @@
+{
+  "scope": "Native compilation, JVM tests, Robolectric API 34 Compose layout / interaction / draw snapshots and Android Lint; no APK generated or installed, no physical device performance verification",
+  "tasks": [
+    ":app:compileDebugKotlin",
+    ":app:testDebugUnitTest",
+    ":app:lintDebug"
+  ],
+  "build": "SUCCESSFUL",
+  "classes": 111,
+  "tests": {
+    "tests": 921,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "nativeUiTests": 13,
+  "snapshots": "native-previews",
+  "lint": {
+    "Error": 0,
+    "Warning": 139
+  },
+  "log": ".codex-tmp/native-reading-final.log"
+}

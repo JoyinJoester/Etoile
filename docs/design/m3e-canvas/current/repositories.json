@@ -1,0 +1,1890 @@
+{
+  "title": "Etoile · 仓库与阅读",
+  "brief": "保持当前二级更多结构，优先展示关注和浏览；阅读区不与管理表单争空间。 基于2026-10-21当前功能优化。示例内容不是实时账户数据。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": true,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "repository",
+      "name": "android",
+      "x": 0,
+      "y": 0,
+      "bg": "surface",
+      "note": "简介与关注操作优先。主层只保留代码、Issue、PR、发行版、更多。"
+    },
+    {
+      "id": "more",
+      "name": "更多",
+      "x": 1420,
+      "y": 0,
+      "bg": "surface",
+      "note": "按协作、版本、成员与管理分组；低频功能不再平铺在仓库主页。"
+    },
+    {
+      "id": "files",
+      "name": "代码",
+      "x": 2840,
+      "y": 0,
+      "bg": "surface",
+      "note": "分支选择紧凑展示；目录、文件各自保持一行主信息，长路径完整可读。"
+    },
+    {
+      "id": "reader",
+      "name": "README.md",
+      "x": 4260,
+      "y": 0,
+      "bg": "surface",
+      "note": "保留原生Markdown能力：可读正文、图片约束、代码横向滚动、链接可点击。"
+    },
+    {
+      "id": "administration",
+      "name": "仓库信息与管理",
+      "x": 0,
+      "y": 1000,
+      "bg": "surface",
+      "note": "当前权限决定可编辑项。危险设置仍需仓库名确认，不把确认按钮常驻于主页面。"
+    },
+    {
+      "id": "issues",
+      "name": "Issue",
+      "x": 1420,
+      "y": 1000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "pulls",
+      "name": "Pull Request",
+      "x": 2840,
+      "y": 1000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "discussions",
+      "name": "讨论",
+      "x": 4260,
+      "y": 1000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "actions",
+      "name": "Actions",
+      "x": 0,
+      "y": 2000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "branches",
+      "name": "分支",
+      "x": 1420,
+      "y": 2000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "tags",
+      "name": "标签",
+      "x": 2840,
+      "y": 2000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "releases",
+      "name": "发行版",
+      "x": 4260,
+      "y": 2000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "commits",
+      "name": "提交",
+      "x": 0,
+      "y": 3000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "collaborators",
+      "name": "协作者",
+      "x": 1420,
+      "y": 3000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "webhooks",
+      "name": "Webhooks",
+      "x": 2840,
+      "y": 3000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "deliveries",
+      "name": "投递记录",
+      "x": 4260,
+      "y": 3000,
+      "bg": "surface",
+      "note": "标题、状态、元信息分层；搜索和分页沿用当前能力，管理入口在工具栏或行末。"
+    },
+    {
+      "id": "release",
+      "name": "Etoile 1.4.0",
+      "x": 0,
+      "y": 4000,
+      "bg": "surface",
+      "note": "附件入口在长篇发布说明前，删除与编辑仍在管理菜单。"
+    },
+    {
+      "id": "assets",
+      "name": "发行版附件",
+      "x": 1420,
+      "y": 4000,
+      "bg": "surface",
+      "note": "完整文件名可换行，平台与大小次级展示。"
+    },
+    {
+      "id": "diff",
+      "name": "提交差异",
+      "x": 2840,
+      "y": 4000,
+      "bg": "surface",
+      "note": "文件名与路径分层，代码横向滚动，正文无多余卡片层级。"
+    },
+    {
+      "id": "code-reader",
+      "name": "build.gradle.kts",
+      "x": 4260,
+      "y": 4000,
+      "bg": "surface",
+      "note": "文件名与路径分层，代码横向滚动，正文无多余卡片层级。"
+    },
+    {
+      "id": "fork-confirm",
+      "name": "复刻仓库？",
+      "x": 0,
+      "y": 5000,
+      "bg": "surface",
+      "note": "原生为确认对话框：说明影响与具体目标；取消不写入，提交中禁用，失败保留目标。"
+    },
+    {
+      "id": "archive-confirm",
+      "name": "归档仓库？",
+      "x": 1420,
+      "y": 5000,
+      "bg": "surface",
+      "note": "原生为确认对话框：说明影响与具体目标；取消不写入，提交中禁用，失败保留目标。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "repository-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-1-item",
+          "kind": "topAppBar",
+          "label": "android",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "open_in_new",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-2",
+      "x": 16,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-2-item",
+          "kind": "text",
+          "label": "Etoile / android",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "repository-3",
+      "x": 16,
+      "y": 136,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-3-item",
+          "kind": "text",
+          "label": "你的开源工作空间",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "repository-4",
+      "x": 16,
+      "y": 176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-4-item",
+          "kind": "text",
+          "label": "在 Android 上浏览 GitHub 与 GitLab 项目",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "repository-5",
+      "x": 16,
+      "y": 224,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-5-item-0",
+          "icon": "star",
+          "variant": "tonal",
+          "kind": "button",
+          "label": "Star · 128",
+          "size": 126,
+          "toggle": {
+            "label": "已加星 · 129",
+            "variant": "filled"
+          }
+        },
+        {
+          "id": "repository-5-item-1",
+          "icon": "visibility",
+          "variant": "tonal",
+          "kind": "button",
+          "label": "Watch · 12",
+          "size": 126,
+          "toggle": {
+            "label": "已关注 · 13",
+            "variant": "filled"
+          }
+        },
+        {
+          "id": "repository-5-item-2",
+          "icon": "fork_right",
+          "variant": "tonal",
+          "kind": "button",
+          "label": "Fork · 34",
+          "size": 126,
+          "action": {
+            "to": "fork-confirm",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-6",
+      "x": 16,
+      "y": 304,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-6-item",
+          "kind": "button",
+          "label": "浏览代码",
+          "icon": "code",
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-7",
+      "x": 16,
+      "y": 384,
+      "axis": "y",
+      "items": [
+        {
+          "id": "repository-7-item-0",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Issue",
+          "supporting": "4 个打开",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "issues",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-7-item-1",
+          "icon": "call_split",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Pull Request",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "pulls",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-7-item-2",
+          "icon": "new_releases",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "发行版",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "releases",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "repository-7-item-3",
+          "icon": "more_horiz",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "更多",
+          "supporting": "Actions、分支、成员与管理",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "more",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "repository-8",
+      "x": 16,
+      "y": 708,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-8-item",
+          "kind": "text",
+          "label": "README",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "repository-9",
+      "x": 16,
+      "y": 752,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repository-9-item",
+          "kind": "text",
+          "label": "支持 GitHub 与 GitLab 的原生客户端",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "more-1",
+      "x": 1420,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "more-1-item",
+          "kind": "topAppBar",
+          "label": "更多",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "more-2",
+      "x": 1436,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "more-2-item",
+          "kind": "text",
+          "label": "Etoile / android",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "more-3",
+      "x": 1436,
+      "y": 144,
+      "axis": "y",
+      "items": [
+        {
+          "id": "more-3-item-0",
+          "icon": "forum",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "讨论",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "discussions",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "more-3-item-1",
+          "icon": "play_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Actions",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "actions",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "more-3-item-2",
+          "icon": "history",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "提交",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "commits",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "more-3-item-3",
+          "icon": "account_tree",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "分支",
+          "supporting": "main",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "branches",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "more-3-item-4",
+          "icon": "sell",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "标签",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "tags",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "more-3-item-5",
+          "icon": "group",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "协作者",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "collaborators",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "more-3-item-6",
+          "icon": "settings",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "仓库信息与管理",
+          "supporting": "主题、分支保护、设置与 Webhooks",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "administration",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "files-1",
+      "x": 2840,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "files-1-item",
+          "kind": "topAppBar",
+          "label": "代码",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "files-2",
+      "x": 2856,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "files-2-item",
+          "kind": "button",
+          "label": "main",
+          "icon": "account_tree",
+          "variant": "tonal",
+          "size": 180,
+          "action": {
+            "to": "branches",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "files-3",
+      "x": 2856,
+      "y": 176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "files-3-item",
+          "kind": "text",
+          "label": "/",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "files-4",
+      "x": 2856,
+      "y": 216,
+      "axis": "y",
+      "items": [
+        {
+          "id": "files-4-item-0",
+          "icon": "folder",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "app",
+          "supporting": "目录",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "files-4-item-1",
+          "icon": "folder",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "docs",
+          "supporting": "目录",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "files-4-item-2",
+          "icon": "description",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "README.md",
+          "supporting": "Markdown · 4.2 KB",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "reader",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "files-4-item-3",
+          "icon": "code",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "build.gradle.kts",
+          "supporting": "Kotlin · 2.8 KB",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "code-reader",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "reader-1",
+      "x": 4260,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-1-item",
+          "kind": "topAppBar",
+          "label": "README.md",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "reader-2",
+      "x": 4276,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-2-item",
+          "kind": "text",
+          "label": "main / README.md",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "reader-3",
+      "x": 4276,
+      "y": 152,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-3-item",
+          "kind": "text",
+          "label": "Etoile",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "reader-4",
+      "x": 4276,
+      "y": 200,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-4-item",
+          "kind": "text",
+          "label": "浏览、协作与管理你的开源项目。",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "reader-5",
+      "x": 4276,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-5-item",
+          "kind": "text",
+          "label": "开始使用",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "reader-6",
+      "x": 4276,
+      "y": 312,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-6-item",
+          "kind": "text",
+          "label": "登录 GitHub 或 GitLab，浏览项目和处理讨论。",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "reader-7",
+      "x": 4276,
+      "y": 372,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-7-item",
+          "kind": "card",
+          "label": "代码示例",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "git clone https://github.com/Etoile/android",
+          "noImage": true,
+          "size": 380,
+          "size2": 96,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "reader-8",
+      "x": 4276,
+      "y": 516,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-8-item",
+          "kind": "text",
+          "label": "项目特性",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "reader-9",
+      "x": 4276,
+      "y": 564,
+      "axis": "x",
+      "items": [
+        {
+          "id": "reader-9-item",
+          "kind": "text",
+          "label": "账户管理 · Issue / PR · 构建与发行版",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "administration-1",
+      "x": 0,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "administration-1-item",
+          "kind": "topAppBar",
+          "label": "仓库信息与管理",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "administration-2",
+      "x": 16,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "administration-2-item-0",
+          "icon": "account_tree",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "默认分支",
+          "supporting": "main",
+          "size": 380
+        },
+        {
+          "id": "administration-2-item-1",
+          "icon": "sell",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "主题",
+          "supporting": "android · kotlin",
+          "size": 380
+        },
+        {
+          "id": "administration-2-item-2",
+          "icon": "verified_user",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "分支保护",
+          "supporting": "检查与审查要求",
+          "size": 380
+        },
+        {
+          "id": "administration-2-item-3",
+          "icon": "settings",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "仓库管理",
+          "supporting": "描述、功能、默认分支",
+          "size": 380
+        },
+        {
+          "id": "administration-2-item-4",
+          "icon": "link",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Webhooks",
+          "supporting": "配置与投递记录",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "webhooks",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "administration-2-item-5",
+          "icon": "archive",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "归档仓库",
+          "supporting": "只读 · 需要二次确认",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "archive-confirm",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-1",
+      "x": 1420,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-1-item",
+          "kind": "topAppBar",
+          "label": "Issue",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-2",
+      "x": 1436,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "issues-2-item-0",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "修复 Markdown 图片排版",
+          "supporting": "#128 · 打开 · 6条回复",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "pulls-1",
+      "x": 2840,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-1-item",
+          "kind": "topAppBar",
+          "label": "Pull Request",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulls-2",
+      "x": 2856,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "pulls-2-item-0",
+          "icon": "call_split",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "优化页面信息层级",
+          "supporting": "#130 · 等待审查",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "discussions-1",
+      "x": 4260,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussions-1-item",
+          "kind": "topAppBar",
+          "label": "讨论",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "discussions-2",
+      "x": 4276,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "discussions-2-item-0",
+          "icon": "forum",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "下个版本的方向",
+          "supporting": "想法 · 12条回复",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "actions-1",
+      "x": 0,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "actions-1-item",
+          "kind": "topAppBar",
+          "label": "Actions",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "actions-2",
+      "x": 16,
+      "y": 2112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "actions-2-item-0",
+          "icon": "play_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Android CI",
+          "supporting": "android.yml · 已启用",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "branches-1",
+      "x": 1420,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "branches-1-item",
+          "kind": "topAppBar",
+          "label": "分支",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "branches-2",
+      "x": 1436,
+      "y": 2112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "branches-2-item-0",
+          "icon": "account_tree",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "main",
+          "supporting": "默认分支 · 受保护",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "branches-2-item-1",
+          "icon": "account_tree",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "feature/layout",
+          "supporting": "最近更新 · 可比较",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "files",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "tags-1",
+      "x": 2840,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "tags-1-item",
+          "kind": "topAppBar",
+          "label": "标签",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "tags-2",
+      "x": 2856,
+      "y": 2112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "tags-2-item-0",
+          "icon": "sell",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "v1.4.0",
+          "supporting": "最近发布",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "releases",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "releases-1",
+      "x": 4260,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "releases-1-item",
+          "kind": "topAppBar",
+          "label": "发行版",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "releases-2",
+      "x": 4276,
+      "y": 2112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "releases-2-item-0",
+          "icon": "new_releases",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile 1.4.0",
+          "supporting": "最新版本 · 3个附件",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "release",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "commits-1",
+      "x": 0,
+      "y": 3000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "commits-1-item",
+          "kind": "topAppBar",
+          "label": "提交",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "commits-2",
+      "x": 16,
+      "y": 3112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "commits-2-item-0",
+          "icon": "history",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "统一页面信息层级",
+          "supporting": "a2f4d6c · etoile · 今天",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "diff",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "collaborators-1",
+      "x": 1420,
+      "y": 3000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "collaborators-1-item",
+          "kind": "topAppBar",
+          "label": "协作者",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "collaborators-2",
+      "x": 1436,
+      "y": 3112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "collaborators-2-item-0",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "android-maintainer",
+          "supporting": "维护者 · 128次贡献",
+          "size": 380
+        },
+        {
+          "id": "collaborators-2-item-1",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "compose-developer",
+          "supporting": "贡献者 · 32次贡献",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "webhooks-1",
+      "x": 2840,
+      "y": 3000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "webhooks-1-item",
+          "kind": "topAppBar",
+          "label": "Webhooks",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "webhooks-2",
+      "x": 2856,
+      "y": 3112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "webhooks-2-item-0",
+          "icon": "link",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "构建通知",
+          "supporting": "已启用 · 上次 200 OK",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "deliveries",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "deliveries-1",
+      "x": 4260,
+      "y": 3000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "deliveries-1-item",
+          "kind": "topAppBar",
+          "label": "投递记录",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "deliveries-2",
+      "x": 4276,
+      "y": 3112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "deliveries-2-item-0",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "push · #108",
+          "supporting": "成功 · 200 OK",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "release-1",
+      "x": 0,
+      "y": 4000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-1-item",
+          "kind": "topAppBar",
+          "label": "Etoile 1.4.0",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "release-2",
+      "x": 16,
+      "y": 4104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-2-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "最新版本",
+          "checked": true
+        },
+        {
+          "id": "release-2-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "v1.4.0",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "release-3",
+      "x": 16,
+      "y": 4168,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-3-item",
+          "kind": "button",
+          "label": "查看附件 · 3",
+          "icon": "download",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "assets",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "release-4",
+      "x": 16,
+      "y": 4264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-4-item",
+          "kind": "text",
+          "label": "更新内容",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "release-5",
+      "x": 16,
+      "y": 4312,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-5-item",
+          "kind": "text",
+          "label": "改进代码阅读、账号切换与页面信息层级。",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "release-6",
+      "x": 16,
+      "y": 4368,
+      "axis": "x",
+      "items": [
+        {
+          "id": "release-6-item",
+          "kind": "card",
+          "label": "阅读发布说明",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "正文图片、代码块、表格按阅读宽度显示。",
+          "noImage": true,
+          "size": 380,
+          "size2": 160,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "assets-1",
+      "x": 1420,
+      "y": 4000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "assets-1-item",
+          "kind": "topAppBar",
+          "label": "发行版附件",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "assets-2",
+      "x": 1436,
+      "y": 4112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "assets-2-item-0",
+          "icon": "android",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile-arm64-v8a.apk",
+          "supporting": "Android · 28.4 MB",
+          "size": 380
+        },
+        {
+          "id": "assets-2-item-1",
+          "icon": "android",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile-armeabi-v7a.apk",
+          "supporting": "Android · 26.1 MB",
+          "size": 380
+        },
+        {
+          "id": "assets-2-item-2",
+          "icon": "folder_zip",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Source code",
+          "supporting": "zip · v1.4.0",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "diff-1",
+      "x": 2840,
+      "y": 4000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "diff-1-item",
+          "kind": "topAppBar",
+          "label": "提交差异",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "diff-2",
+      "x": 2856,
+      "y": 4104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "diff-2-item",
+          "kind": "text",
+          "label": "app / build.gradle.kts",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "diff-3",
+      "x": 2856,
+      "y": 4160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "diff-3-item",
+          "kind": "card",
+          "label": "代码预览",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "plugins {\n    alias(libs.plugins.android.application)\n}\n\nandroid {\n    namespace = \"takagi.ru.monica\"\n}",
+          "noImage": true,
+          "size": 380,
+          "size2": 400,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "code-reader-1",
+      "x": 4260,
+      "y": 4000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "code-reader-1-item",
+          "kind": "topAppBar",
+          "label": "build.gradle.kts",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "code-reader-2",
+      "x": 4276,
+      "y": 4104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "code-reader-2-item",
+          "kind": "text",
+          "label": "app / build.gradle.kts",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "code-reader-3",
+      "x": 4276,
+      "y": 4160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "code-reader-3-item",
+          "kind": "card",
+          "label": "代码预览",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "plugins {\n    alias(libs.plugins.android.application)\n}\n\nandroid {\n    namespace = \"takagi.ru.monica\"\n}",
+          "noImage": true,
+          "size": 380,
+          "size2": 400,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "fork-confirm-1",
+      "x": 0,
+      "y": 5000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "fork-confirm-1-item",
+          "kind": "topAppBar",
+          "label": "复刻仓库？",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "fork-confirm-2",
+      "x": 16,
+      "y": 5208,
+      "axis": "x",
+      "items": [
+        {
+          "id": "fork-confirm-2-item",
+          "kind": "card",
+          "label": "复刻仓库？",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "将 Etoile / android 复刻到你的账户。",
+          "noImage": true,
+          "size": 380,
+          "size2": 248,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "fork-confirm-3",
+      "x": 32,
+      "y": 5360,
+      "axis": "x",
+      "items": [
+        {
+          "id": "fork-confirm-3-item",
+          "kind": "button",
+          "label": "取消",
+          "icon": null,
+          "variant": "text",
+          "size": 164,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          },
+          "x": 32
+        }
+      ]
+    },
+    {
+      "id": "fork-confirm-4",
+      "x": 212,
+      "y": 5360,
+      "axis": "x",
+      "items": [
+        {
+          "id": "fork-confirm-4-item",
+          "kind": "button",
+          "label": "复刻",
+          "icon": null,
+          "variant": "filled",
+          "size": 164,
+          "x": 212
+        }
+      ]
+    },
+    {
+      "id": "archive-confirm-1",
+      "x": 1420,
+      "y": 5000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "archive-confirm-1-item",
+          "kind": "topAppBar",
+          "label": "归档仓库？",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "archive-confirm-2",
+      "x": 1436,
+      "y": 5208,
+      "axis": "x",
+      "items": [
+        {
+          "id": "archive-confirm-2-item",
+          "kind": "card",
+          "label": "归档仓库？",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "归档后仓库将变为只读。请输入 Etoile/android 确认。",
+          "noImage": true,
+          "size": 380,
+          "size2": 320,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "archive-confirm-3",
+      "x": 1436,
+      "y": 5336,
+      "axis": "x",
+      "items": [
+        {
+          "id": "archive-confirm-3-item",
+          "kind": "textField",
+          "label": "输入 Etoile/android",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "archive-confirm-4",
+      "x": 1452,
+      "y": 5432,
+      "axis": "x",
+      "items": [
+        {
+          "id": "archive-confirm-4-item",
+          "kind": "button",
+          "label": "取消",
+          "icon": null,
+          "variant": "text",
+          "size": 164,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          },
+          "x": 32
+        }
+      ]
+    },
+    {
+      "id": "archive-confirm-5",
+      "x": 1632,
+      "y": 5432,
+      "axis": "x",
+      "items": [
+        {
+          "id": "archive-confirm-5-item",
+          "kind": "button",
+          "label": "归档",
+          "icon": null,
+          "variant": "filled",
+          "size": 164,
+          "x": 212
+        }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
 import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.GithubContentItem
 import takagi.ru.monica.github.domain.GithubContentType
@@ -43,7 +46,8 @@ data class RepositoryFilesUiState(
     val pendingMutation: RepositoryFileMutation? = null,
     val mutationOutcome: RepositoryFileMutationOutcome? = null,
     val viewerLogin: String? = null,
-    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN
+    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val canWrite: Boolean get() = viewerLogin != null && viewerRole.canPush
@@ -107,13 +111,17 @@ class RepositoryFilesViewModel(
     private val ref: String,
     private val path: String,
     private val repository: GithubRepositoryContentsRepository,
-    private val detailsRepository: GithubRepositoryDetailsRepository
+    private val detailsRepository: GithubRepositoryDetailsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
     private val _state = MutableStateFlow(RepositoryFilesUiState(owner, name, ref, path))
     val state: StateFlow<RepositoryFilesUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var viewerRoleJob: Job? = null
     private var sessionLogin: String? = null
+    private var sessionAccountId: Long? = null
+    private var sessionInitialized = false
     private var branchesJob: Job? = null
     private var tagsJob: Job? = null
     private var mutationJob: Job? = null
@@ -141,12 +149,21 @@ class RepositoryFilesViewModel(
         }
     }
 
+    init {
+        sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } }
+    }
+
     fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login == sessionLogin) return
-        sessionLogin = login
-        _state.update { it.copy(viewerLogin = login) }
-        loadViewerRole(signedIn = login != null)
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && account?.id == sessionAccountId && account?.login == sessionLogin) return
+        sessionInitialized = true
+        sessionAccountId = account?.id
+        sessionLogin = account?.login
+        requests.coroutineContext.cancelChildren()
+        _state.value = RepositoryFilesUiState(owner, name, ref, path, viewerAccountId = sessionAccountId, viewerLogin = sessionLogin)
+        loadViewerRole(signedIn = account != null)
+        loadBranches()
+        load()
     }
 
     private fun loadViewerRole(signedIn: Boolean) {
@@ -155,9 +172,9 @@ class RepositoryFilesViewModel(
             _state.update { it.copy(viewerRole = GithubCollaboratorRole.UNKNOWN) }
             return
         }
-        viewerRoleJob = viewModelScope.launch {
+        viewerRoleJob = requests.launch {
             val role = detailsRepository.details(owner, name)
-                .getOrNull()
+                .currentRepositoryResult().getOrNull()
                 ?.viewerRole
                 ?: GithubCollaboratorRole.UNKNOWN
             _state.update { it.copy(viewerRole = role) }
@@ -185,8 +202,8 @@ class RepositoryFilesViewModel(
             return
         }
         mutationJob?.cancel()
-        mutationJob = viewModelScope.launch {
-            repository.write(owner, name, change).fold(
+        mutationJob = requests.launch {
+            repository.write(owner, name, change).currentRepositoryResult().fold(
                 onSuccess = { result ->
                     _state.update {
                         it.copy(
@@ -204,8 +221,8 @@ class RepositoryFilesViewModel(
     private fun loadBranches(page: Int = 1, append: Boolean = false) {
         branchesJob?.cancel()
         _state.update { it.copy(isLoadingBranches = true, branchesError = false) }
-        branchesJob = viewModelScope.launch {
-            repository.branches(owner, name, page = page).fold(
+        branchesJob = requests.launch {
+            repository.branches(owner, name, page = page).currentRepositoryResult().fold(
                 onSuccess = { branches ->
                     _state.update {
                         it.copy(
@@ -232,8 +249,8 @@ class RepositoryFilesViewModel(
     private fun loadTags(page: Int = 1, append: Boolean = false) {
         tagsJob?.cancel()
         _state.update { it.copy(isLoadingTags = true, tagsError = false, tagsLoaded = true) }
-        tagsJob = viewModelScope.launch {
-            repository.tags(owner, name, page = page).fold(
+        tagsJob = requests.launch {
+            repository.tags(owner, name, page = page).currentRepositoryResult().fold(
                 onSuccess = { tags ->
                     _state.update {
                         it.copy(
@@ -258,8 +275,8 @@ class RepositoryFilesViewModel(
     private fun load(refreshing: Boolean = false) {
         loadJob?.cancel()
         _state.update { it.copy(isLoading = !refreshing, isRefreshing = refreshing, error = false) }
-        loadJob = viewModelScope.launch {
-            repository.directory(owner, name, path, ref).fold(
+        loadJob = requests.launch {
+            repository.directory(owner, name, path, ref).currentRepositoryResult().fold(
                 onSuccess = { items ->
                     _state.update {
                         it.copy(
@@ -284,12 +301,13 @@ class RepositoryFilesViewModel(
         private val ref: String,
         private val path: String,
         private val repository: GithubRepositoryContentsRepository,
-        private val detailsRepository: GithubRepositoryDetailsRepository
+        private val detailsRepository: GithubRepositoryDetailsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryFilesViewModel::class.java))
-            return RepositoryFilesViewModel(owner, name, ref, path, repository, detailsRepository) as T
+            return RepositoryFilesViewModel(owner, name, ref, path, repository, detailsRepository, sessions) as T
         }
     }
 }
@@ -309,7 +327,8 @@ data class RepositoryFileUiState(
     val writeFailure: RepositoryWriteFailure? = null,
     val writtenCommit: String? = null,
     val viewerLogin: String? = null,
-    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN
+    val viewerRole: GithubCollaboratorRole = GithubCollaboratorRole.UNKNOWN,
+    val viewerAccountId: Long? = null
 ) {
     val fullName: String get() = "$owner/$name"
     val fileName: String get() = path.substringAfterLast('/')
@@ -331,13 +350,18 @@ class RepositoryFileViewModel(
     private val ref: String,
     private val path: String,
     private val repository: GithubRepositoryContentsRepository,
-    private val detailsRepository: GithubRepositoryDetailsRepository
+    private val detailsRepository: GithubRepositoryDetailsRepository,
+    sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
 ) : ViewModel() {
+    private val requests = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
     private val _state = MutableStateFlow(RepositoryFileUiState(owner, name, ref, path))
+    private val accountDrafts = mutableMapOf<Long, Pair<Boolean, String?>>()
     val state: StateFlow<RepositoryFileUiState> = _state.asStateFlow()
     private var loadJob: Job? = null
     private var viewerRoleJob: Job? = null
     private var sessionLogin: String? = null
+    private var sessionAccountId: Long? = null
+    private var sessionInitialized = false
 
     init {
         load()
@@ -364,12 +388,23 @@ class RepositoryFileViewModel(
         }
     }
 
+    init {
+        sessions?.let { source -> viewModelScope.launch { source.collect { onSessionChanged(it) } } }
+    }
+
     fun onSessionChanged(session: GithubSession) {
-        val login = (session as? GithubSession.SignedIn)?.account?.login
-        if (login == sessionLogin) return
-        sessionLogin = login
-        _state.update { it.copy(viewerLogin = login) }
-        loadViewerRole(signedIn = login != null)
+        val account = (session as? GithubSession.SignedIn)?.account
+        if (sessionInitialized && account?.id == sessionAccountId && account?.login == sessionLogin) return
+        sessionInitialized = true
+        sessionAccountId?.let { accountDrafts[it] = _state.value.editing to _state.value.draftText }
+        sessionAccountId = account?.id
+        sessionLogin = account?.login
+        requests.coroutineContext.cancelChildren()
+        val draft = account?.id?.let(accountDrafts::get)
+        _state.value = RepositoryFileUiState(owner, name, ref, path, viewerAccountId = sessionAccountId, viewerLogin = sessionLogin,
+            editing = draft?.first ?: false, draftText = draft?.second)
+        loadViewerRole(signedIn = account != null)
+        load()
     }
 
     private fun loadViewerRole(signedIn: Boolean) {
@@ -378,9 +413,9 @@ class RepositoryFileViewModel(
             _state.update { it.copy(viewerRole = GithubCollaboratorRole.UNKNOWN) }
             return
         }
-        viewerRoleJob = viewModelScope.launch {
+        viewerRoleJob = requests.launch {
             val role = detailsRepository.details(owner, name)
-                .getOrNull()
+                .currentRepositoryResult().getOrNull()
                 ?.viewerRole
                 ?: GithubCollaboratorRole.UNKNOWN
             _state.update { it.copy(viewerRole = role) }
@@ -404,8 +439,8 @@ class RepositoryFileViewModel(
             }
         _state.update { it.copy(writing = true, writeFailure = null) }
         loadJob?.cancel()
-        loadJob = viewModelScope.launch {
-            repository.write(owner, name, change).fold(onSuccess = { result ->
+        loadJob = requests.launch {
+            repository.write(owner, name, change).currentRepositoryResult().fold(onSuccess = { result ->
                 _state.update {
                     it.copy(
                         content = GithubFileContent.Text(text, result.contentSha ?: original.sha),
@@ -422,8 +457,8 @@ class RepositoryFileViewModel(
     private fun load() {
         loadJob?.cancel()
         _state.update { it.copy(isLoading = true, error = false) }
-        loadJob = viewModelScope.launch {
-            repository.file(owner, name, path, ref).fold(
+        loadJob = requests.launch {
+            repository.file(owner, name, path, ref).currentRepositoryResult().fold(
                 onSuccess = { content ->
                     _state.update { it.copy(content = content, isLoading = false, error = false) }
                 },
@@ -438,12 +473,13 @@ class RepositoryFileViewModel(
         private val ref: String,
         private val path: String,
         private val repository: GithubRepositoryContentsRepository,
-        private val detailsRepository: GithubRepositoryDetailsRepository
+        private val detailsRepository: GithubRepositoryDetailsRepository,
+        private val sessions: kotlinx.coroutines.flow.Flow<GithubSession>? = null
     ) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             require(modelClass.isAssignableFrom(RepositoryFileViewModel::class.java))
-            return RepositoryFileViewModel(owner, name, ref, path, repository, detailsRepository) as T
+            return RepositoryFileViewModel(owner, name, ref, path, repository, detailsRepository, sessions) as T
         }
     }
 }

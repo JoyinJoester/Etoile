@@ -2,6 +2,7 @@ package takagi.ru.monica.github
 
 import androidx.navigation.NavHostController
 import takagi.ru.monica.github.di.GithubAppDependencies
+import takagi.ru.monica.github.di.GithubConversationDependencies
 import takagi.ru.monica.github.feature.auth.GithubSessionUiState
 
 /**
@@ -9,11 +10,18 @@ import takagi.ru.monica.github.feature.auth.GithubSessionUiState
  * sessionState 走 provider 委托——图内 Composable 每次读取都发生在组合期,
  * 因此会话变化仍能正常触发重组,不会读到过期快照。
  */
+internal interface GithubConversationNavScope {
+    val dependencies: GithubConversationDependencies
+    val navController: NavHostController
+    val sessionState: GithubSessionUiState
+    val openUrl: (String) -> Unit
+}
+
 internal class GithubNavScope(
-    val dependencies: GithubAppDependencies,
-    val navController: NavHostController,
+    override val dependencies: GithubAppDependencies,
+    override val navController: NavHostController,
     private val sessionStateProvider: () -> GithubSessionUiState,
-    val openUrl: (String) -> Unit,
-) {
-    val sessionState: GithubSessionUiState get() = sessionStateProvider()
+    override val openUrl: (String) -> Unit,
+) : GithubConversationNavScope {
+    override val sessionState: GithubSessionUiState get() = sessionStateProvider()
 }

@@ -1,5 +1,15 @@
 package takagi.ru.monica.github.feature.releases
 
+import androidx.lifecycle.SavedStateHandle
+
+import takagi.ru.monica.github.domain.TestGithubRepositoryDetailsRepository
+import takagi.ru.monica.github.domain.GithubSession
+import takagi.ru.monica.github.domain.GithubAccount
+import kotlin.coroutines.suspendCoroutine
+import kotlin.coroutines.resume
+import kotlin.coroutines.Continuation
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -16,6 +26,9 @@ import org.junit.Before
 import org.junit.Test
 import takagi.ru.monica.github.data.GithubApiException
 import takagi.ru.monica.github.data.GithubSignedOutException
+import takagi.ru.monica.github.data.InMemoryGithubActionJournal
+import takagi.ru.monica.github.domain.GithubActionKind
+import takagi.ru.monica.github.domain.GithubActionOperation
 import takagi.ru.monica.github.domain.GithubAssetInput
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRelease
@@ -381,7 +394,268 @@ class ReleasesViewModelTest {
         override fun close() = Unit
     }
 
+    @Test
+    fun releaseReadAndDeleteCompletionCannotLeakAcrossAccountsWithoutAnActiveScreen() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val base = FakeReleasesRepository()
+        lateinit var read: Continuation<Result<GithubRelease>>
+        lateinit var write: Continuation<Result<Unit>>
+        var delayed = false
+        val repository = object : GithubReleasesRepository by base {
+            override fun forAccount(accountId: Long?): GithubReleasesRepository = this
+            override suspend fun release(owner: String, name: String, releaseId: Long): Result<GithubRelease> =
+                if (!delayed) base.release(owner, name, releaseId)
+                else if ((sessions.value as? GithubSession.SignedIn)?.account?.id == 1L) suspendCoroutine { read = it }
+                else Result.failure(IllegalStateException("private release denied"))
+            override suspend fun deleteAsset(owner: String, name: String, assetId: Long): Result<Unit> = suspendCoroutine { write = it }
+        }
+        val vm = ReleaseDetailViewModel("o", "r", ReleaseReference.Id(1), repository,
+            sessions, TestGithubRepositoryDetailsRepository())
+        runCurrent()
+        assertTrue(vm.state.value.canManage)
+        vm.onAction(ReleaseDetailAction.RemoveAsset(10, 1L))
+        runCurrent()
+        delayed = true
+        vm.onAction(ReleaseDetailAction.Retry)
+        runCurrent()
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        runCurrent()
+        read.resume(base.release("o", "r", 1))
+        write.resume(Result.success(Unit))
+        runCurrent()
+        assertEquals(2L, vm.state.value.viewerAccountId)
+        assertNull(vm.state.value.release)
+        assertNull(vm.state.value.removingAssetId)
+    }
+
+    @Test fun editorDraftsRestoreByNumericAccountAndTargetAfterStateRecreation() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val saved = SavedStateHandle()
+        val repo = FakeReleasesRepository()
+        val details = TestGithubRepositoryDetailsRepository()
+        val vm = ReleasesViewModel("o", "r", repo, sessions, details, saved)
+        runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor())
+        val draftA = vm.state.value.editor!!.copy(tagName = "v3", body = "private A", isDraft = true)
+        vm.onAction(ReleasesAction.EditEditor(draftA))
+        vm.onAction(ReleasesAction.CloseEditor)
+        vm.onAction(ReleasesAction.OpenEditor(1))
+        vm.onAction(ReleasesAction.EditEditor(vm.state.value.editor!!.copy(body = "edit target 1")))
+        sessions.value = first.copy(account = first.account.copy(id = 2)); runCurrent()
+        assertNull(vm.state.value.editor)
+        vm.onAction(ReleasesAction.OpenEditor())
+        assertEquals("", vm.state.value.editor?.body)
+        vm.onAction(ReleasesAction.EditEditor(draftA)) // Stale field callback from A.
+        assertEquals("", vm.state.value.editor?.body)
+        vm.onAction(ReleasesAction.EditEditor(vm.state.value.editor!!.copy(body = "private B")))
+
+        val restored = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        sessions.value = first
+        val recreated = ReleasesViewModel("o", "r", repo, sessions, details, restored)
+        runCurrent()
+        assertNull(recreated.state.value.editor) // Restoration never reopens a confirmation/editor.
+        recreated.onAction(ReleasesAction.OpenEditor())
+        assertEquals(draftA, recreated.state.value.editor)
+        recreated.onAction(ReleasesAction.OpenEditor(1))
+        assertEquals("edit target 1", recreated.state.value.editor?.body)
+        sessions.value = first.copy(account = first.account.copy(id = 2)); runCurrent()
+        recreated.onAction(ReleasesAction.OpenEditor())
+        assertEquals("private B", recreated.state.value.editor?.body)
+    }
+
+    @Test fun oldCreateCompletionCannotEraseEitherAccountsDraftOrAcceptStaleConsent() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val base = FakeReleasesRepository()
+        lateinit var completion: Continuation<Result<GithubRelease>>
+        var calls = 0
+        val repo = object : GithubReleasesRepository by base {
+            override fun forAccount(accountId: Long?): GithubReleasesRepository = this
+            override suspend fun createRelease(owner: String, name: String, draft: GithubReleaseDraft): Result<GithubRelease> {
+                calls++
+                return suspendCoroutine { completion = it }
+            }
+        }
+        val vm = ReleasesViewModel("o", "r", repo, sessions, TestGithubRepositoryDetailsRepository())
+        runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor())
+        val draftA = vm.state.value.editor!!.copy(tagName = "v3", body = "private A")
+        vm.onAction(ReleasesAction.EditEditor(draftA))
+        vm.onAction(saveEditor(draftA)); runCurrent()
+        sessions.value = first.copy(account = first.account.copy(id = 2)); runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor())
+        val draftB = vm.state.value.editor!!.copy(tagName = "v4", body = "private B")
+        vm.onAction(ReleasesAction.EditEditor(draftB))
+        vm.onAction(saveEditor(draftA))
+        assertEquals(1, calls)
+        completion.resume(base.release("o", "r", 1)); runCurrent()
+        assertEquals(draftB, vm.state.value.editor)
+        assertNull(vm.state.value.mutationOutcome)
+        sessions.value = first; runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor())
+        assertEquals(draftA, vm.state.value.editor)
+    }
+
+    @Test fun failedSaveRetainsEditorAndSuccessfulSaveClearsOnlyItsTargetDraft() = runTest(dispatcher) {
+        val repo = FakeReleasesRepository()
+        val vm = ReleasesViewModel("o", "r", repo)
+        runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor(1))
+        val edit = vm.state.value.editor!!.copy(body = "keep edit")
+        vm.onAction(ReleasesAction.EditEditor(edit))
+        vm.onAction(ReleasesAction.OpenEditor())
+        val create = vm.state.value.editor!!.copy(tagName = "v3", body = "retry")
+        vm.onAction(ReleasesAction.EditEditor(create))
+        repo.writeFailure = IllegalStateException("offline")
+        vm.onAction(saveEditor(create)); runCurrent()
+        assertEquals(create, vm.state.value.editor)
+        repo.writeFailure = null
+        vm.onAction(saveEditor(create).copy(repeatConfirmed = true)); runCurrent()
+        assertNull(vm.state.value.editor)
+        vm.onAction(ReleasesAction.OpenEditor())
+        assertEquals("", vm.state.value.editor?.body)
+        vm.onAction(ReleasesAction.OpenEditor(1, asDraft = false))
+        assertEquals("keep edit", vm.state.value.editor?.body)
+        assertEquals(false, vm.state.value.editor?.isDraft)
+        assertTrue(repo.updated.isEmpty()) // Publish menu opens an editor; only Save writes.
+    }
+
+    @Test fun liveAccountChangeRejectsSaveBeforeCollectorRuns() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val repository = FakeReleasesRepository()
+        val vm = ReleasesViewModel("o", "r", repository, sessions, TestGithubRepositoryDetailsRepository())
+        runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor())
+        val draft = vm.state.value.editor!!.copy(tagName = "v3", body = "private A")
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        vm.onAction(saveEditor(draft))
+        assertNull("Stale save must not enter pending state", vm.state.value.pendingMutation)
+        runCurrent()
+        assertTrue(repository.created.isEmpty())
+    }
+
+    @Test fun queuedSaveChecksLiveAccountBeforeRepositoryCall() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val repository = FakeReleasesRepository()
+        val vm = ReleasesViewModel("o", "r", repository, sessions, TestGithubRepositoryDetailsRepository())
+        runCurrent()
+        vm.onAction(ReleasesAction.OpenEditor())
+        val draft = vm.state.value.editor!!.copy(tagName = "v3", body = "private A")
+        vm.onAction(saveEditor(draft))
+        assertTrue(vm.state.value.isMutating)
+        sessions.value = first.copy(account = first.account.copy(id = 2))
+        runCurrent()
+        assertTrue("Queued save must not call the repository", repository.created.isEmpty())
+    }
+
+    @Test fun allReleaseWritesRejectImmediateQueuedAndPreviouslyConfirmedAccountChanges() = runTest(dispatcher) {
+        for (phase in 0..2) for (operation in 0..4) {
+            val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+            val sessions = MutableStateFlow<GithubSession>(first)
+            val repository = FakeReleasesRepository()
+            val vm = ReleasesViewModel("o", "r", repository, sessions, TestGithubRepositoryDetailsRepository())
+            val detail = ReleaseDetailViewModel("o", "r", ReleaseReference.Id(1), repository, sessions, TestGithubRepositoryDetailsRepository())
+            runCurrent()
+            fun write() = submitAccountWrite(operation, vm, detail)
+            if (phase == 1) {
+                write()
+                assertTrue(if (operation == 4) detail.state.value.isRemovingAsset else vm.state.value.isMutating)
+            }
+            sessions.value = first.copy(account = first.account.copy(id = 2))
+            if (phase == 2) runCurrent()
+            if (phase != 1) write()
+            runCurrent()
+            assertTrue(repository.created.isEmpty())
+            assertTrue(repository.updated.isEmpty())
+            assertTrue(repository.deleted.isEmpty())
+            assertTrue(repository.uploaded.isEmpty())
+            assertTrue(repository.removedAssets.isEmpty())
+        }
+    }
+
+    @Test fun allMatchingReleaseWritesSelectTheBoundRepository() = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val repository = FakeReleasesRepository()
+        val vm = ReleasesViewModel("o", "r", repository, sessions, TestGithubRepositoryDetailsRepository())
+        val detail = ReleaseDetailViewModel("o", "r", ReleaseReference.Id(1), repository, sessions, TestGithubRepositoryDetailsRepository())
+        runCurrent()
+        for (operation in 0..4) { submitAccountWrite(operation, vm, detail); runCurrent() }
+        assertEquals(listOf(1L, 1L, 1L, 1L, 1L), repository.boundAccounts)
+        assertEquals(1, repository.created.size)
+        assertEquals(1, repository.updated.size)
+        assertEquals(listOf(1L), repository.deleted)
+        assertEquals(1, repository.uploaded.size)
+        assertEquals(listOf(10L), repository.removedAssets)
+    }
+
+    private fun submitAccountWrite(operation: Int, vm: ReleasesViewModel, detail: ReleaseDetailViewModel) {
+        when (operation) {
+            0, 1 -> vm.onAction(ReleasesAction.Save(if (operation == 0) null else 1L, "v3", "Title", "Private A", "main", true, false, 1L))
+            2 -> vm.onAction(ReleasesAction.Delete(1, 1L))
+            3 -> vm.onAction(ReleasesAction.Attach(1, "private.bin", "", "application/octet-stream", 1,
+                { error("Fake never opens a stream") }, 1L))
+            4 -> detail.onAction(ReleaseDetailAction.RemoveAsset(10, 1L))
+        }
+    }
+
+    private fun saveEditor(draft: ReleaseEditorDraft) = ReleasesAction.Save(
+        draft.releaseId, draft.tagName, draft.title, draft.body, draft.targetCommitish,
+        draft.isDraft, draft.isPrerelease, draft.accountId
+    )
+
+    @Test fun uncertainCreateCannotBeRepeatedWithoutNewConsent() = uncertainWriteRequiresConsent(0)
+    @Test fun uncertainEditCannotBeRepeatedWithoutNewConsent() = uncertainWriteRequiresConsent(1)
+    @Test fun uncertainReleaseDeletionCannotBeRepeatedWithoutNewConsent() = uncertainWriteRequiresConsent(2)
+    @Test fun uncertainAssetUploadCannotBeRepeatedWithoutNewConsent() = uncertainWriteRequiresConsent(3)
+    @Test fun uncertainAssetDeletionCannotBeRepeatedWithoutNewConsent() = uncertainWriteRequiresConsent(4)
+
+    private fun uncertainWriteRequiresConsent(operation: Int) = runTest(dispatcher) {
+        val first = GithubSession.SignedIn(GithubAccount(1, "same", null, null, "", "", 0, 0, 0))
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val repo = FakeReleasesRepository().apply { writeFailure = java.io.IOException("Response lost") }
+        val vm = ReleasesViewModel("o", "r", repo, sessions, TestGithubRepositoryDetailsRepository())
+        val detail = ReleaseDetailViewModel("o", "r", ReleaseReference.Id(1), repo, sessions, TestGithubRepositoryDetailsRepository())
+        runCurrent()
+        submitAccountWrite(operation, vm, detail); runCurrent()
+        assertEquals(1, repo.created.size + repo.updated.size + repo.deleted.size + repo.uploaded.size + repo.removedAssets.size)
+        repo.writeFailure = null
+        vm.onAction(ReleasesAction.Refresh)
+        detail.onAction(ReleaseDetailAction.Retry)
+        runCurrent()
+        submitAccountWrite(operation, vm, detail); runCurrent()
+        assertEquals("A lost release result needs explicit new consent", 1,
+            repo.created.size + repo.updated.size + repo.deleted.size + repo.uploaded.size + repo.removedAssets.size)
+    }
+
+    @Test fun uncertainReleaseOutcomeSurvivesViewModelRecreationUntilExplicitRepeatConsent() = runTest(dispatcher) {
+        val journal = InMemoryGithubActionJournal()
+        val repo = FakeReleasesRepository().apply { writeFailure = java.io.IOException("Response lost") }
+        val first = ReleasesViewModel("o", "r", repo, journal = journal)
+        runCurrent()
+        first.onAction(ReleasesAction.Save(null, "v3", "Title", "Body", "main", true, false))
+        runCurrent()
+        assertEquals(1, repo.created.size)
+        repo.writeFailure = null
+        val recreated = ReleasesViewModel("o", "r", repo, journal = journal)
+        runCurrent()
+        assertTrue(recreated.state.value.unconfirmedOperations.contains(
+            GithubActionOperation(GithubActionKind.RELEASE_CREATE, 1L)))
+        recreated.onAction(ReleasesAction.Save(null, "v3", "Title", "Body", "main", true, false))
+        runCurrent()
+        assertEquals("Recreation must not silently repeat an uncertain release", 1, repo.created.size)
+        recreated.onAction(ReleasesAction.Save(null, "v3", "Title", "Body", "main", true, false, repeatConfirmed = true))
+        runCurrent()
+        assertEquals(2, repo.created.size)
+    }
+
     private class FakeReleasesRepository : GithubReleasesRepository {
+        val boundAccounts = mutableListOf<Long?>()
+        override fun forAccount(accountId: Long?): GithubReleasesRepository { boundAccounts += accountId; return this }
         val pages = mutableListOf<Int>()
         val refreshRequests = mutableListOf<Int>()
         val tags = mutableListOf<String>()

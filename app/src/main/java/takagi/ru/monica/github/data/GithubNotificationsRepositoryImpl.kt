@@ -64,7 +64,7 @@ class GithubNotificationsRepositoryImpl(
             val request = requests.builder(threadEndpoint(id))
                 .patch(EMPTY_JSON)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
@@ -90,7 +90,7 @@ class GithubNotificationsRepositoryImpl(
         githubRunCatching {
             val body = "{\"last_read_at\":\"${Instant.now()}\"}".toRequestBody(JSON_MEDIA_TYPE)
             val request = requests.builder(endpoint("notifications")).put(body).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.clear()
             }
@@ -172,9 +172,9 @@ class GithubNotificationsRepositoryImpl(
         .build()
         .toString()
 
-    private fun delete(url: String) {
+    private suspend fun delete(url: String) {
         val request = requests.builder(url).delete().build()
-        client.newCall(request).execute().use { response ->
+        client.readGithubResponse(request) { response ->
             if (!response.isSuccessful) throw GithubApiException.of(response)
         }
     }

@@ -4,6 +4,9 @@ import androidx.activity.compose.BackHandler
 import android.content.Intent
 import androidx.compose.animation.*
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,8 +69,11 @@ fun StoreReadingScreen(
             projectUrl?.startsWith("https://") == true -> ({ (onOpenProject ?: onOpenExternal)(projectUrl) })
             else -> null
         }
-        val list = if (fdroid != null) snapshot.filteredFdroidApps.map { it.packageName }
+        val fdroidApps = rememberFilteredFdroidApps(snapshot)
+        val list = remember(fdroid != null, fdroidApps, snapshot.sources, snapshot.apps, snapshot.query) {
+            if (fdroid != null) fdroidApps.map { it.packageName }
             else (snapshot.filteredSources + snapshot.filteredApps).distinctBy { it.fullName }.map { it.fullName }
+        }
         val index = list.indexOf(identity)
         val hasNext = index >= 0 && index < list.lastIndex
         val lazyState = rememberLazyListState()
@@ -75,12 +81,25 @@ fun StoreReadingScreen(
         val haptics = LocalHapticFeedback.current
         var pull by remember(identity) { mutableFloatStateOf(0f) }
         var horizontal by remember(identity) { mutableFloatStateOf(0f) }
+        var pulling by remember(identity) { mutableStateOf(false) }
+        var swiping by remember(identity) { mutableStateOf(false) }
+        val verticalOffset by animateFloatAsState(
+            storeReaderDisplacement(pull, threshold),
+            animationSpec = if (pulling) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy),
+            label = "storePullReturn"
+        )
+        val horizontalOffset by animateFloatAsState(
+            storeReaderDisplacement(horizontal, threshold),
+            animationSpec = if (swiping) snap() else spring(dampingRatio = Spring.DampingRatioNoBouncy),
+            label = "storeSwipeReturn"
+        )
         val next by rememberUpdatedState({ onAction(StoreAction.NextApp) })
         val currentProject by rememberUpdatedState(openProject)
         val connection = remember(identity, hasNext, threshold) {
             object : NestedScrollConnection {
                 override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                    if (pull > 0f && available.y > 0f) {
+                    if (pull > 0f && available.y > 0f && source == NestedScrollSource.UserInput) {
+                        pulling = true
                         val used = minOf(pull, available.y)
                         pull -= used
                         return Offset(0f, used)
@@ -90,7 +109,8 @@ fun StoreReadingScreen(
                 override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                     if (hasNext && !lazyState.canScrollForward && available.y < 0 && source == NestedScrollSource.UserInput) {
                         val before = pull
-                        pull = (pull - available.y).coerceAtMost(threshold * 1.5f)
+                        pulling = true
+                        pull = storeReaderDrag(pull, -available.y, threshold)
                         if (before < threshold && pull >= threshold) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
                         return Offset(0f, available.y)
                     }
@@ -98,9 +118,11 @@ fun StoreReadingScreen(
                 }
                 override suspend fun onPreFling(available: Velocity): Velocity {
                     val advance = pull >= threshold
+                    val wasPulling = pull > 0f
+                    pulling = false
                     pull = 0f
                     if (advance) next()
-                    return if (advance) available else Velocity.Zero
+                    return if (wasPulling) available else Velocity.Zero
                 }
             }
         }
@@ -136,18 +158,22 @@ fun StoreReadingScreen(
                     .nestedScroll(connection)
                     .pointerInput(identity, openProject != null) {
                         detectHorizontalDragGestures(
-                            onDragStart = { horizontal = 0f },
+                            onDragStart = { swiping = true },
                             onHorizontalDrag = { change, amount ->
                                 if (currentProject != null) {
                                     // Reveal the project from the right with a left swipe.
-                                    horizontal = (horizontal - amount).coerceAtLeast(0f)
+                                    horizontal = storeReaderDrag(horizontal, -amount, threshold)
                                     change.consume()
                                 }
                             },
-                            onDragEnd = { if (horizontal >= threshold) currentProject?.invoke(); horizontal = 0f },
-                            onDragCancel = { horizontal = 0f }
+                            onDragEnd = {
+                                swiping = false
+                                if (horizontal >= threshold) currentProject?.invoke()
+                                horizontal = 0f
+                            },
+                            onDragCancel = { swiping = false; horizontal = 0f }
                         )
-                }.graphicsLayer { translationY = -pull / 4; translationX = -horizontal / 4 },
+                }.graphicsLayer { translationY = -verticalOffset; translationX = -horizontalOffset },
                 contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item("summary") {

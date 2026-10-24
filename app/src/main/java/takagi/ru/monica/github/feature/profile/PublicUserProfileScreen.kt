@@ -65,6 +65,7 @@ import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.feature.repository.RepositoryWriteFailure
 import takagi.ru.monica.github.navigation.GithubWebUrls
 import takagi.ru.monica.ui.components.MarkdownPreviewText
+import takagi.ru.monica.ui.components.MarkdownImageContext
 
 @Composable
 fun PublicUserProfileScreen(
@@ -79,8 +80,8 @@ fun PublicUserProfileScreen(
     onOpenExternal: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showBlockConfirm by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(state.login) { showBlockConfirm = false }
+    var showBlockConfirm by rememberSaveable(state.login, state.viewerAccountId, state.user?.id) { mutableStateOf(false) }
+    LaunchedEffect(state.login, state.viewerAccountId, state.user?.id) { showBlockConfirm = false }
     LaunchedEffect(state.isBlocked, state.isUpdatingBlocked) {
         if (showBlockConfirm && !state.isUpdatingBlocked && state.isBlocked == true) {
             showBlockConfirm = false
@@ -194,7 +195,7 @@ fun PublicUserProfileScreen(
             }
         }
     }
-    if (showBlockConfirm) {
+    if (showBlockConfirm && state.viewerAccountId != null && state.user != null && state.isBlocked == false) {
         val updating = state.isUpdatingBlocked
         AlertDialog(
             onDismissRequest = { if (!updating) showBlockConfirm = false },
@@ -214,7 +215,7 @@ fun PublicUserProfileScreen(
             },
             confirmButton = {
                 TextButton(enabled = !updating, onClick = {
-                    onAction(PublicUserProfileAction.ToggleBlocked)
+                    onAction(PublicUserProfileAction.ConfirmBlock(state.viewerAccountId, state.user.id))
                 }) { Text(stringResource(R.string.github_block_user)) }
             },
             dismissButton = {
@@ -306,6 +307,7 @@ private fun PublicUserReadmeSection(
             ) {
                 MarkdownPreviewText(
                     markdown = state.readme,
+                    imageContext = MarkdownImageContext("${state.login}/${state.login}"),
                     onOpenExternalLink = onOpenExternal,
                     modifier = Modifier.padding(16.dp)
                 )
@@ -401,14 +403,18 @@ private fun PublicUserHeader(
             onSignIn = onSignIn
         )
         if (!user.company.isNullOrBlank() || !user.location.isNullOrBlank()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.padding(top = 12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
                 user.company?.takeIf(String::isNotBlank)?.let {
-                    Icon(Icons.Default.Work, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Work, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    }
                 }
                 user.location?.takeIf(String::isNotBlank)?.let {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(it, style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    }
                 }
             }
         }

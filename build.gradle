@@ -1,4 +1,20 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        exclusiveContent {
+            forRepository {
+                maven { url = uri('https://storage.googleapis.com/r8-releases/raw') }
+            }
+            filter { includeModule('com.android.tools', 'r8') }
+        }
+    }
+    dependencies {
+        // Kotlin 2.4 requires R8 9.1.29 or newer. AGP 8.13's bundled R8 cannot
+        // read that metadata: https://developer.android.com/build/kotlin-support
+        classpath 'com.android.tools:r8:9.1.29'
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false

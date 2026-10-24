@@ -75,7 +75,7 @@ class GithubUserRepositoriesRepositoryImpl(
                 val request = requests.builder(url.toString())
                     .post(payload.toString().toRequestBody(JSON_MEDIA_TYPE))
                     .build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     val created = json.decodeFromString(
                         GithubRepositoryDto.serializer(),

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="takagi.ru.monica.github.design.NativeReleaseSafetyTest" tests="7" skipped="0" failures="0" errors="0" timestamp="2026-10-24T14:29:26.548Z" hostname="JOYIN" time="1.317">
+  <properties/>
+  <testcase name="warningsScrollWithReleaseListInsteadOfHidingItsContents" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.277"/>
+  <testcase name="detailExplainsUncertainOperationAndAcknowledgesWithoutDeleting" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.076"/>
+  <testcase name="losingPermissionInvalidatesPendingDeleteConfirmation" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.146"/>
+  <testcase name="assetRemovalRequiresFreshRepeatConsentInOneDialog" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.369"/>
+  <testcase name="editingBodyAfterRepeatPromptInvalidatesSaveConsent" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.185"/>
+  <testcase name="repeatDeleteUsesOneDialogAndCancelDoesNotRetainConsent" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.203"/>
+  <testcase name="editorShowsHistoryFailureAndDisablesSave" classname="takagi.ru.monica.github.design.NativeReleaseSafetyTest" time="0.061"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

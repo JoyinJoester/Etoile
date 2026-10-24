@@ -28,15 +28,21 @@ fun GithubCommentEditorScreen(
     onSignIn: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    disabledMessage: String? = null
+    disabledMessage: String? = null,
+    title: String? = null,
+    subtitle: String? = null,
+    submitLabel: String? = null,
+    showGithubServiceStatus: Boolean = true,
+    context: @Composable () -> Unit = {}
 ) {
     BackHandler { if (!isSubmitting) onBack() }
     GithubDetailScaffold(
-        title = stringResource(R.string.github_write_comment),
-        subtitle = stringResource(R.string.github_comment_editor_subtitle),
+        title = title ?: stringResource(R.string.github_write_comment),
+        subtitle = subtitle ?: stringResource(R.string.github_comment_editor_subtitle),
         backContentDescription = stringResource(R.string.github_back),
         onBack = onBack,
-        modifier = modifier
+        modifier = modifier,
+        showGithubServiceStatus = showGithubServiceStatus
     ) { padding ->
         androidx.compose.foundation.layout.Column(
             modifier = Modifier.fillMaxSize()
@@ -45,6 +51,7 @@ fun GithubCommentEditorScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
+            context()
             GithubCommentComposer(
                 value = value,
                 maxLength = maxLength,
@@ -55,7 +62,8 @@ fun GithubCommentEditorScreen(
                 onValueChange = onValueChange,
                 onSubmit = onSubmit,
                 onSignIn = onSignIn,
-                disabledMessage = disabledMessage
+                disabledMessage = disabledMessage,
+                submitLabel = submitLabel
             )
             if (!canWrite && disabledMessage == null) {
                 Text(

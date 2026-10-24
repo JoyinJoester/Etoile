@@ -1,0 +1,499 @@
+{
+  "title": "Etoile · 状态与宽屏规则",
+  "brief": "覆盖加载、空列表、失败、提交、权限和危险确认。状态表达沿用实际行为，不伪造成功。 基于2026-10-21当前功能优化。示例内容不是实时账户数据。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": true,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "loading",
+      "name": "仓库",
+      "x": 0,
+      "y": 0,
+      "bg": "surface",
+      "note": "首次加载使用列表骨架，刷新保留已有内容；不以巨大留白表示等待。"
+    },
+    {
+      "id": "empty",
+      "name": "星标收藏",
+      "x": 1420,
+      "y": 0,
+      "bg": "surface",
+      "note": "清空筛选与去发现项目分别有意义，空状态说明下一步。"
+    },
+    {
+      "id": "error",
+      "name": "仓库",
+      "x": 2840,
+      "y": 0,
+      "bg": "surface",
+      "note": "错误在失败内容附近显示，保留已有结果并提供重试；不整页清空。"
+    },
+    {
+      "id": "busy",
+      "name": "保存内容",
+      "x": 4260,
+      "y": 0,
+      "bg": "surface",
+      "note": "提交中禁止重复写入，失败保留草稿。"
+    },
+    {
+      "id": "permission",
+      "name": "仓库管理",
+      "x": 0,
+      "y": 1000,
+      "bg": "surface",
+      "note": "区分未登录和权限不足，给出可执行入口，不诱导无效写入。"
+    },
+    {
+      "id": "danger",
+      "name": "删除确认",
+      "x": 1420,
+      "y": 1000,
+      "bg": "surface",
+      "note": "原生为确认对话框：具体目标和影响清楚，取消是完整退出路径。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "loading-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "loading-1-item",
+          "kind": "topAppBar",
+          "label": "仓库",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "loading-2",
+      "x": 182,
+      "y": 256,
+      "axis": "x",
+      "items": [
+        {
+          "id": "loading-2-item",
+          "kind": "loadingIndicator",
+          "label": "",
+          "icon": null,
+          "variant": "filled"
+        }
+      ]
+    },
+    {
+      "id": "loading-3",
+      "x": 16,
+      "y": 336,
+      "axis": "x",
+      "items": [
+        {
+          "id": "loading-3-item",
+          "kind": "text",
+          "label": "正在加载仓库…",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "empty-1",
+      "x": 1420,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "empty-1-item",
+          "kind": "topAppBar",
+          "label": "星标收藏",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "empty-2",
+      "x": 1436,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "empty-2-item",
+          "kind": "searchBar",
+          "label": "搜索星标仓库",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "empty-3",
+      "x": 1436,
+      "y": 248,
+      "axis": "x",
+      "items": [
+        {
+          "id": "empty-3-item",
+          "kind": "card",
+          "label": "暂无匹配项目",
+          "icon": "search_off",
+          "variant": "filled",
+          "supporting": "试试其他关键词，或清空筛选。",
+          "noImage": true,
+          "size": 380,
+          "size2": 152,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "empty-4",
+      "x": 1436,
+      "y": 448,
+      "axis": "x",
+      "items": [
+        {
+          "id": "empty-4-item",
+          "kind": "button",
+          "label": "清空筛选",
+          "icon": null,
+          "variant": "tonal",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "error-1",
+      "x": 2840,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "error-1-item",
+          "kind": "topAppBar",
+          "label": "仓库",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "error-2",
+      "x": 2856,
+      "y": 112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "error-2-item-0",
+          "icon": "folder",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile / android",
+          "supporting": "上次加载的内容",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "error-3",
+      "x": 2856,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "error-3-item",
+          "kind": "card",
+          "label": "暂时无法加载更多",
+          "icon": "wifi_off",
+          "variant": "filled",
+          "supporting": "检查网络后重试，已显示的项目会保留。",
+          "noImage": true,
+          "size": 380,
+          "size2": 132,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "error-4",
+      "x": 2856,
+      "y": 440,
+      "axis": "x",
+      "items": [
+        {
+          "id": "error-4-item",
+          "kind": "button",
+          "label": "重试",
+          "icon": null,
+          "variant": "tonal",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "busy-1",
+      "x": 4260,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "busy-1-item",
+          "kind": "topAppBar",
+          "label": "保存内容",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "busy-2",
+      "x": 4276,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "busy-2-item",
+          "kind": "textField",
+          "label": "标题",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "优化客户端页面"
+        }
+      ]
+    },
+    {
+      "id": "busy-3",
+      "x": 4276,
+      "y": 216,
+      "axis": "x",
+      "items": [
+        {
+          "id": "busy-3-item",
+          "kind": "card",
+          "label": "草稿内容",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "你的输入在提交失败后仍会保留。",
+          "noImage": true,
+          "size": 380,
+          "size2": 200,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "busy-4",
+      "x": 4276,
+      "y": 472,
+      "axis": "x",
+      "items": [
+        {
+          "id": "busy-4-item",
+          "kind": "linearProgress",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "wavy": true
+        }
+      ]
+    },
+    {
+      "id": "busy-5",
+      "x": 4276,
+      "y": 532,
+      "axis": "x",
+      "items": [
+        {
+          "id": "busy-5-item",
+          "kind": "text",
+          "label": "正在保存…",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "permission-1",
+      "x": 0,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "permission-1-item",
+          "kind": "topAppBar",
+          "label": "仓库管理",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "permission-2",
+      "x": 16,
+      "y": 1184,
+      "axis": "x",
+      "items": [
+        {
+          "id": "permission-2-item",
+          "kind": "card",
+          "label": "需要管理权限",
+          "icon": "lock",
+          "variant": "filled",
+          "supporting": "使用拥有此仓库管理权限的账户后再试。",
+          "noImage": true,
+          "size": 380,
+          "size2": 152,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "permission-3",
+      "x": 16,
+      "y": 1384,
+      "axis": "x",
+      "items": [
+        {
+          "id": "permission-3-item",
+          "kind": "button",
+          "label": "管理账户",
+          "icon": null,
+          "variant": "tonal",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "danger-1",
+      "x": 1420,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "danger-1-item",
+          "kind": "topAppBar",
+          "label": "删除确认",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "danger-2",
+      "x": 1436,
+      "y": 1240,
+      "axis": "x",
+      "items": [
+        {
+          "id": "danger-2-item",
+          "kind": "card",
+          "label": "删除 Webhook？",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "目标：https://example.test/build。删除后将停止发送事件，此操作无法撤销。",
+          "noImage": true,
+          "size": 380,
+          "size2": 248,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "danger-3",
+      "x": 1452,
+      "y": 1400,
+      "axis": "x",
+      "items": [
+        {
+          "id": "danger-3-item",
+          "kind": "button",
+          "label": "取消",
+          "icon": null,
+          "variant": "text",
+          "size": 164,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          },
+          "x": 32
+        }
+      ]
+    },
+    {
+      "id": "danger-4",
+      "x": 1632,
+      "y": 1400,
+      "axis": "x",
+      "items": [
+        {
+          "id": "danger-4-item",
+          "kind": "button",
+          "label": "删除",
+          "icon": null,
+          "variant": "filled",
+          "size": 164,
+          "x": 212
+        }
+      ]
+    }
+  ]
+}

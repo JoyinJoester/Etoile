@@ -1,10 +1,15 @@
 package takagi.ru.monica.github.feature.profile
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import androidx.lifecycle.SavedStateHandle
@@ -16,6 +21,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import takagi.ru.monica.github.data.GithubApiException
+import takagi.ru.monica.github.domain.GithubSession
+import takagi.ru.monica.github.domain.signedInGithubSession
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRepository
 import takagi.ru.monica.github.domain.GithubRepositoryCreateDraft
@@ -151,7 +158,59 @@ class CreateRepositoryViewModelTest {
         assertTrue(source.drafts.single().autoInit)
     }
 
+    @Test
+    fun accountDraftsStaySeparateAcrossSwitchesAndStateRestoration() = runTest(dispatcher) {
+        val alice = signedInGithubSession("alice")
+        val bob = GithubSession.SignedIn(alice.account.copy(id = 2, login = "bob"))
+        val sessions = MutableStateFlow<GithubSession>(alice)
+        val saved = SavedStateHandle()
+        val viewModel = CreateRepositoryViewModel(source, saved, sessions)
+        viewModel.onAction(CreateRepositoryAction.NameChanged("alice-private-draft"))
+        viewModel.onAction(CreateRepositoryAction.TogglePrivate)
+        sessions.value = bob
+        runCurrent()
+        assertEquals("", viewModel.state.value.name)
+        viewModel.onAction(CreateRepositoryAction.NameChanged("bob-draft"))
+        sessions.value = alice
+        runCurrent()
+        assertEquals("alice-private-draft", viewModel.state.value.name)
+        assertTrue(viewModel.state.value.isPrivate)
+        val recreated = CreateRepositoryViewModel(source, saved, sessions)
+        assertEquals("alice-private-draft", recreated.state.value.name)
+        sessions.value = GithubSession.SignedOut
+        runCurrent()
+        viewModel.onAction(CreateRepositoryAction.NameChanged("ignored"))
+        viewModel.onAction(CreateRepositoryAction.Submit)
+        assertFalse(viewModel.state.value.canSubmit)
+        assertEquals("", viewModel.state.value.name)
+        assertTrue(source.drafts.isEmpty())
+    }
+
+    @Test
+    fun lateCreationCannotNavigateOrEraseTheOriginalDraftAfterAccountSwitch() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<GithubRepository>>()
+        source.createRequest = { withContext(NonCancellable) { gate.await() } }
+        val alice = signedInGithubSession("alice")
+        val sessions = MutableStateFlow<GithubSession>(alice)
+        val viewModel = CreateRepositoryViewModel(source, SavedStateHandle(), sessions, expectedAccountId = 1)
+        viewModel.onAction(CreateRepositoryAction.NameChanged("unfinished"))
+        viewModel.onAction(CreateRepositoryAction.Submit)
+        runCurrent()
+        sessions.value = GithubSession.SignedIn(alice.account.copy(id = 2))
+        runCurrent()
+        gate.complete(Result.success(CREATED))
+        advanceUntilIdle()
+        assertNull(viewModel.state.value.created)
+        assertFalse(viewModel.state.value.accountAvailable)
+        sessions.value = alice
+        runCurrent()
+        assertEquals("unfinished", viewModel.state.value.name)
+        assertNull(viewModel.state.value.created)
+        assertFalse(viewModel.state.value.isSubmitting)
+    }
+
     private class FakeRepository : GithubUserRepositoriesRepository {
+        var createRequest: (suspend () -> Result<GithubRepository>)? = null
         var result: Result<GithubRepository> = Result.success(CREATED)
         val drafts = mutableListOf<GithubRepositoryCreateDraft>()
 
@@ -160,7 +219,7 @@ class CreateRepositoryViewModelTest {
 
         override suspend fun create(draft: GithubRepositoryCreateDraft): Result<GithubRepository> {
             drafts += draft
-            return result
+            return createRequest?.invoke() ?: result
         }
     }
 

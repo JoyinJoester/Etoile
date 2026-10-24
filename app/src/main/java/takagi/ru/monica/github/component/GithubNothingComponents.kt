@@ -77,12 +77,13 @@ fun GithubTechnicalSectionHeader(
         modifier = modifier.fillMaxWidth().heightIn(min = 28.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        GithubTechnicalLabel(label)
-        Spacer(Modifier.width(12.dp))
-        HorizontalDivider(
-            modifier = Modifier.weight(1f),
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
+        if (LocalDesignStyle.current == DesignStyle.MATERIAL) {
+            Text(label, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+        } else {
+            GithubTechnicalLabel(label)
+            Spacer(Modifier.width(12.dp))
+            HorizontalDivider(Modifier.weight(1f), color = MaterialTheme.colorScheme.outlineVariant)
+        }
         if (trailing != null) {
             Spacer(Modifier.width(12.dp))
             trailing()
@@ -103,8 +104,8 @@ fun GithubFlatCard(
     Surface(
         modifier = modifier.fillMaxWidth(),
         shape = GithubExpressiveShapes.container,
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+        color = if (LocalDesignStyle.current == DesignStyle.MATERIAL) MaterialTheme.colorScheme.surfaceContainerLow else MaterialTheme.colorScheme.surface,
+        border = if (LocalDesignStyle.current == DesignStyle.MATERIAL) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
     ) {
         Column(modifier = Modifier.padding(contentPadding), content = content)
     }
@@ -122,13 +123,17 @@ fun GithubTechnicalTag(
     count: Int? = null,
     onClick: (() -> Unit)? = null
 ) {
-    val borderColor = if (selected) {
-        MaterialTheme.colorScheme.onSurface
-    } else {
-        MaterialTheme.colorScheme.outline
+    val material = LocalDesignStyle.current == DesignStyle.MATERIAL
+    val borderColor = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.outline
+    val backgroundColor = when {
+        material && selected -> MaterialTheme.colorScheme.secondaryContainer
+        material -> MaterialTheme.colorScheme.surfaceContainerHigh
+        selected -> MaterialTheme.colorScheme.onSurface
+        else -> Color.Transparent
     }
     val contentColor = when {
-        selected -> MaterialTheme.colorScheme.surface
+        material && selected -> MaterialTheme.colorScheme.onSecondaryContainer
+        selected && !material -> MaterialTheme.colorScheme.surface
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     val tagContent: @Composable () -> Unit = {
@@ -152,16 +157,16 @@ fun GithubTechnicalTag(
             onClick = onClick,
             modifier = modifier.heightIn(min = 48.dp),
             shape = RoundedCornerShape(999.dp),
-            color = if (selected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-            border = BorderStroke(1.dp, borderColor),
+            color = backgroundColor,
+            border = if (material) null else BorderStroke(1.dp, borderColor),
             content = tagContent
         )
     } else {
         Surface(
             modifier = modifier.heightIn(min = 32.dp),
             shape = RoundedCornerShape(999.dp),
-            color = if (selected) MaterialTheme.colorScheme.onSurface else Color.Transparent,
-            border = BorderStroke(1.dp, borderColor),
+            color = backgroundColor,
+            border = if (material) null else BorderStroke(1.dp, borderColor),
             content = tagContent
         )
     }

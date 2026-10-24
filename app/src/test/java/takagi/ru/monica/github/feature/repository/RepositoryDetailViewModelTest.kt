@@ -1,5 +1,6 @@
 package takagi.ru.monica.github.feature.repository
 
+import takagi.ru.monica.github.domain.GithubWebhookDeliveriesPage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -30,7 +31,6 @@ import takagi.ru.monica.github.domain.GithubCollaboratorInvite
 import takagi.ru.monica.github.domain.GithubPage
 import takagi.ru.monica.github.domain.GithubRepositoryWebhook
 import takagi.ru.monica.github.domain.GithubWebhookEdit
-import takagi.ru.monica.github.domain.GithubWebhookDelivery
 import takagi.ru.monica.github.domain.GithubRepositoryDetailsRepository
 import takagi.ru.monica.github.domain.GithubRepositorySettings
 import takagi.ru.monica.github.domain.GithubRepositorySettingsEdit
@@ -201,6 +201,41 @@ class RepositoryDetailViewModelTest {
     }
 
     @Test
+    fun dangerousSettingsRequireExactRepositoryName() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        listOf("", "codex", "other/codex", "openai/codex ").forEach { confirmation ->
+            viewModel.onAction(RepositoryDetailAction.SetVisibility(true, confirmation))
+            viewModel.onAction(RepositoryDetailAction.SetArchived(true, confirmation))
+            viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("develop", confirmation))
+            advanceUntilIdle()
+            assertEquals(null, repository.updatedSettings)
+            assertFalse(viewModel.state.value.isUpdatingSettings)
+        }
+    }
+
+    @Test
+    fun archivedRepositoryOnlyAcceptsConfirmedUnarchive() = runTest(dispatcher) {
+        val repository = FakeRepository()
+        val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
+        viewModel.onSessionChanged(GithubSession.SignedIn(account()))
+        advanceUntilIdle()
+        viewModel.onAction(RepositoryDetailAction.SetArchived(true, "openai/codex"))
+        advanceUntilIdle()
+        val archivedWrite = repository.updatedSettings
+        viewModel.onAction(RepositoryDetailAction.SetVisibility(true, "openai/codex"))
+        viewModel.onAction(RepositoryDetailAction.SetFeature(GithubRepositoryFeature.Wiki, false))
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("develop", "openai/codex"))
+        advanceUntilIdle()
+        assertEquals(archivedWrite, repository.updatedSettings)
+        viewModel.onAction(RepositoryDetailAction.SetArchived(false, "openai/codex"))
+        advanceUntilIdle()
+        assertEquals(false, viewModel.state.value.details?.isArchived)
+    }
+
+    @Test
     fun adminSettingsWritesSendOneFieldAndReadBackTheServerSnapshot() = runTest(dispatcher) {
         val repository = FakeRepository()
         val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
@@ -208,7 +243,7 @@ class RepositoryDetailViewModelTest {
         advanceUntilIdle()
         assertTrue(viewModel.state.value.canManageSettings)
 
-        viewModel.onAction(RepositoryDetailAction.SetVisibility(isPrivate = true))
+        viewModel.onAction(RepositoryDetailAction.SetVisibility(isPrivate = true, confirmation = "openai/codex"))
         assertTrue(viewModel.state.value.isUpdatingSettings)
         advanceUntilIdle()
 
@@ -218,7 +253,7 @@ class RepositoryDetailViewModelTest {
         assertFalse(viewModel.state.value.isUpdatingSettings)
         assertEquals(null, viewModel.state.value.settingsFailure)
 
-        viewModel.onAction(RepositoryDetailAction.SetArchived(isArchived = true))
+        viewModel.onAction(RepositoryDetailAction.SetArchived(isArchived = true, confirmation = "openai/codex"))
         advanceUntilIdle()
 
         assertEquals(GithubRepositorySettingsEdit(isArchived = true), repository.updatedSettings)
@@ -243,7 +278,7 @@ class RepositoryDetailViewModelTest {
             advanceUntilIdle()
             repository.settingsRequest = { Result.failure(error) }
 
-            viewModel.onAction(RepositoryDetailAction.SetArchived(isArchived = true))
+            viewModel.onAction(RepositoryDetailAction.SetArchived(isArchived = true, confirmation = "openai/codex"))
             advanceUntilIdle()
 
             assertEquals(expected, viewModel.state.value.settingsFailure)
@@ -259,7 +294,7 @@ class RepositoryDetailViewModelTest {
         viewModel.onSessionChanged(GithubSession.SignedIn(account()))
         advanceUntilIdle()
 
-        viewModel.onAction(RepositoryDetailAction.SetVisibility(isPrivate = false))
+        viewModel.onAction(RepositoryDetailAction.SetVisibility(isPrivate = false, confirmation = "openai/codex"))
         advanceUntilIdle()
 
         assertEquals(null, repository.updatedSettings)
@@ -273,7 +308,7 @@ class RepositoryDetailViewModelTest {
         val viewModel = RepositoryDetailViewModel("openai", "codex", repository, FakeActionsRepository())
         viewModel.onSessionChanged(GithubSession.SignedIn(account()))
         advanceUntilIdle()
-        viewModel.onAction(RepositoryDetailAction.SetVisibility(isPrivate = true))
+        viewModel.onAction(RepositoryDetailAction.SetVisibility(isPrivate = true, confirmation = "openai/codex"))
         advanceUntilIdle()
 
         viewModel.onAction(RepositoryDetailAction.SetFeature(GithubRepositoryFeature.Wiki, false))
@@ -400,7 +435,7 @@ class RepositoryDetailViewModelTest {
         viewModel.onAction(RepositoryDetailAction.SetFeature(GithubRepositoryFeature.Wiki, false))
         advanceUntilIdle()
 
-        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("  release/1.2  "))
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("  release/1.2  ", confirmation = "openai/codex"))
         assertTrue(viewModel.state.value.isUpdatingSettings)
         advanceUntilIdle()
 
@@ -419,7 +454,7 @@ class RepositoryDetailViewModelTest {
         advanceUntilIdle()
         repository.settingsRequest = { Result.failure(GithubApiException(422)) }
 
-        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("does-not-exist"))
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("does-not-exist", confirmation = "openai/codex"))
         advanceUntilIdle()
 
         assertEquals(RepositoryWriteFailure.InvalidInput, viewModel.state.value.settingsFailure)
@@ -434,7 +469,7 @@ class RepositoryDetailViewModelTest {
         viewModel.onSessionChanged(GithubSession.SignedIn(account()))
         advanceUntilIdle()
 
-        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("  main  "))
+        viewModel.onAction(RepositoryDetailAction.SetDefaultBranch("  main  ", confirmation = "openai/codex"))
         advanceUntilIdle()
 
         assertEquals(null, repository.updatedSettings)
@@ -568,7 +603,7 @@ class RepositoryDetailViewModelTest {
         viewModel.onAction(RepositoryDetailAction.ToggleWatch)
         viewModel.onAction(RepositoryDetailAction.Fork)
         viewModel.onAction(RepositoryDetailAction.UpdateTopics(listOf("old-account")))
-        viewModel.onAction(RepositoryDetailAction.SetArchived(isArchived = true))
+        viewModel.onAction(RepositoryDetailAction.SetArchived(isArchived = true, confirmation = "openai/codex"))
         runCurrent()
         assertTrue(viewModel.state.value.isUpdatingStar)
         assertTrue(viewModel.state.value.isUpdatingWatch)
@@ -691,8 +726,8 @@ class RepositoryDetailViewModelTest {
         override suspend fun webhooks(owner: String, name: String, page: Int, perPage: Int) =
             Result.success(GithubPage<GithubRepositoryWebhook>(emptyList(), null))
         override suspend fun webhookDeliveries(
-            owner: String, name: String, id: Long, page: Int, perPage: Int
-        ): Result<GithubPage<GithubWebhookDelivery>> = Result.failure(UnsupportedOperationException())
+            owner: String, name: String, id: Long, cursor: String?, perPage: Int
+        ): Result<GithubWebhookDeliveriesPage> = Result.failure(UnsupportedOperationException())
         override suspend fun redeliverWebhook(owner: String, name: String, id: Long, deliveryId: Long): Result<Unit> =
             Result.failure(UnsupportedOperationException())
         override suspend fun updateWebhook(

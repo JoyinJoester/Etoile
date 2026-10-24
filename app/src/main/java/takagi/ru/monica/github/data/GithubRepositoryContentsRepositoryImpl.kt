@@ -43,7 +43,7 @@ class GithubRepositoryContentsRepositoryImpl(
             }.toString().toRequestBody("application/json".toMediaType())
             val builder = requests.builder(contentsEndpoint(owner, name, change.path, null))
             val request = (if (change.content == null) builder.delete(payload) else builder.put(payload)).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     val value = json.parseToJsonElement(response.body?.string().orEmpty()).jsonObject
@@ -63,7 +63,7 @@ class GithubRepositoryContentsRepositoryImpl(
                 .addPathSegment("commits").addPathSegment(normalizedRef)
                 .build().toString()
             val request = requests.optionalBuilder(url).get().build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 json.parseToJsonElement(response.body?.string().orEmpty())
                     .jsonObject.getValue("sha").jsonPrimitive.content
@@ -107,7 +107,7 @@ class GithubRepositoryContentsRepositoryImpl(
             url.addPathSegment(branch).addPathSegment("rename")
             val body = buildJsonObject { put("new_name", newName) }.toString().toRequestBody("application/json".toMediaType())
             val request = requests.builder(url.build().toString()).post(body).build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 val value = json.parseToJsonElement(response.body?.string().orEmpty()).jsonObject
                 cacheStore.invalidateAfter {
@@ -228,12 +228,12 @@ class GithubRepositoryContentsRepositoryImpl(
                 .header("Accept", "application/vnd.github.v3+json")
                 .get()
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 val metadata = json.parseToJsonElement(response.body?.string().orEmpty()).jsonObject
                 val size = metadata["size"]?.jsonPrimitive?.longOrNull ?: 0L
                 val sha = metadata["sha"]?.jsonPrimitive?.contentOrNull
-                if (size > maxTextFileBytes) return@use GithubFileContent.TooLarge
+                if (size > maxTextFileBytes) return@readGithubResponse GithubFileContent.TooLarge
                 val encoded = metadata["content"]?.jsonPrimitive?.contentOrNull
                 val bytes = encoded?.stripBase64LineBreaks()?.let { Base64.getDecoder().decode(it) }
                 when {
@@ -278,23 +278,23 @@ class GithubRepositoryContentsRepositoryImpl(
         require(COMMIT_SHA.matches(sha)) { "Invalid base commit" }
     }
 
-    private fun postRef(owner: String, name: String, fullRef: String, sha: String): JsonObject {
+    private suspend fun postRef(owner: String, name: String, fullRef: String, sha: String): JsonObject {
         val payload = buildJsonObject {
             put("ref", fullRef); put("sha", sha)
         }.toString().toRequestBody("application/json".toMediaType())
         val request = requests.builder(refCreateEndpoint(owner, name)).post(payload).build()
-        client.newCall(request).execute().use { response ->
+        return client.readGithubResponse(request) { response ->
             if (!response.isSuccessful) throw GithubApiException.of(response)
-            return json.parseToJsonElement(response.body?.string().orEmpty()).jsonObject
+            json.parseToJsonElement(response.body?.string().orEmpty()).jsonObject
         }
     }
 
-    private fun deleteRef(owner: String, name: String, kind: String, refName: String) {
+    private suspend fun deleteRef(owner: String, name: String, kind: String, refName: String) {
         val builder = baseUrl.toHttpUrl().newBuilder().addPathSegment("repos").addPathSegment(owner)
             .addPathSegment(name).addPathSegment("git").addPathSegment("refs").addPathSegment(kind)
         refName.split('/').forEach(builder::addPathSegment)
         val request = requests.builder(builder.build().toString()).delete().build()
-        client.newCall(request).execute().use { response ->
+        client.readGithubResponse(request) { response ->
             if (!response.isSuccessful) throw GithubApiException.of(response)
             cacheStore.invalidateAfter { Unit }
         }

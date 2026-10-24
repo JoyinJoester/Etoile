@@ -1,5 +1,7 @@
 package takagi.ru.monica.github.feature.pullrequest
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import androidx.lifecycle.SavedStateHandle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -11,6 +13,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -41,6 +44,12 @@ import takagi.ru.monica.github.domain.GithubPullRequestReviewDraft
 import takagi.ru.monica.github.domain.GithubPullRequestState
 import takagi.ru.monica.github.domain.GithubPullRequestsRepository
 import takagi.ru.monica.github.domain.GithubReviewEvent
+import takagi.ru.monica.github.domain.GithubReviewCommentReplyDraft
+import takagi.ru.monica.github.domain.GithubReviewLineComment
+import takagi.ru.monica.github.domain.GithubReviewSubmissionDraft
+import takagi.ru.monica.github.domain.GithubDiffSide
+import takagi.ru.monica.github.domain.GithubReviewThreadStatus
+import takagi.ru.monica.github.domain.GithubReviewThreadPage
 import takagi.ru.monica.github.domain.GithubReviewState
 import takagi.ru.monica.github.domain.GithubReactionContent
 import takagi.ru.monica.github.domain.GithubReactionToggle
@@ -57,6 +66,27 @@ import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PullRequestsViewModelTest {
+    @Test fun switchingAccountHidesPreviousPullRequestAndScopesTextDrafts() = runTest(dispatcher) {
+        val vm = replyViewModel(FakePullRequestsRepository())
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        vm.onAction(PullRequestDetailAction.CommentChanged("Private account A comment"))
+        vm.onAction(PullRequestDetailAction.ReviewBodyChanged("Private account A review"))
+        assertTrue(vm.state.value.pullRequest != null)
+        vm.onSessionChanged(signedInSession("reader", 2))
+        assertNull(vm.state.value.pullRequest)
+        assertTrue(vm.state.value.files.isEmpty())
+        assertTrue(vm.state.value.reviews.isEmpty())
+        assertTrue(vm.state.value.comments.isEmpty())
+        assertEquals("", vm.state.value.commentDraft)
+        assertEquals("", vm.state.value.reviewBody)
+        advanceUntilIdle()
+        vm.onSessionChanged(signedInSession("reviewer"))
+        assertEquals("Private account A comment", vm.state.value.commentDraft)
+        assertEquals("Private account A review", vm.state.value.reviewBody)
+        advanceUntilIdle()
+    }
+
     private val dispatcher = StandardTestDispatcher()
 
     @Before
@@ -468,7 +498,9 @@ class PullRequestsViewModelTest {
 
         details.viewerRole = GithubCollaboratorRole.READ
         viewModel.onSessionChanged(signedInSession("reader", 2))
-        assertEquals("Old review", viewModel.state.value.reviewBody)
+        assertEquals("", viewModel.state.value.reviewBody)
+        assertNull(viewModel.state.value.pullRequest)
+        assertTrue(viewModel.state.value.reviews.isEmpty())
         viewModel.onAction(PullRequestDetailAction.ReviewBodyChanged("Current review draft"))
         advanceUntilIdle()
         val current = viewModel.state.value
@@ -503,7 +535,9 @@ class PullRequestsViewModelTest {
 
         details.viewerRole = GithubCollaboratorRole.READ
         viewModel.onSessionChanged(signedInSession("reader", 2))
-        assertEquals("Old account draft", viewModel.state.value.commentDraft)
+        assertEquals("", viewModel.state.value.commentDraft)
+        assertNull(viewModel.state.value.pullRequest)
+        assertTrue(viewModel.state.value.comments.isEmpty())
         assertFalse(viewModel.state.value.isSubmittingComment)
         viewModel.onAction(PullRequestDetailAction.CommentChanged("New account draft"))
         viewModel.onAction(PullRequestDetailAction.SubmitComment)
@@ -528,6 +562,664 @@ class PullRequestsViewModelTest {
         assertFalse(viewModel.state.value.commentSubmitError)
     }
 
+    @Test
+    fun reviewReplyUsesRootThreadAndOnlyServerResponseIsAdded() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val root = repository.reviewComments("openai", "codex", 1, 1, 30).getOrThrow().items.single()
+        val existingReply = root.copy(id = 902, inReplyToId = root.id)
+        val serverReply = root.copy(id = 903, inReplyToId = root.id, body = "Server reply", author = user("joyins"))
+        repository.replyResponse = { Result.success(serverReply) }
+        val threads = object : GithubPullRequestsRepository by repository {
+            override suspend fun reviewComments(owner: String, name: String, number: Int, page: Int, perPage: Int) =
+                Result.success(GithubPage(listOf(existingReply), null))
+        }
+        val saved = SavedStateHandle()
+        val viewModel = replyViewModel(threads, saved)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        val conversation = viewModel.state.value.comments
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(existingReply.id))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("  Sent reply  "))
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        advanceUntilIdle()
+
+        assertEquals(root.id, repository.replyRequests.single().threadId)
+        assertEquals("Sent reply", repository.replyRequests.single().body)
+        assertEquals(listOf(existingReply, serverReply), viewModel.state.value.reviewComments)
+        assertEquals(conversation, viewModel.state.value.comments)
+        assertTrue(viewModel.state.value.reviewReply.sent)
+        assertFalse(viewModel.state.value.reviewReply.isEditorOpen)
+        assertEquals("", viewModel.state.value.reviewReply.body)
+        assertTrue(saved.keys().isEmpty())
+        assertFalse(viewModel.state.value.reviewThreads.single().hasRoot)
+    }
+
+    @Test
+    fun reviewReplyFailureRetainsDraftAndRequiresExplicitRetry() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        repository.replyResponse = { Result.failure(IllegalStateException("denied")) }
+        val viewModel = replyViewModel(repository)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        assertTrue(viewModel.state.value.reviewReply.validationError)
+        assertTrue(repository.replyRequests.isEmpty())
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Draft"))
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        advanceUntilIdle()
+        assertTrue(viewModel.state.value.reviewReply.submitError)
+        assertEquals("Draft", viewModel.state.value.reviewReply.body)
+        assertEquals(901L, viewModel.state.value.reviewReply.threadId)
+        assertTrue(viewModel.state.value.reviewReply.isEditorOpen)
+        viewModel.onAction(PullRequestDetailAction.CloseReviewReply)
+        viewModel.onAction(PullRequestDetailAction.ResumeReviewReply)
+        advanceUntilIdle()
+        assertEquals(1, repository.replyRequests.size)
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        advanceUntilIdle()
+        assertEquals(2, repository.replyRequests.size)
+    }
+
+    @Test
+    fun reviewReplyIsSingleFlightAndSubmissionPreventsEditingOrClosing() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubPullRequestReviewComment>()
+        repository.replyResponse = { pending.await() }
+        val viewModel = replyViewModel(repository)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        val root = viewModel.state.value.reviewComments.single()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(root.id))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Draft"))
+        repeat(2) { viewModel.onAction(PullRequestDetailAction.SubmitReviewReply) }
+        runCurrent()
+        viewModel.onAction(PullRequestDetailAction.CloseReviewReply)
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Replacement"))
+        assertEquals(1, repository.replyRequests.size)
+        assertEquals("Draft", viewModel.state.value.reviewReply.body)
+        assertTrue(viewModel.state.value.reviewReply.isEditorOpen)
+        pending.complete(Result.success(root.copy(id = 902, inReplyToId = root.id)))
+        advanceUntilIdle()
+        assertFalse(viewModel.state.value.reviewReply.isSubmitting)
+    }
+
+    @Test
+    fun reviewReplyRejectsSignedOutUnknownTargetsAndLockedPullRequest() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val viewModel = replyViewModel(repository)
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        assertFalse(viewModel.state.value.reviewReply.isEditorOpen)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(999))
+        assertFalse(viewModel.state.value.reviewReply.isEditorOpen)
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Draft before lock"))
+        viewModel.onAction(PullRequestDetailAction.ToggleLock)
+        advanceUntilIdle()
+        assertFalse(viewModel.state.value.canReplyToReview)
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        advanceUntilIdle()
+        assertTrue(repository.replyRequests.isEmpty())
+        assertEquals("Draft before lock", viewModel.state.value.reviewReply.body)
+    }
+
+    @Test
+    fun changingReviewThreadRequiresDiscardConfirmationAndCancelKeepsDraft() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val root = repository.reviewComments("openai", "codex", 1, 1, 30).getOrThrow().items.single()
+        val threads = object : GithubPullRequestsRepository by repository {
+            override suspend fun reviewComments(owner: String, name: String, number: Int, page: Int, perPage: Int) =
+                Result.success(GithubPage(listOf(root, root.copy(id = 910)), null))
+        }
+        val viewModel = replyViewModel(threads)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Keep me"))
+        viewModel.onAction(PullRequestDetailAction.CloseReviewReply)
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(910))
+        assertEquals(910L, viewModel.state.value.reviewReply.pendingThreadId)
+        assertEquals(901L, viewModel.state.value.reviewReply.threadId)
+        viewModel.onAction(PullRequestDetailAction.CancelReplaceReviewReply)
+        assertEquals("Keep me", viewModel.state.value.reviewReply.body)
+        assertEquals(null, viewModel.state.value.reviewReply.pendingThreadId)
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(910))
+        viewModel.onAction(PullRequestDetailAction.ConfirmReplaceReviewReply)
+        assertEquals(910L, viewModel.state.value.reviewReply.threadId)
+        assertEquals("", viewModel.state.value.reviewReply.body)
+        assertTrue(viewModel.state.value.reviewReply.isEditorOpen)
+        assertTrue(repository.replyRequests.isEmpty())
+    }
+
+    @Test
+    fun reviewReplyDraftsRestorePerAccountWithoutRestoringPendingPost() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubPullRequestReviewComment>()
+        repository.replyResponse = { pending.await() }
+        val saved = SavedStateHandle()
+        val viewModel = replyViewModel(repository, saved)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("First account"))
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        runCurrent()
+        val snapshot = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        val restored = replyViewModel(repository, snapshot)
+        restored.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        assertEquals("First account", restored.state.value.reviewReply.body)
+        assertTrue(restored.state.value.reviewReply.isEditorOpen)
+        assertFalse(restored.state.value.reviewReply.isSubmitting)
+        assertEquals(null, restored.state.value.reviewReply.pendingThreadId)
+        assertEquals(1, repository.replyRequests.size)
+        restored.onSessionChanged(signedInSession("reader", 2))
+        advanceUntilIdle()
+        assertEquals(null, restored.state.value.reviewReply.threadId)
+        restored.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        restored.onAction(PullRequestDetailAction.ReviewReplyChanged("Second account"))
+        restored.onAction(PullRequestDetailAction.CloseReviewReply)
+        restored.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        assertEquals("First account", restored.state.value.reviewReply.body)
+        restored.onSessionChanged(GithubSession.SignedOut)
+        assertEquals(null, restored.state.value.reviewReply.threadId)
+        restored.onSessionChanged(signedInSession("reader", 2))
+        advanceUntilIdle()
+        assertEquals("Second account", restored.state.value.reviewReply.body)
+        assertFalse(restored.state.value.reviewReply.isEditorOpen)
+        pending.complete(Result.failure(IllegalStateException("failed")))
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun oldAccountsReviewReplySuccessCannotChangeNewAccountsDraft() = verifyOldReviewReplyIgnored(false)
+
+    @Test
+    fun oldAccountsReviewReplyFailureCannotChangeNewAccountsDraft() = verifyOldReviewReplyIgnored(true)
+
+    @Test
+    fun restoredReviewReplyWaitsForItsTargetAndDoesNotRestoreDiscardConfirmation() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val root = repository.reviewComments("openai", "codex", 1, 1, 30).getOrThrow().items.single()
+        var visible = listOf(root, root.copy(id = 910))
+        val threads = object : GithubPullRequestsRepository by repository {
+            override suspend fun reviewComments(owner: String, name: String, number: Int, page: Int, perPage: Int) =
+                Result.success(GithubPage(visible, null))
+        }
+        val saved = SavedStateHandle()
+        val viewModel = replyViewModel(threads, saved)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Unsent reply"))
+        viewModel.onAction(PullRequestDetailAction.CloseReviewReply)
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(910))
+        assertEquals(910L, viewModel.state.value.reviewReply.pendingThreadId)
+        visible = emptyList()
+        val restored = replyViewModel(threads, SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) }))
+        restored.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        assertEquals(null, restored.state.value.reviewReply.pendingThreadId)
+        restored.onAction(PullRequestDetailAction.ResumeReviewReply)
+        restored.onAction(PullRequestDetailAction.SubmitReviewReply)
+        advanceUntilIdle()
+        assertTrue(repository.replyRequests.isEmpty())
+        assertEquals("Unsent reply", restored.state.value.reviewReply.body)
+        assertFalse(restored.state.value.hasReplyTarget)
+        visible = listOf(root)
+        restored.onAction(PullRequestDetailAction.RetryReviewComments)
+        advanceUntilIdle()
+        assertTrue(restored.state.value.hasReplyTarget)
+        assertEquals("Unsent reply", restored.state.value.reviewReply.body)
+        assertTrue(repository.replyRequests.isEmpty())
+    }
+
+    private fun verifyOldReviewReplyIgnored(failure: Boolean) = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubPullRequestReviewComment>()
+        repository.replyResponse = { pending.await() }
+        val viewModel = replyViewModel(repository)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        val root = viewModel.state.value.reviewComments.single()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Old account"))
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        runCurrent()
+        viewModel.onSessionChanged(signedInSession("reader", 2))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Current account"))
+        val current = viewModel.state.value
+        pending.complete(if (failure) Result.failure(IllegalStateException("late failure"))
+            else Result.success(root.copy(id = 902, inReplyToId = root.id)))
+        advanceUntilIdle()
+        assertEquals(current, viewModel.state.value)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        assertEquals("Old account", viewModel.state.value.reviewReply.body)
+        assertFalse(viewModel.state.value.reviewReply.isSubmitting)
+    }
+
+    @Test
+    fun lateReviewCommentsPageDoesNotOverwriteConfirmedReplyAndCanBeRetried() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val root = repository.reviewComments("openai", "codex", 1, 1, 30).getOrThrow().items.single()
+        val pending = PendingResult<GithubPage<GithubPullRequestReviewComment>>()
+        var pageTwoRequests = 0
+        val threads = object : GithubPullRequestsRepository by repository {
+            override suspend fun reviewComments(owner: String, name: String, number: Int, page: Int, perPage: Int) =
+                if (page == 1) Result.success(GithubPage(listOf(root), 2))
+                else if (++pageTwoRequests == 1) pending.await()
+                else Result.success(GithubPage(listOf(root.copy(id = 910)), null))
+        }
+        val sent = root.copy(id = 902, inReplyToId = root.id, body = "Confirmed")
+        repository.replyResponse = { Result.success(sent) }
+        val viewModel = replyViewModel(threads)
+        viewModel.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        viewModel.onAction(PullRequestDetailAction.LoadMoreReviewComments)
+        runCurrent()
+        viewModel.onAction(PullRequestDetailAction.OpenReviewReply(901))
+        viewModel.onAction(PullRequestDetailAction.ReviewReplyChanged("Reply"))
+        viewModel.onAction(PullRequestDetailAction.SubmitReviewReply)
+        advanceUntilIdle()
+        val current = viewModel.state.value
+        pending.complete(Result.success(GithubPage(listOf(root.copy(id = 911)), null)))
+        advanceUntilIdle()
+        assertEquals(current, viewModel.state.value)
+        viewModel.onAction(PullRequestDetailAction.LoadMoreReviewComments)
+        advanceUntilIdle()
+        assertEquals(listOf(901L, 902L, 910L), viewModel.state.value.reviewComments.map { it.id })
+        assertEquals(2, pageTwoRequests)
+    }
+
+    @Test
+    fun batchReviewQueuesBothDiffSidesAndPublishesOnceAfterConfirmation() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val saved = SavedStateHandle()
+        val vm = replyViewModel(repository, saved)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        queueLine(vm, GithubDiffSide.LEFT, "  old line  ")
+        queueLine(vm, GithubDiffSide.RIGHT, "new line")
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        workspace(vm, PullRequestReviewWorkspaceAction.Body(" summary "))
+        workspace(vm, PullRequestReviewWorkspaceAction.Event(GithubReviewEvent.REQUEST_CHANGES))
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        assertEquals(ReviewWorkspaceConfirmation.Submit, vm.state.value.reviewWorkspace.confirmation)
+        assertTrue(repository.batchRequests.isEmpty())
+        workspace(vm, PullRequestReviewWorkspaceAction.Cancel)
+        assertEquals(2, vm.state.value.reviewWorkspace.comments.size)
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        repeat(2) { workspace(vm, PullRequestReviewWorkspaceAction.Confirm) }
+        advanceUntilIdle()
+        val draft = repository.batchRequests.single()
+        assertEquals("head-sha", draft.commitSha)
+        assertEquals(listOf(GithubDiffSide.LEFT, GithubDiffSide.RIGHT), draft.comments.map { it.side })
+        assertEquals("old line", draft.comments.first().body)
+        assertEquals("summary", draft.body)
+        assertEquals(GithubReviewEvent.REQUEST_CHANGES, draft.event)
+        assertTrue(repository.lineRequests.isEmpty())
+        assertFalse(vm.state.value.reviewWorkspace.hasDraft)
+        assertTrue(vm.state.value.reviewWorkspace.sent)
+        assertTrue(saved.keys().isEmpty())
+        assertEquals(990L, vm.state.value.reviews.first().id)
+    }
+
+    @Test
+    fun standaloneDiffCommentRejectsUnknownCoordinatesAndUsesServerResponse() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val vm = replyViewModel(repository)
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.RIGHT))
+        assertEquals(null, vm.state.value.reviewWorkspace.editor)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("unknown.kt", 1, GithubDiffSide.RIGHT))
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 999, GithubDiffSide.RIGHT))
+        assertEquals(null, vm.state.value.reviewWorkspace.editor)
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.LEFT))
+        workspace(vm, PullRequestReviewWorkspaceAction.LineBody("Delete line"))
+        repeat(2) { workspace(vm, PullRequestReviewWorkspaceAction.SendLine) }
+        advanceUntilIdle()
+        assertEquals("head-sha", repository.lineRequests.single().first)
+        assertEquals(GithubDiffSide.LEFT, repository.lineRequests.single().second.side)
+        assertEquals("Delete line", vm.state.value.reviewComments.last().body)
+        assertEquals(990L, vm.state.value.reviewComments.last().id)
+        assertFalse(vm.state.value.reviewWorkspace.isLineOpen)
+    }
+
+    @Test
+    fun batchFailureKeepsDraftAndBlocksChangesWhileSending() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubPullRequestReview>()
+        repository.batchResponse = { pending.await() }
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        queueLine(vm, GithubDiffSide.RIGHT, "Keep me")
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        runCurrent()
+        workspace(vm, PullRequestReviewWorkspaceAction.Close)
+        workspace(vm, PullRequestReviewWorkspaceAction.Body("New summary"))
+        workspace(vm, PullRequestReviewWorkspaceAction.Clear)
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        assertTrue(vm.state.value.reviewWorkspace.isOpen)
+        assertEquals("", vm.state.value.reviewWorkspace.body)
+        assertEquals(1, repository.batchRequests.size)
+        pending.complete(Result.failure(IllegalStateException("failed")))
+        advanceUntilIdle()
+        assertTrue(vm.state.value.reviewWorkspace.sendError)
+        assertEquals("Keep me", vm.state.value.reviewWorkspace.comments.single().body)
+        assertFalse(vm.state.value.reviewWorkspace.isSending)
+        assertEquals(null, vm.state.value.reviewWorkspace.confirmation)
+    }
+
+    @Test
+    fun freshPreflightRejectsHeadChangesClosedLockedAndFailedReadsWithoutPosting() = runTest(dispatcher) {
+        val base = pullRequest(1, GithubPullRequestState.OPEN)
+        val snapshots = listOf(Result.success(base.copy(head = base.head.copy(sha = "new-head"))),
+            Result.success(base.copy(isLocked = true)), Result.success(base.copy(state = GithubPullRequestState.CLOSED)),
+            Result.failure(IllegalStateException("offline")))
+        for (snapshot in snapshots) {
+            val repository = FakePullRequestsRepository()
+            repository.snapshotResponse = { snapshot }
+            val vm = replyViewModel(repository)
+            vm.onSessionChanged(signedInSession("reviewer"))
+            advanceUntilIdle()
+            workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.RIGHT))
+            workspace(vm, PullRequestReviewWorkspaceAction.LineBody("Keep me"))
+            workspace(vm, PullRequestReviewWorkspaceAction.SendLine)
+            advanceUntilIdle()
+            assertTrue(repository.lineRequests.isEmpty())
+            assertEquals("Keep me", vm.state.value.reviewWorkspace.editor?.body)
+            assertTrue(vm.state.value.reviewWorkspace.stale || vm.state.value.reviewWorkspace.sendError)
+        }
+    }
+
+    @Test
+    fun batchPreflightRejectsMovedHeadAndOwnApproval() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val base = pullRequest(1, GithubPullRequestState.OPEN)
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        queueLine(vm, GithubDiffSide.RIGHT, "Note")
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        repository.snapshotResponse = { Result.success(base.copy(head = base.head.copy(sha = "moved"))) }
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        advanceUntilIdle()
+        assertTrue(repository.batchRequests.isEmpty())
+        assertEquals(1, vm.state.value.reviewWorkspace.comments.size)
+        assertTrue(vm.state.value.reviewWorkspace.stale)
+        vm.onSessionChanged(signedInSession(base.author.login, 2))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        workspace(vm, PullRequestReviewWorkspaceAction.Event(GithubReviewEvent.APPROVE))
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        assertEquals(null, vm.state.value.reviewWorkspace.confirmation)
+        assertTrue(vm.state.value.reviewWorkspace.validationError)
+    }
+
+    @Test
+    fun draftEditingRemovalAndClearRequireConfirmationAndPreserveUnsentEdits() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        queueLine(vm, GithubDiffSide.RIGHT, "Original")
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        workspace(vm, PullRequestReviewWorkspaceAction.Edit(0))
+        workspace(vm, PullRequestReviewWorkspaceAction.LineBody("Edited"))
+        workspace(vm, PullRequestReviewWorkspaceAction.QueueLine)
+        assertEquals("Edited", vm.state.value.reviewWorkspace.comments.single().body)
+        workspace(vm, PullRequestReviewWorkspaceAction.Remove(0))
+        workspace(vm, PullRequestReviewWorkspaceAction.Cancel)
+        assertEquals(1, vm.state.value.reviewWorkspace.comments.size)
+        workspace(vm, PullRequestReviewWorkspaceAction.Remove(0))
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        assertTrue(vm.state.value.reviewWorkspace.comments.isEmpty())
+        workspace(vm, PullRequestReviewWorkspaceAction.Body("Summary"))
+        workspace(vm, PullRequestReviewWorkspaceAction.Clear)
+        workspace(vm, PullRequestReviewWorkspaceAction.Cancel)
+        assertEquals("Summary", vm.state.value.reviewWorkspace.body)
+        workspace(vm, PullRequestReviewWorkspaceAction.Clear)
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        assertFalse(vm.state.value.reviewWorkspace.hasDraft)
+        assertTrue(repository.batchRequests.isEmpty())
+    }
+
+    @Test
+    fun batchDraftRestoresPerAccountWithoutRestoringPostOrConfirmation() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val saved = SavedStateHandle()
+        val pending = PendingResult<GithubPullRequestReview>()
+        repository.batchResponse = { pending.await() }
+        val vm = replyViewModel(repository, saved)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        queueLine(vm, GithubDiffSide.LEFT, "First account")
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        val confirmSnapshot = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        runCurrent()
+        val postSnapshot = SavedStateHandle(saved.keys().associateWith { saved.get<Any?>(it) })
+        for (snapshot in listOf(confirmSnapshot, postSnapshot)) {
+            val restored = replyViewModel(repository, snapshot)
+            restored.onSessionChanged(signedInSession("reviewer"))
+            advanceUntilIdle()
+            assertEquals("First account", restored.state.value.reviewWorkspace.comments.single().body)
+            assertTrue(restored.state.value.reviewWorkspace.isOpen)
+            assertFalse(restored.state.value.reviewWorkspace.isSending)
+            assertEquals(null, restored.state.value.reviewWorkspace.confirmation)
+            restored.onSessionChanged(signedInSession("other", 2))
+            advanceUntilIdle()
+            assertFalse(restored.state.value.reviewWorkspace.hasDraft)
+            restored.onSessionChanged(signedInSession("reviewer"))
+            advanceUntilIdle()
+            assertEquals("First account", restored.state.value.reviewWorkspace.comments.single().body)
+        }
+        assertEquals(1, repository.batchRequests.size)
+        pending.complete(Result.failure(IllegalStateException("failed")))
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun lineDraftTargetReplacementRequiresConfirmationAndCancelKeepsText() = runTest(dispatcher) {
+        val vm = replyViewModel(FakePullRequestsRepository())
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.LEFT))
+        workspace(vm, PullRequestReviewWorkspaceAction.LineBody("Unsent"))
+        workspace(vm, PullRequestReviewWorkspaceAction.CloseLine)
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.RIGHT))
+        workspace(vm, PullRequestReviewWorkspaceAction.Cancel)
+        assertEquals("Unsent", vm.state.value.reviewWorkspace.editor?.body)
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.RIGHT))
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        assertEquals(GithubDiffSide.RIGHT, vm.state.value.reviewWorkspace.editor?.side)
+        assertEquals("", vm.state.value.reviewWorkspace.editor?.body)
+    }
+
+    @Test
+    fun threadResolveRequiresLoadedPermissionsConfirmationAndSingleFlight() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubReviewThreadStatus>()
+        repository.resolveResponse = { _, _ -> pending.await() }
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("unknown", true))
+        assertEquals(null, vm.state.value.reviewWorkspace.confirmation)
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("thread-1", true))
+        workspace(vm, PullRequestReviewWorkspaceAction.Cancel)
+        assertTrue(repository.resolveRequests.isEmpty())
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("thread-1", true))
+        repeat(2) { workspace(vm, PullRequestReviewWorkspaceAction.Confirm) }
+        runCurrent()
+        assertEquals(listOf("thread-1" to true), repository.resolveRequests)
+        pending.complete(Result.success(GithubReviewThreadStatus("thread-1", 901, true, false, false, true)))
+        advanceUntilIdle()
+        assertTrue(vm.state.value.reviewWorkspace.threads.single().isResolved)
+        repository.resolveResponse = { _, _ -> Result.failure(IllegalStateException("denied")) }
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("thread-1", false))
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.reviewWorkspace.threads.single().isResolved)
+        assertTrue("thread-1" in vm.state.value.reviewWorkspace.threadErrors)
+        repository.threadsResponse = { Result.success(GithubReviewThreadPage(listOf(GithubReviewThreadStatus("thread-1", 901, true, false, false, false)), null)) }
+        workspace(vm, PullRequestReviewWorkspaceAction.LoadThreads())
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("thread-1", false))
+        assertEquals(null, vm.state.value.reviewWorkspace.confirmation)
+        assertEquals(2, repository.resolveRequests.size)
+    }
+
+    @Test
+    fun lateBatchResultCannotEraseNextAccountsDraft() = verifyLateWorkspaceWrite(batch = true)
+
+    @Test
+    fun lateLineFailureCannotFailNextAccountsDraft() = verifyLateWorkspaceWrite(batch = false)
+
+    private fun verifyLateWorkspaceWrite(batch: Boolean) = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val review = PendingResult<GithubPullRequestReview>()
+        val line = PendingResult<GithubPullRequestReviewComment>()
+        repository.batchResponse = { review.await() }
+        repository.lineResponse = { line.await() }
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, GithubDiffSide.RIGHT))
+        workspace(vm, PullRequestReviewWorkspaceAction.LineBody("Old account"))
+        if (batch) {
+            workspace(vm, PullRequestReviewWorkspaceAction.QueueLine)
+            workspace(vm, PullRequestReviewWorkspaceAction.Open)
+            workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+            workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        } else workspace(vm, PullRequestReviewWorkspaceAction.SendLine)
+        runCurrent()
+        vm.onSessionChanged(signedInSession("new", 2))
+        advanceUntilIdle()
+        queueLine(vm, GithubDiffSide.LEFT, "New account")
+        val current = vm.state.value
+        if (batch) review.complete(Result.success(GithubPullRequestReview(990, "Old", GithubReviewState.COMMENTED, user("reviewer"), null, "")))
+        else line.complete(Result.failure(IllegalStateException("late")))
+        advanceUntilIdle()
+        assertEquals(current, vm.state.value)
+        assertEquals("New account", vm.state.value.reviewWorkspace.comments.single().body)
+    }
+
+    @Test
+    fun lateThreadReadCannotUndoResolvedState() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubReviewThreadPage>()
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        val old = vm.state.value.reviewWorkspace.threads.single()
+        repository.threadsResponse = { pending.await() }
+        workspace(vm, PullRequestReviewWorkspaceAction.LoadThreads())
+        runCurrent()
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("thread-1", true))
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        advanceUntilIdle()
+        assertTrue(vm.state.value.reviewWorkspace.threads.single().isResolved)
+        pending.complete(Result.success(GithubReviewThreadPage(listOf(old), null)))
+        advanceUntilIdle()
+        assertTrue(vm.state.value.reviewWorkspace.threads.single().isResolved)
+    }
+
+    private fun workspace(vm: PullRequestDetailViewModel, action: PullRequestReviewWorkspaceAction) =
+        vm.onAction(PullRequestDetailAction.ReviewWorkspace(action))
+
+    @Test
+    fun threadPaginationRejectsRepeatedCursorsAndKeepsLoadedPermissions() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val one = GithubReviewThreadStatus("thread-1", 901, false, false, true, true)
+        val two = one.copy(id = "thread-2", rootCommentId = 902)
+        repository.threadsResponse = { cursor -> Result.success(GithubReviewThreadPage(if (cursor == null) listOf(one) else listOf(two), "next")) }
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.LoadThreads(reset = false))
+        advanceUntilIdle()
+        assertTrue(vm.state.value.reviewWorkspace.threadsError)
+        assertEquals(listOf(one), vm.state.value.reviewWorkspace.threads)
+        repository.threadsResponse = { Result.success(GithubReviewThreadPage(listOf(two), null)) }
+        workspace(vm, PullRequestReviewWorkspaceAction.LoadThreads(reset = false))
+        advanceUntilIdle()
+        assertEquals(setOf("thread-1", "thread-2"), vm.state.value.reviewWorkspace.threads.map { it.id }.toSet())
+        assertEquals(null, vm.state.value.reviewWorkspace.nextCursor)
+    }
+
+    @Test
+    fun oldAccountsLateThreadMutationCannotGrantTheNextAccountsPermissions() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val pending = PendingResult<GithubReviewThreadStatus>()
+        repository.resolveResponse = { _, _ -> pending.await() }
+        val vm = replyViewModel(repository)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        workspace(vm, PullRequestReviewWorkspaceAction.Resolve("thread-1", true))
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        runCurrent()
+        repository.threadsResponse = { Result.success(GithubReviewThreadPage(listOf(GithubReviewThreadStatus("thread-1", 901, false, false, false, false)), null)) }
+        vm.onSessionChanged(signedInSession("reader", 2))
+        advanceUntilIdle()
+        val current = vm.state.value
+        pending.complete(Result.success(GithubReviewThreadStatus("thread-1", 901, true, false, true, true)))
+        advanceUntilIdle()
+        assertEquals(current, vm.state.value)
+        assertFalse(vm.state.value.reviewWorkspace.threads.single().viewerCanResolve)
+        assertTrue(vm.state.value.reviewWorkspace.threadBusy.isEmpty())
+    }
+
+    @Test
+    fun oldReviewPageCannotChangeJustPublishedBatchReview() = runTest(dispatcher) {
+        val repository = FakePullRequestsRepository()
+        val oldPage = PendingResult<GithubPage<GithubPullRequestReview>>()
+        var calls = 0
+        val reads = object : GithubPullRequestsRepository by repository {
+            override suspend fun reviews(owner: String, name: String, number: Int, page: Int, perPage: Int): Result<GithubPage<GithubPullRequestReview>> =
+                if (++calls == 1) repository.reviews(owner, name, number, page, perPage).map { it.copy(nextPage = 2) } else oldPage.await()
+        }
+        val vm = replyViewModel(reads)
+        vm.onSessionChanged(signedInSession("reviewer"))
+        advanceUntilIdle()
+        vm.onAction(PullRequestDetailAction.LoadMoreReviews)
+        runCurrent()
+        queueLine(vm, GithubDiffSide.RIGHT, "New review")
+        workspace(vm, PullRequestReviewWorkspaceAction.Open)
+        workspace(vm, PullRequestReviewWorkspaceAction.Submit)
+        workspace(vm, PullRequestReviewWorkspaceAction.Confirm)
+        advanceUntilIdle()
+        assertEquals(990L, vm.state.value.reviews.first().id)
+        val confirmed = vm.state.value.reviews
+        oldPage.complete(Result.success(GithubPage(listOf(confirmed.first().copy(id = 991)), null)))
+        advanceUntilIdle()
+        assertEquals(990L, vm.state.value.reviews.first().id)
+        assertEquals(confirmed, vm.state.value.reviews)
+    }
+
+    private fun queueLine(vm: PullRequestDetailViewModel, side: GithubDiffSide, text: String) {
+        workspace(vm, PullRequestReviewWorkspaceAction.OpenLine("app/Main.kt", 1, side))
+        workspace(vm, PullRequestReviewWorkspaceAction.LineBody(text))
+        workspace(vm, PullRequestReviewWorkspaceAction.QueueLine)
+    }
+
+    private fun replyViewModel(repository: GithubPullRequestsRepository, saved: SavedStateHandle = SavedStateHandle()) =
+        PullRequestDetailViewModel("openai", "codex", 1, repository, FakeIssuesRepository(), TestGithubRepositoryDetailsRepository(), saved)
+
     private class PendingResult<T> {
         private var continuation: Continuation<Result<T>>? = null
 
@@ -542,6 +1234,27 @@ class PullRequestsViewModelTest {
         }
     }
 
+    @Test
+    fun privatePullRequestListCannotReturnFromOldAccountAfterBackstackSwitch() = runTest(dispatcher) {
+        val first = signedInSession("same", 1)
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val base = FakePullRequestsRepository()
+        lateinit var result: Continuation<Result<GithubPage<GithubPullRequest>>>
+        val repository = object : GithubPullRequestsRepository by base {
+            override suspend fun pullRequests(owner: String, name: String, query: GithubPullRequestListQuery, page: Int, perPage: Int): Result<GithubPage<GithubPullRequest>> =
+                if ((sessions.value as? GithubSession.SignedIn)?.account?.id == 1L) suspendCoroutine { result = it }
+                else Result.failure(IllegalStateException("private pull requests denied"))
+        }
+        val vm = PullRequestsViewModel("o", "r", repository, sessions)
+        runCurrent()
+        sessions.value = signedInSession("same", 2)
+        runCurrent()
+        result.resume(base.pullRequests("o", "r", GithubPullRequestListQuery(GithubPullRequestState.OPEN), 1, 30))
+        runCurrent()
+        assertEquals(2L, vm.state.value.viewerAccountId)
+        assertTrue(vm.state.value.items.isEmpty())
+    }
+
     private class FakePullRequestsRepository : GithubPullRequestsRepository {
         val pullRequestPages = mutableListOf<Int>()
         val pullRequestQueries = mutableListOf<GithubPullRequestListQuery>()
@@ -549,6 +1262,46 @@ class PullRequestsViewModelTest {
         var updatedDraft: GithubPullRequestDraft? = null
         var requestedReviewersUpdate: GithubRequestedReviewersUpdate? = null
         var mergeDraft: GithubMergeDraft? = null
+        var snapshotResponse: suspend () -> Result<GithubPullRequest> = { Result.success(pullRequest(1, GithubPullRequestState.OPEN)) }
+        val lineRequests = mutableListOf<Pair<String, GithubReviewLineComment>>()
+        val batchRequests = mutableListOf<GithubReviewSubmissionDraft>()
+        val resolveRequests = mutableListOf<Pair<String, Boolean>>()
+        var lineResponse: suspend (GithubReviewLineComment) -> Result<GithubPullRequestReviewComment> = { comment ->
+            Result.success(reviewComments("openai", "codex", 1, 1, 30).getOrThrow().items.single().copy(id = 990, body = comment.body))
+        }
+        var batchResponse: suspend (GithubReviewSubmissionDraft) -> Result<GithubPullRequestReview> = { draft ->
+            Result.success(GithubPullRequestReview(990, draft.body.orEmpty(), GithubReviewState.COMMENTED, user("reviewer"), null, "https://github.com/openai/codex/pull/1"))
+        }
+        var threadsResponse: suspend (String?) -> Result<GithubReviewThreadPage> = {
+            Result.success(GithubReviewThreadPage(listOf(GithubReviewThreadStatus("thread-1", 901, false, false, true, true)), null))
+        }
+        var resolveResponse: suspend (String, Boolean) -> Result<GithubReviewThreadStatus> = { id, resolved ->
+            Result.success(GithubReviewThreadStatus(id, 901, resolved, false, !resolved, resolved))
+        }
+
+        override suspend fun reviewSnapshot(owner: String, name: String, number: Int) = snapshotResponse()
+        override suspend fun createLineComment(owner: String, name: String, number: Int, commitSha: String, comment: GithubReviewLineComment): Result<GithubPullRequestReviewComment> {
+            lineRequests += commitSha to comment
+            return lineResponse(comment)
+        }
+        override suspend fun submitReviewBatch(owner: String, name: String, number: Int, draft: GithubReviewSubmissionDraft): Result<GithubPullRequestReview> {
+            batchRequests += draft
+            return batchResponse(draft)
+        }
+        override suspend fun reviewThreadStatuses(owner: String, name: String, number: Int, cursor: String?) = threadsResponse(cursor)
+        override suspend fun setReviewThreadResolved(threadId: String, resolved: Boolean): Result<GithubReviewThreadStatus> {
+            resolveRequests += threadId to resolved
+            return resolveResponse(threadId, resolved)
+        }
+        val replyRequests = mutableListOf<GithubReviewCommentReplyDraft>()
+        var replyResponse: suspend (GithubReviewCommentReplyDraft) -> Result<GithubPullRequestReviewComment> = {
+            Result.failure(UnsupportedOperationException())
+        }
+
+        override suspend fun replyToReviewComment(owner: String, name: String, number: Int, draft: GithubReviewCommentReplyDraft): Result<GithubPullRequestReviewComment> {
+            replyRequests += draft
+            return replyResponse(draft)
+        }
 
         override suspend fun pullRequests(
             owner: String,
@@ -586,7 +1339,7 @@ class PullRequestsViewModelTest {
                             additions = 1,
                             deletions = 1,
                             changes = 2,
-                            patch = "+new",
+                            patch = "@@ -1 +1 @@\n-old\n+new",
                             blobUrl = "https://github.com/openai/codex/blob/head/app/Main.kt",
                             rawUrl = null
                         )

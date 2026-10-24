@@ -7,11 +7,18 @@ import android.content.pm.PackageManager
 import androidx.core.content.FileProvider
 import androidx.core.content.pm.PackageInfoCompat
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import takagi.ru.monica.github.domain.GithubApkDetails
 import java.io.File
+import java.io.IOException
+import java.security.MessageDigest
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 商店的 APK 下载/解析/安装链路：
@@ -21,8 +28,9 @@ import java.io.File
  */
 class GithubApkManager(
     private val context: Context,
-    private val client: OkHttpClient = GithubNetwork.client.newBuilder().callTimeout(10, java.util.concurrent.TimeUnit.MINUTES).readTimeout(45, java.util.concurrent.TimeUnit.SECONDS).build()
+    private val client: OkHttpClient = GithubNetwork.client.newBuilder().followSslRedirects(false).callTimeout(10, java.util.concurrent.TimeUnit.MINUTES).readTimeout(45, java.util.concurrent.TimeUnit.SECONDS).build()
 ) {
+    private val downloadLocks = ConcurrentHashMap<String, Mutex>()
     val supportedAbis: List<String> get() = android.os.Build.SUPPORTED_ABIS.toList()
 
     fun installedVersionCode(packageName: String): Long? = runCatching {
@@ -33,35 +41,66 @@ class GithubApkManager(
         get() = File(context.filesDir, "apks").apply { mkdirs() }
 
     /** 下载 APK,[onProgress] 回报 0f..1f(按 1% 步进节流,避免高频重组)。 */
-    suspend fun download(url: String, fileName: String, onProgress: (Float) -> Unit): File =
+    suspend fun download(url: String, fileName: String, expectedSha256: String? = null, onProgress: (Float) -> Unit): File =
         withContext(Dispatchers.IO) {
             val request = Request.Builder().url(url).build()
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) throw GithubApiException.of(response)
-                val body = response.body ?: throw GithubApiException.of(response)
-                val total = body.contentLength()
+            require(request.url.isHttps && request.url.username.isEmpty() && request.url.password.isEmpty())
+            require(fileName.isNotBlank() && fileName.length <= 240 && fileName !in setOf(".", "..") &&
+                fileName.none { it == '/' || it == '\\' || it.isISOControl() })
+            require(expectedSha256 == null || expectedSha256.matches(Regex("[0-9a-fA-F]{64}")))
+            downloadLocks.getOrPut(fileName) { Mutex() }.withLock {
                 val target = File(apksDir, fileName)
-                body.byteStream().use { input ->
-                    target.outputStream().use { output ->
-                        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-                        var read: Int
-                        var written = 0L
-                        var lastReported = 0f
-                        while (input.read(buffer).also { read = it } != -1) {
-                            output.write(buffer, 0, read)
-                            written += read
-                            if (total > 0) {
-                                val fraction = (written.toFloat() / total).coerceIn(0f, 1f)
-                                if (fraction - lastReported >= PROGRESS_STEP || fraction >= 1f) {
-                                    lastReported = fraction
-                                    onProgress(fraction)
+                val staged = File.createTempFile("download-", ".part", apksDir)
+                val context = currentCoroutineContext()
+                try {
+                    client.newCall(request).readAuthResponse { response ->
+                        try {
+                            context.ensureActive()
+                            if (!response.isSuccessful) throw GithubApiException.of(response)
+                            val body = response.body ?: throw GithubApiException.of(response)
+                            val total = body.contentLength()
+                            val digest = expectedSha256?.let { MessageDigest.getInstance("SHA-256") }
+                            body.byteStream().use { input ->
+                                staged.outputStream().use { output ->
+                                    val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+                                    var written = 0L
+                                    var lastReported = 0f
+                                    while (true) {
+                                        context.ensureActive()
+                                        val read = input.read(buffer)
+                                        if (read == -1) break
+                                        output.write(buffer, 0, read)
+                                        digest?.update(buffer, 0, read)
+                                        written += read
+                                        if (total > 0) {
+                                            val fraction = (written.toFloat() / total).coerceIn(0f, 1f)
+                                            if (fraction - lastReported >= PROGRESS_STEP && fraction < 1f) {
+                                                lastReported = fraction
+                                                onProgress(fraction)
+                                            }
+                                        }
+                                    }
+                                    if (written == 0L || (total >= 0 && written != total)) throw IOException("Incomplete APK download")
+                                    output.flush()
                                 }
                             }
+                            context.ensureActive()
+                            if (digest != null && !digest.digest().joinToString("") { "%02x".format(it) }.equals(expectedSha256, true)) {
+                                throw IOException("APK checksum mismatch")
+                            }
+                        } catch (error: Exception) {
+                            // The callback may finish after cancellation has already resumed the caller.
+                            staged.delete()
+                            throw error
                         }
-                        output.flush()
                     }
+                    context.ensureActive()
+                    check(staged.renameTo(target)) { "Could not commit APK download" }
+                    onProgress(1f)
+                    target
+                } finally {
+                    staged.delete()
                 }
-                target
             }
         }
 

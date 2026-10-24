@@ -3,10 +3,6 @@ package takagi.ru.monica.github
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -66,7 +62,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -84,7 +79,6 @@ import top.yukonga.miuix.kmp.basic.NavigationBarItem as MiuixNavigationBarItem
 import top.yukonga.miuix.kmp.theme.MiuixTheme
 import takagi.ru.monica.data.ColorScheme
 import takagi.ru.monica.github.design.GithubAdaptiveLayout
-import takagi.ru.monica.github.design.GithubExpressiveMotion
 import takagi.ru.monica.github.design.LocalDesignStyle
 import takagi.ru.monica.github.di.GithubAppDependencies
 import takagi.ru.monica.github.data.GithubApkInsightsStore
@@ -523,16 +517,12 @@ internal fun GithubDestinationContent(
         GithubServiceStatusNotices(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
         )
-        val enterTween = GithubExpressiveMotion.standardTween<Float>()
-        val enterOffsetTween = GithubExpressiveMotion.standardTween<IntOffset>()
-        val exitTween = GithubExpressiveMotion.quickTween<Float>()
-        val exitOffsetTween = GithubExpressiveMotion.quickTween<IntOffset>()
         AnimatedContent(
             targetState = destination,
             modifier = Modifier.weight(1f).fillMaxWidth(),
             transitionSpec = {
-                (fadeIn(enterTween) + slideInHorizontally(enterOffsetTween) { it / 12 }) togetherWith
-                    (fadeOut(exitTween) + slideOutHorizontally(exitOffsetTween) { -it / 16 })
+                (GithubNavigationTransitions.tabEnter() togetherWith GithubNavigationTransitions.tabExit())
+                    .using(null)
             },
             label = "githubDestination"
         ) { target ->

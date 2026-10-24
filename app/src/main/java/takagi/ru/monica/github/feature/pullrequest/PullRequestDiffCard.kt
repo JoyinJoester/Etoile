@@ -14,6 +14,9 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -30,12 +33,14 @@ import takagi.ru.monica.R
 import takagi.ru.monica.github.component.GithubOpenOnGithubButton
 import takagi.ru.monica.github.design.GithubExpressiveShapes
 import takagi.ru.monica.github.domain.GithubPullRequestFile
+import takagi.ru.monica.github.domain.GithubDiffSide
 
 @Composable
 internal fun PullRequestDiffCard(
     file: GithubPullRequestFile,
     onOpenExternal: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onLineComment: ((Int, GithubDiffSide) -> Unit)? = null
 ) {
     val diff = remember(file.patch) { file.patch?.let(::parsePullRequestDiff) }
     Surface(
@@ -100,10 +105,29 @@ internal fun PullRequestDiffCard(
                     modifier = Modifier.padding(16.dp)
                 )
             } else {
-                val annotatedDiff = pullRequestDiffAnnotatedString(diff)
-                SelectionContainer {
+                if (onLineComment != null) {
+                    Column(Modifier.background(MaterialTheme.colorScheme.surfaceContainerHighest)) {
+                        diff.lines.forEach { line ->
+                            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp), verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(onClick = { line.oldLine?.let { onLineComment(it, GithubDiffSide.LEFT) } },
+                                    enabled = line.oldLine != null, modifier = Modifier.width(70.dp)) {
+                                    Text(line.oldLine?.let { stringResource(R.string.github_review_left_line, it) } ?: "·")
+                                }
+                                TextButton(onClick = { line.newLine?.let { onLineComment(it, GithubDiffSide.RIGHT) } },
+                                    enabled = line.newLine != null, modifier = Modifier.width(70.dp)) {
+                                    Text(line.newLine?.let { stringResource(R.string.github_review_right_line, it) } ?: "·")
+                                }
+                                SelectionContainer(Modifier.weight(1f)) {
+                                    Text(pullRequestDiffAnnotatedString(PullRequestDiff(listOf(line), false)),
+                                        modifier = Modifier.horizontalScroll(rememberScrollState()).padding(end = 12.dp),
+                                        fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall, softWrap = false)
+                                }
+                            }
+                        }
+                    }
+                } else SelectionContainer {
                     Text(
-                        text = annotatedDiff,
+                        text = pullRequestDiffAnnotatedString(diff),
                         modifier = Modifier
                             .fillMaxWidth()
                             .background(MaterialTheme.colorScheme.surfaceContainerHighest)

@@ -1,0 +1,1443 @@
+{
+  "title": "Etoile · 讨论与审查",
+  "brief": "沿用当前Issue、PR、审查与讨论能力。标题状态先于正文，管理表单按需打开。 基于2026-10-21当前功能优化。示例内容不是实时账户数据。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": true,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "issue",
+      "name": "Issue #128",
+      "x": 0,
+      "y": 0,
+      "bg": "surface",
+      "note": "保留评论入口；标签、成员、里程碑及状态管理进入更多面板。"
+    },
+    {
+      "id": "pull",
+      "name": "PR #130",
+      "x": 1420,
+      "y": 0,
+      "bg": "surface",
+      "note": "保留概览、活动、文件三页签；审查优先，低频管理进入更多。"
+    },
+    {
+      "id": "management",
+      "name": "更多操作",
+      "x": 2840,
+      "y": 0,
+      "bg": "surface",
+      "note": "原生为底部面板，只显示当前用户有权限执行的操作。"
+    },
+    {
+      "id": "issues",
+      "name": "Issue",
+      "x": 4260,
+      "y": 0,
+      "bg": "surface",
+      "note": "状态筛选、列表、分页同一滚动区域，创建入口只出现一次。"
+    },
+    {
+      "id": "pulls",
+      "name": "Pull Request",
+      "x": 0,
+      "y": 1000,
+      "bg": "surface",
+      "note": "状态筛选、列表、分页同一滚动区域，创建入口只出现一次。"
+    },
+    {
+      "id": "discussions",
+      "name": "讨论",
+      "x": 1420,
+      "y": 1000,
+      "bg": "surface",
+      "note": "状态筛选、列表、分页同一滚动区域，创建入口只出现一次。"
+    },
+    {
+      "id": "discussion",
+      "name": "下个版本的方向",
+      "x": 2840,
+      "y": 1000,
+      "bg": "surface",
+      "note": "主题、正文、回复与回复线程逐层阅读。"
+    },
+    {
+      "id": "edit",
+      "name": "编辑内容",
+      "x": 4260,
+      "y": 1000,
+      "bg": "surface",
+      "note": "使用已有独立编辑器，键盘出现时可滚动；草稿与失败输入保留。"
+    },
+    {
+      "id": "comment",
+      "name": "添加评论",
+      "x": 0,
+      "y": 2000,
+      "bg": "surface",
+      "note": "使用已有独立编辑器，键盘出现时可滚动；草稿与失败输入保留。"
+    },
+    {
+      "id": "review",
+      "name": "审查更改",
+      "x": 1420,
+      "y": 2000,
+      "bg": "surface",
+      "note": "代码差异与审查工作区沿用当前实现。审查意见不夹在长列表底部。"
+    },
+    {
+      "id": "merge",
+      "name": "合并 Pull Request",
+      "x": 2840,
+      "y": 2000,
+      "bg": "surface",
+      "note": "与当前合并表单一致，选择方式后再次确认；提交使用所审查的head SHA。"
+    },
+    {
+      "id": "metadata",
+      "name": "标签与负责人",
+      "x": 4260,
+      "y": 2000,
+      "bg": "surface",
+      "note": "多选列表和保存分层，加载失败可重试，保存失败不丢选择。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "issue-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-1-item",
+          "kind": "topAppBar",
+          "label": "Issue #128",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "more_vert",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            },
+            "icon2": {
+              "to": "management",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "issue-2",
+      "x": 16,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-2-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "打开",
+          "checked": true
+        },
+        {
+          "id": "issue-2-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "bug",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "issue-3",
+      "x": 16,
+      "y": 160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-3-item",
+          "kind": "text",
+          "label": "修复 Markdown 图片排版",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "issue-4",
+      "x": 16,
+      "y": 208,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-4-item",
+          "kind": "text",
+          "label": "etoile · 今天 · 6条回复",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "issue-5",
+      "x": 16,
+      "y": 264,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-5-item",
+          "kind": "card",
+          "label": "问题说明",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "README 中的宽图和表格应适配屏幕，代码块允许独立横向滚动。",
+          "noImage": true,
+          "size": 380,
+          "size2": 180,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "issue-6",
+      "x": 16,
+      "y": 484,
+      "axis": "y",
+      "items": [
+        {
+          "id": "issue-6-item-0",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "android-maintainer",
+          "supporting": "可以补充一下出现问题的文件吗？",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "issue-7",
+      "x": 16,
+      "y": 680,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issue-7-item",
+          "kind": "button",
+          "label": "添加评论",
+          "icon": "add_comment",
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "comment",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pull-1",
+      "x": 1420,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-1-item",
+          "kind": "topAppBar",
+          "label": "PR #130",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "more_vert",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            },
+            "icon2": {
+              "to": "management",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pull-2",
+      "x": 1436,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-2-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "打开",
+          "checked": true
+        },
+        {
+          "id": "pull-2-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "等待审查",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "pull-3",
+      "x": 1436,
+      "y": 160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-3-item",
+          "kind": "text",
+          "label": "统一客户端页面信息层级",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "pull-4",
+      "x": 1436,
+      "y": 208,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-4-item",
+          "kind": "text",
+          "label": "feature/layout → main",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "pull-5",
+      "x": 1420,
+      "y": 256,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-5-item",
+          "kind": "tabs",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "tabs": [
+            {
+              "label": "概览"
+            },
+            {
+              "label": "活动"
+            },
+            {
+              "label": "文件"
+            }
+          ],
+          "selected": 0
+        }
+      ]
+    },
+    {
+      "id": "pull-6",
+      "x": 1436,
+      "y": 328,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-6-item",
+          "kind": "card",
+          "label": "变更说明",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "优化导航和内容密度，保留现有操作和危险确认。",
+          "noImage": true,
+          "size": 380,
+          "size2": 164,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "pull-7",
+      "x": 1436,
+      "y": 524,
+      "axis": "y",
+      "items": [
+        {
+          "id": "pull-7-item-0",
+          "icon": "difference",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "3 个文件",
+          "supporting": "+128 −74",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "review",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pull-8",
+      "x": 1436,
+      "y": 652,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pull-8-item",
+          "kind": "button",
+          "label": "审查更改",
+          "icon": "rate_review",
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "review",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "management-1",
+      "x": 2840,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "management-1-item",
+          "kind": "topAppBar",
+          "label": "更多操作",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "management-2",
+      "x": 2856,
+      "y": 112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "management-2-item-0",
+          "icon": "edit",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "编辑内容",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "edit",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "management-2-item-1",
+          "icon": "label",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "标签与负责人",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "metadata",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "management-2-item-2",
+          "icon": "group",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "审查者",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "metadata",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "management-2-item-3",
+          "icon": "merge",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "合并 Pull Request",
+          "supporting": "",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "merge",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "management-2-item-4",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "关闭或重新打开",
+          "supporting": "需要确认",
+          "size": 380
+        },
+        {
+          "id": "management-2-item-5",
+          "icon": "lock",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "锁定讨论",
+          "supporting": "需要确认",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "issues-1",
+      "x": 4260,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-1-item",
+          "kind": "topAppBar",
+          "label": "Issue",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-2",
+      "x": 4276,
+      "y": 104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-2-item",
+          "kind": "searchBar",
+          "label": "搜索",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "issues-3",
+      "x": 4276,
+      "y": 176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-3-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "打开",
+          "checked": true
+        },
+        {
+          "id": "issues-3-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "已关闭",
+          "checked": false
+        },
+        {
+          "id": "issues-3-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "全部",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "issues-4",
+      "x": 4276,
+      "y": 244,
+      "axis": "y",
+      "items": [
+        {
+          "id": "issues-4-item-0",
+          "icon": "radio_button_checked",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "修复 Markdown 图片排版",
+          "supporting": "#128 · 打开 · 6条回复",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "issue",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "issues-5",
+      "x": 4508,
+      "y": 700,
+      "axis": "x",
+      "items": [
+        {
+          "id": "issues-5-item",
+          "kind": "extendedFab",
+          "label": "新建",
+          "icon": "add",
+          "variant": "filled",
+          "action": {
+            "to": "edit",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulls-1",
+      "x": 0,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-1-item",
+          "kind": "topAppBar",
+          "label": "Pull Request",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulls-2",
+      "x": 16,
+      "y": 1104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-2-item",
+          "kind": "searchBar",
+          "label": "搜索",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "pulls-3",
+      "x": 16,
+      "y": 1176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-3-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "打开",
+          "checked": true
+        },
+        {
+          "id": "pulls-3-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "已关闭",
+          "checked": false
+        },
+        {
+          "id": "pulls-3-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "全部",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "pulls-4",
+      "x": 16,
+      "y": 1244,
+      "axis": "y",
+      "items": [
+        {
+          "id": "pulls-4-item-0",
+          "icon": "call_split",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "统一客户端页面信息层级",
+          "supporting": "#130 · 等待审查",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "pull",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pulls-5",
+      "x": 248,
+      "y": 1700,
+      "axis": "x",
+      "items": [
+        {
+          "id": "pulls-5-item",
+          "kind": "extendedFab",
+          "label": "新建",
+          "icon": "add",
+          "variant": "filled",
+          "action": {
+            "to": "edit",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "discussions-1",
+      "x": 1420,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussions-1-item",
+          "kind": "topAppBar",
+          "label": "讨论",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "discussions-2",
+      "x": 1436,
+      "y": 1104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussions-2-item",
+          "kind": "searchBar",
+          "label": "搜索",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "discussions-3",
+      "x": 1436,
+      "y": 1176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussions-3-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "打开",
+          "checked": true
+        },
+        {
+          "id": "discussions-3-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "已关闭",
+          "checked": false
+        },
+        {
+          "id": "discussions-3-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "全部",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "discussions-4",
+      "x": 1436,
+      "y": 1244,
+      "axis": "y",
+      "items": [
+        {
+          "id": "discussions-4-item-0",
+          "icon": "forum",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "下个版本的方向",
+          "supporting": "想法 · 12条回复",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "discussion",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "discussions-5",
+      "x": 1668,
+      "y": 1700,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussions-5-item",
+          "kind": "extendedFab",
+          "label": "新建",
+          "icon": "add",
+          "variant": "filled",
+          "action": {
+            "to": "edit",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "discussion-1",
+      "x": 2840,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussion-1-item",
+          "kind": "topAppBar",
+          "label": "下个版本的方向",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "discussion-2",
+      "x": 2856,
+      "y": 1104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussion-2-item",
+          "kind": "text",
+          "label": "想法 · etoile · 12条回复",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "discussion-3",
+      "x": 2856,
+      "y": 1160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussion-3-item",
+          "kind": "card",
+          "label": "下一步体验优化",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "讨论GitHub与GitLab的协作体验。",
+          "noImage": true,
+          "size": 380,
+          "size2": 180,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "discussion-4",
+      "x": 2856,
+      "y": 1396,
+      "axis": "y",
+      "items": [
+        {
+          "id": "discussion-4-item-0",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "android-maintainer",
+          "supporting": "先统一列表、阅读和管理的操作顺序。",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "discussion-5",
+      "x": 2856,
+      "y": 1652,
+      "axis": "x",
+      "items": [
+        {
+          "id": "discussion-5-item",
+          "kind": "button",
+          "label": "回复",
+          "icon": null,
+          "variant": "tonal",
+          "size": 380,
+          "action": {
+            "to": "comment",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "edit-1",
+      "x": 4260,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "edit-1-item",
+          "kind": "topAppBar",
+          "label": "编辑内容",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "check",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "edit-2",
+      "x": 4276,
+      "y": 1112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "edit-2-item",
+          "kind": "textField",
+          "label": "标题",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "edit-3",
+      "x": 4276,
+      "y": 1200,
+      "axis": "x",
+      "items": [
+        {
+          "id": "edit-3-item",
+          "kind": "textField",
+          "label": "支持 Markdown",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "编辑 / 预览"
+        }
+      ]
+    },
+    {
+      "id": "edit-4",
+      "x": 4276,
+      "y": 1288,
+      "axis": "x",
+      "items": [
+        {
+          "id": "edit-4-item",
+          "kind": "card",
+          "label": "编辑区",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "内容随输入增长，提交按钮在工具栏；退出未保存内容会确认。",
+          "noImage": true,
+          "size": 380,
+          "size2": 300,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "comment-1",
+      "x": 0,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "comment-1-item",
+          "kind": "topAppBar",
+          "label": "添加评论",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "check",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "comment-2",
+      "x": 16,
+      "y": 2112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "comment-2-item",
+          "kind": "textField",
+          "label": "支持 Markdown",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380,
+          "supporting": "编辑 / 预览"
+        }
+      ]
+    },
+    {
+      "id": "comment-3",
+      "x": 16,
+      "y": 2288,
+      "axis": "x",
+      "items": [
+        {
+          "id": "comment-3-item",
+          "kind": "card",
+          "label": "编辑区",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "内容随输入增长，提交按钮在工具栏；退出未保存内容会确认。",
+          "noImage": true,
+          "size": 380,
+          "size2": 300,
+          "fill": "surfaceContainerLow"
+        }
+      ]
+    },
+    {
+      "id": "review-1",
+      "x": 1420,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-1-item",
+          "kind": "topAppBar",
+          "label": "审查更改",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "review-2",
+      "x": 1436,
+      "y": 2104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-2-item",
+          "kind": "text",
+          "label": "app / GithubNavChrome.kt",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "review-3",
+      "x": 1436,
+      "y": 2160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-3-item",
+          "kind": "card",
+          "label": "代码差异",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "+ 统一页面间距与操作位置\n− 移除重复的功能入口",
+          "noImage": true,
+          "size": 380,
+          "size2": 220,
+          "fill": "surfaceContainerHigh"
+        }
+      ]
+    },
+    {
+      "id": "review-4",
+      "x": 1436,
+      "y": 2416,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-4-item",
+          "kind": "textField",
+          "label": "审查意见",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "review-5",
+      "x": 1436,
+      "y": 2496,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-5-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "评论",
+          "checked": true
+        },
+        {
+          "id": "review-5-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "批准",
+          "checked": false
+        },
+        {
+          "id": "review-5-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "请求更改",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "review-6",
+      "x": 1436,
+      "y": 2584,
+      "axis": "x",
+      "items": [
+        {
+          "id": "review-6-item",
+          "kind": "button",
+          "label": "提交审查",
+          "icon": "rate_review",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "merge-1",
+      "x": 2840,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-1-item",
+          "kind": "topAppBar",
+          "label": "合并 Pull Request",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "merge-2",
+      "x": 2856,
+      "y": 2104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-2-item",
+          "kind": "text",
+          "label": "feature/layout → main",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "merge-3",
+      "x": 2856,
+      "y": 2160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-3-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "Merge",
+          "checked": true
+        },
+        {
+          "id": "merge-3-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "Squash",
+          "checked": false
+        },
+        {
+          "id": "merge-3-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "Rebase",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "merge-4",
+      "x": 2856,
+      "y": 2232,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-4-item",
+          "kind": "textField",
+          "label": "提交标题",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "merge-5",
+      "x": 2856,
+      "y": 2320,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-5-item",
+          "kind": "textField",
+          "label": "提交说明",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "merge-6",
+      "x": 2856,
+      "y": 2412,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-6-item",
+          "kind": "text",
+          "label": "确认前检查目标分支与当前提交",
+          "icon": null,
+          "variant": "filled",
+          "size": 14
+        }
+      ]
+    },
+    {
+      "id": "merge-7",
+      "x": 2856,
+      "y": 2488,
+      "axis": "x",
+      "items": [
+        {
+          "id": "merge-7-item",
+          "kind": "button",
+          "label": "继续确认",
+          "icon": "merge",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "metadata-1",
+      "x": 4260,
+      "y": 2000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "metadata-1-item",
+          "kind": "topAppBar",
+          "label": "标签与负责人",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "metadata-2",
+      "x": 4276,
+      "y": 2104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "metadata-2-item",
+          "kind": "searchBar",
+          "label": "搜索标签或用户",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "metadata-3",
+      "x": 4276,
+      "y": 2184,
+      "axis": "y",
+      "items": [
+        {
+          "id": "metadata-3-item-0",
+          "icon": "check_circle",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "bug",
+          "supporting": "已选择",
+          "size": 380
+        },
+        {
+          "id": "metadata-3-item-1",
+          "icon": "label",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "enhancement",
+          "supporting": "",
+          "size": 380
+        },
+        {
+          "id": "metadata-3-item-2",
+          "icon": "person",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "android-maintainer",
+          "supporting": "负责人",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "metadata-4",
+      "x": 4276,
+      "y": 2652,
+      "axis": "x",
+      "items": [
+        {
+          "id": "metadata-4-item",
+          "kind": "button",
+          "label": "保存",
+          "icon": null,
+          "variant": "filled",
+          "size": 380,
+          "action": {
+            "to": "back",
+            "transition": "slide"
+          }
+        }
+      ]
+    }
+  ]
+}

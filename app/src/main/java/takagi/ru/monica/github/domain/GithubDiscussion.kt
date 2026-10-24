@@ -13,6 +13,9 @@ data class GithubDiscussionComment(val id: String, val body: String, val author:
 data class GithubDiscussionComments(val items: List<GithubDiscussionComment>, val nextCursor: String?)
 
 interface GithubDiscussionsRepository {
+    /** Bind every request to the account that owns its screen and draft. */
+    fun forAccount(accountId: Long?): GithubDiscussionsRepository = this
+
     suspend fun editComment(id: String, body: String): Result<GithubDiscussionComment> =
         Result.failure(UnsupportedOperationException("Comment editing unavailable"))
     suspend fun deleteComment(id: String): Result<Unit> =

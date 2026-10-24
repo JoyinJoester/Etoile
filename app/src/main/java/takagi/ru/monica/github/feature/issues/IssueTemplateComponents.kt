@@ -53,6 +53,7 @@ import takagi.ru.monica.github.domain.GithubIssueFormField
 import takagi.ru.monica.github.domain.GithubIssueFormFieldType
 import takagi.ru.monica.github.domain.GithubIssueTemplateLanguage
 import takagi.ru.monica.github.navigation.GithubWebUrls
+import takagi.ru.monica.ui.components.MarkdownImageContext
 import takagi.ru.monica.ui.components.MarkdownPreviewText
 
 @Composable
@@ -257,7 +258,7 @@ internal fun IssueFormFieldEditor(
 @Composable
 internal fun IssueTemplateMarkdown(text: String, fullName: String, onOpenExternal: (String) -> Unit, sourcePath: String = "") {
     MarkdownPreviewText(
-        markdown = text, renderImages = false,
+        markdown = text, imageContext = MarkdownImageContext(fullName, sourcePath = sourcePath),
         onOpenExternalLink = { onOpenExternal(GithubWebUrls.resolveMarkdownLink(fullName, "HEAD", sourcePath, it)) },
         modifier = Modifier.fillMaxWidth()
     )

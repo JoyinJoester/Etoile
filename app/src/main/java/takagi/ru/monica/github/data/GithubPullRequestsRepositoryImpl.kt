@@ -9,6 +9,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.JsonArray
+import takagi.ru.monica.github.domain.GithubReviewLineComment
+import takagi.ru.monica.github.domain.GithubReviewSubmissionDraft
 import takagi.ru.monica.github.domain.GithubCreatePullRequestDraft
 import takagi.ru.monica.github.domain.GithubBranchComparison
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -28,6 +31,7 @@ import takagi.ru.monica.github.domain.GithubPullRequestRef
 import takagi.ru.monica.github.domain.GithubPullRequestReview
 import takagi.ru.monica.github.domain.GithubPullRequestReviewComment
 import takagi.ru.monica.github.domain.GithubPullRequestReviewDraft
+import takagi.ru.monica.github.domain.GithubReviewCommentReplyDraft
 import takagi.ru.monica.github.domain.GithubPullRequestState
 import takagi.ru.monica.github.domain.GithubPullRequestsRepository
 import takagi.ru.monica.github.domain.GithubReviewState
@@ -44,6 +48,57 @@ class GithubPullRequestsRepositoryImpl(
     cacheStatusReporter: GithubCacheStatusReporter = NoOpGithubCacheStatusReporter
 ) : GithubPullRequestsRepository {
     private val cachedGet = GithubCachedGetExecutor(cacheStore, cacheStatusReporter)
+    private val threads = GithubReviewThreadsApi(requests, client, baseUrl.toHttpUrl().resolve("/graphql")!!.toString(), cacheStore)
+
+    override suspend fun reviewSnapshot(owner: String, name: String, number: Int): Result<GithubPullRequest> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            // Preflight for writes must never use an offline/stale cache fallback.
+            val request = requests.builder(endpoint(owner, name, "pulls", number.toString()).toString()).get().build()
+            client.readGithubResponse(request) { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                json.decodeFromString(GithubPullRequestDto.serializer(), response.body?.string().orEmpty()).toDomain()
+            }
+        }
+    }
+
+    override suspend fun reviewThreadStatuses(owner: String, name: String, number: Int, cursor: String?) = threads.load(owner, name, number, cursor)
+
+    override suspend fun setReviewThreadResolved(threadId: String, resolved: Boolean) = threads.setResolved(threadId, resolved)
+
+    override suspend fun createLineComment(owner: String, name: String, number: Int, commitSha: String, comment: GithubReviewLineComment): Result<GithubPullRequestReviewComment> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            require(commitSha.isNotBlank() && commitSha.length <= 128)
+            val validated = comment.validated()
+            val payload = buildJsonObject {
+                put("commit_id", commitSha)
+                put("path", validated.path); put("line", validated.line); put("side", validated.side.name); put("body", validated.body)
+            }
+            val request = requests.builder(endpoint(owner, name, "pulls", number.toString(), "comments").toString())
+                .post(payload.toString().toRequestBody(JSON_MEDIA_TYPE)).build()
+            client.readGithubResponse(request) { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.invalidateAfter { json.decodeFromString(GithubPullRequestReviewCommentDto.serializer(), response.body?.string().orEmpty()).toDomain() }
+            }
+        }
+    }
+
+    override suspend fun submitReviewBatch(owner: String, name: String, number: Int, draft: GithubReviewSubmissionDraft): Result<GithubPullRequestReview> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val payload = buildJsonObject {
+                put("commit_id", draft.commitSha); put("event", draft.event.name)
+                draft.body?.let { put("body", it) }
+                put("comments", JsonArray(draft.comments.map { comment -> buildJsonObject {
+                    put("path", comment.path); put("line", comment.line); put("side", comment.side.name); put("body", comment.body)
+                } }))
+            }
+            val request = requests.builder(endpoint(owner, name, "pulls", number.toString(), "reviews").toString())
+                .post(payload.toString().toRequestBody(JSON_MEDIA_TYPE)).build()
+            client.readGithubResponse(request) { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.invalidateAfter { json.decodeFromString(GithubPullRequestReviewDto.serializer(), response.body?.string().orEmpty()).toDomain() }
+            }
+        }
+    }
 
     override suspend fun compare(
         owner: String,
@@ -71,7 +126,7 @@ class GithubPullRequestsRepositoryImpl(
                     .addQueryParameter("per_page", perPage.coerceIn(1, MAX_COMPARE_PAGE).toString())
                     .addQueryParameter("page", "1").build()
                 val request = requests.optionalBuilder(url.toString()).get().build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     val value = json.decodeFromString(ComparisonResponse.serializer(), response.body?.string().orEmpty())
                     GithubBranchComparison(value.status, value.aheadBy, value.behindBy, value.totalCommits,
@@ -102,7 +157,7 @@ class GithubPullRequestsRepositoryImpl(
                     draft.headRepository?.let { put("head_repo", it) }
                 }.toString().toRequestBody(JSON_MEDIA_TYPE)
                 val request = requests.builder(endpoint(owner, name, "pulls").toString()).post(payload).build()
-                client.newCall(request).execute().use { response ->
+                client.readGithubResponse(request) { response ->
                     if (!response.isSuccessful) throw GithubApiException.of(response)
                     cacheStore.invalidateAfter {
                         json.decodeFromString(GithubPullRequestDto.serializer(), response.body?.string().orEmpty()).toDomain()
@@ -259,6 +314,25 @@ class GithubPullRequestsRepositoryImpl(
         }
     }
 
+    override suspend fun replyToReviewComment(
+        owner: String,
+        name: String,
+        number: Int,
+        draft: GithubReviewCommentReplyDraft
+    ): Result<GithubPullRequestReviewComment> = withContext(Dispatchers.IO) {
+        githubRunCatching {
+            val url = endpoint(owner, name, "pulls", number.toString(), "comments", draft.threadId.toString(), "replies")
+            val payload = json.encodeToString(ReviewCommentReplyRequest(draft.body)).toRequestBody(JSON_MEDIA_TYPE)
+            val request = requests.builder(url.toString()).post(payload).build()
+            client.readGithubResponse(request) { response ->
+                if (!response.isSuccessful) throw GithubApiException.of(response)
+                cacheStore.invalidateAfter {
+                    json.decodeFromString(GithubPullRequestReviewCommentDto.serializer(), response.body?.string().orEmpty()).toDomain()
+                }
+            }
+        }
+    }
+
     override suspend fun submitReview(
         owner: String,
         name: String,
@@ -272,7 +346,7 @@ class GithubPullRequestsRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "pulls", number.toString(), "reviews").toString())
                 .post(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -302,7 +376,7 @@ class GithubPullRequestsRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "pulls", number.toString(), "merge").toString())
                 .put(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(MergeResponse.serializer(), response.body?.string().orEmpty()).toDomain()
@@ -322,7 +396,7 @@ class GithubPullRequestsRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "pulls", number.toString()).toString())
                 .patch(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -347,7 +421,7 @@ class GithubPullRequestsRepositoryImpl(
             val request = requests.builder(endpoint(owner, name, "pulls", number.toString()).toString())
                 .patch(payload)
                 .build()
-            client.newCall(request).execute().use { response ->
+            client.readGithubResponse(request) { response ->
                 if (!response.isSuccessful) throw GithubApiException.of(response)
                 cacheStore.invalidateAfter {
                     json.decodeFromString(
@@ -389,7 +463,7 @@ class GithubPullRequestsRepositoryImpl(
         }
     }
 
-    private fun writeRequestedReviewers(
+    private suspend fun writeRequestedReviewers(
         owner: String,
         name: String,
         number: Int,
@@ -401,7 +475,7 @@ class GithubPullRequestsRepositoryImpl(
             endpoint(owner, name, "pulls", number.toString(), "requested_reviewers").toString()
         )
         val request = if (remove) builder.delete(payload).build() else builder.post(payload).build()
-        return client.newCall(request).execute().use { response ->
+        return client.readGithubResponse(request) { response ->
             if (!response.isSuccessful) throw GithubApiException.of(response)
             cacheStore.invalidateAfter {
                 json.decodeFromString(
@@ -576,7 +650,9 @@ class GithubPullRequestsRepositoryImpl(
         val user: GithubUserDto? = null,
         @SerialName("created_at") val createdAt: String,
         @SerialName("updated_at") val updatedAt: String,
-        @SerialName("html_url") val htmlUrl: String
+        @SerialName("html_url") val htmlUrl: String,
+        @SerialName("in_reply_to_id") val inReplyToId: Long? = null,
+        @SerialName("original_line") val originalLine: Int? = null
     ) {
         fun toDomain() = GithubPullRequestReviewComment(
             id = id,
@@ -589,9 +665,14 @@ class GithubPullRequestsRepositoryImpl(
             author = user.toDomainOrGhost(),
             createdAt = createdAt,
             updatedAt = updatedAt,
-            htmlUrl = htmlUrl
+            htmlUrl = htmlUrl,
+            inReplyToId = inReplyToId,
+            originalLine = originalLine
         )
     }
+
+    @Serializable
+    private data class ReviewCommentReplyRequest(val body: String)
 
     @Serializable
     private data class SubmitReviewRequest(val body: String?, val event: String)

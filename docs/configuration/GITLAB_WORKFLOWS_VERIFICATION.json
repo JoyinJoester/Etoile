@@ -1,0 +1,43 @@
+{
+  "date": "2026-10-21",
+  "scope": "GitLab issues, merge requests, pipelines, jobs, authentication write scopes and shared transport regression",
+  "unitTests": {
+    "command": ".\\gradlew.bat :app:testDebugUnitTest --console=plain --max-workers=1",
+    "status": "passed",
+    "suites": 106,
+    "tests": 867,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "gitLabSuites": 7,
+    "gitLabTests": 71,
+    "log": ".codex-tmp/gitlab-work-final-tests.log"
+  },
+  "lint": {
+    "command": ".\\gradlew.bat :app:testDebugUnitTest :app:lintDebug --console=plain --max-workers=1",
+    "status": "passed",
+    "errors": 0,
+    "fatal": 0,
+    "warnings": 132,
+    "newCollaborationSourceWarnings": 0,
+    "log": ".codex-tmp/gitlab-work-final.log",
+    "report": "app/build/reports/lint-results-debug.xml"
+  },
+  "staticChecks": {
+    "gitDiffCheck": "passed",
+    "gitLabLocalizedStringKeysAndPlaceholders": 123,
+    "gitLabKotlinUtf8AndWhitespaceFiles": 31,
+    "domainAndUiArchitectureTests": "passed"
+  },
+  "apiVerification": "Local MockWebServer only; no real credentials or remote writes",
+  "apkBuilt": false,
+  "deviceVerification": false,
+  "realGitLabInstanceVerification": false,
+  "remainingAdvancedFeatures": [
+    "Merge request approvals and inline review threads",
+    "Labels, assignees and milestones editing",
+    "Cross-project merge request creation",
+    "CI variables, artifacts and child pipelines",
+    "GitLab notifications and advanced project administration"
+  ]
+}

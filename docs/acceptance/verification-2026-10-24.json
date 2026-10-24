@@ -1,0 +1,192 @@
+{
+  "generatedAtUtc": "2026-10-24T14:36:36.167213+00:00",
+  "baseCommit": "d5d84679d6b4874b13e270d24ec8831f1e572ed0",
+  "overall": "NOT_ACCEPTED_FOR_STABLE_RELEASE",
+  "sourceSnapshot": {
+    "files": 532,
+    "sha256": "766929c7417d9e533edd3c09c35571983fc9228c2738710d06170ab0db53f56f",
+    "gitSourceDigest": "0828570bb22820fe9538600a8c13ab93da194c7213d4f38f7a71bfbddb4b96ce",
+    "rawAlgorithm": "SHA256 over sorted UTF8 path + NUL + raw file SHA256 + LF entries; raw checkout EOL-sensitive.",
+    "gitAlgorithm": "SHA256 over sorted UTF8 path + NUL + indexed Git blob OID + LF entries. Same source digest can be checked in the resulting commit.",
+    "manifest": "docs\\acceptance\\evidence-2026-10-24\\source-snapshot.json",
+    "compiledSourceMatchesIndex": true,
+    "scope": "Application main/debug/test and resources; legal archives; Rust/auth service; build config, scripts and source CI. Excludes local credentials, signing config, APKs, generated outputs and acceptance evidence."
+  },
+  "command": "./scripts/verify-client.ps1",
+  "buildResult": "PASS",
+  "variants": {
+    "debug": {
+      "classes": 132,
+      "tests": 1207,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "lint": {
+        "Warning": 129
+      }
+    },
+    "release": {
+      "classes": 132,
+      "tests": 1207,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "lint": {
+        "Warning": 131
+      }
+    }
+  },
+  "coverage": "NOT_MEASURED",
+  "otherTests": {
+    "rust": 3,
+    "authServiceNode": 5
+  },
+  "regressions": {
+    "releaseNative": 7,
+    "markdownNative": 3,
+    "targetedTests": 40,
+    "scope": "Native Compose components on Robolectric with controlled dependencies. Pixel drawing and action dispatch tested. No actual Android process death or authenticated provider writes."
+  },
+  "device": {
+    "serial": "emulator-5554",
+    "apk": "app/build/outputs/apk/debug/Etoile-Android-arm64-v8a-0.1.0-26102401-03.APK",
+    "apkSha256": "1fd76ba97f060b720de173fda17b58e8e933ce22bb5b3f690ffec948b2225f3e",
+    "installedApplicationSha256": "1fd76ba97f060b720de173fda17b58e8e933ce22bb5b3f690ffec948b2225f3e",
+    "dataPreserved": true,
+    "fontScale": "1.5",
+    "density": "Physical density: 420\r\nOverride density: 320",
+    "resolution": "Physical size: 1080x2400\r\nOverride size: 1080x2100",
+    "deviceAndroidVersion": "12",
+    "productionScreens": [
+      "production-home",
+      "production-settings"
+    ],
+    "fixtureScreens": [
+      "fixture-markdown"
+    ],
+    "limitations": [
+      "Signed out; no authorization or provider writes.",
+      "Markdown uses deterministic sample content and public internet images.",
+      "Static captures do not measure animation performance or prove whole-app device acceptance."
+    ],
+    "sourceSnapshotSha256": "766929c7417d9e533edd3c09c35571983fc9228c2738710d06170ab0db53f56f",
+    "fixtureVerified": [
+      "Initial contribution viewport shows latest months; horizontal drag reveals older months.",
+      "Relative PNG, SVG badge and HTML image loaded.",
+      "Inline HTML image code remains literal text."
+    ],
+    "performanceAcceptance": "NOT_PASSED; previous measured slow-frame result remains unresolved; no new benchmark in this run."
+  },
+  "instrumentation": {
+    "executedTests": 0,
+    "result": "NOT_A_DEVICE_TEST_PASS",
+    "scope": "Earlier connectedDebugAndroidTest report contained zero tests. Current screenshots are ADB manual observations."
+  },
+  "advisories": {
+    "checkedAt": "2026-10-24T14:32:23.192086+00:00",
+    "coordinates": 252,
+    "packagesWithIndexedAdvisories": 0,
+    "scope": "Resolved release Maven runtime coordinates and Cargo.lock registry packages. Build tooling, Android OS, unindexed vulnerabilities and reachability are not assessed."
+  },
+  "remainingGates": [
+    "Real GitHub/GitLab OAuth, PAT, refresh, cancellation and account switching.",
+    "Explicit test-project provider mutations, lifecycle and uncertain-result handling across all write entry points.",
+    "Settings transition performance, long Markdown/Diff, memory and scrolling measurements.",
+    "Official signing, upgrade continuity, production Release runtime and both ARM ABIs.",
+    "TalkBack, Android compatibility matrix and remote CI result."
+  ],
+  "evidence": [
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/assemble-debug.log",
+      "sha256": "efed5fa73294931fccc4f4c591c1bd6f8f42d188e823d3b4634f2458e7774a2a"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/debug-suite-summary.json",
+      "sha256": "037b59d3b205ee3b85587d66e2e2844f8f5c4d558177f6a4a730f8e024d59c4e"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/debug-TEST-takagi.ru.monica.github.design.NativeMarkdownImagesTest.xml",
+      "sha256": "7ea133f60775155face6ff76a334df617f4130b9004b32a9c8d222453e684352"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/debug-TEST-takagi.ru.monica.github.design.NativeReleaseSafetyTest.xml",
+      "sha256": "23ea2f1879e260ee639ff445611ada9d6338ee579f81496c74633a6cc24abaf0"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/dependency-advisories.json",
+      "sha256": "6690e170bcee3e11d15ba32fa11524c742d57f717bb0c14c5d21978ca39c54fe"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/device-contact-sheet.jpg",
+      "sha256": "419e109379b8a1d23f31f3c2e19cae3499572610d88f006aba3eb780586126f3"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/fixture-contributions-older.png",
+      "sha256": "26d048e8051e8db5a9d6074c34f5a05284fa101df144bfa79b39d658cd61efc6"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/fixture-markdown-bottom.png",
+      "sha256": "d22ffaeb8f8356ef0a10d16101203b95550d7da290e5b5f9fe29c6ca019144e7"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/fixture-markdown.png",
+      "sha256": "6748d053c89869e1bf73c958a23c58d50afda241c18abe7e65edce5a25815460"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/fixture-markdown.xml",
+      "sha256": "594e6ab7d103e79dfd8c15f1481ddb26ca3eecfc4c235eaf837a1a35ba4d7e8b"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/full-verification.log",
+      "sha256": "322d3671b7f0e907b190875676e158b7fd1d4f7e3439b42ca9153b3e2ce991aa"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/markdown-ui-initial-red.log",
+      "sha256": "c9edbfefb95cb62517812af78303c2f5d37c732785f7e757d63f511842d13355"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/package-metadata.txt",
+      "sha256": "75552792e4f1ece9c453f7ba58d9690ee166b62ea3f2480082e9b4509ff5bd6e"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/production-home.png",
+      "sha256": "553edfb44ab75203dc01dc52a9014a422247c1aab4f3023c8ecc473e28dd2ec5"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/production-home.xml",
+      "sha256": "63f21247ec73cbad8f911970f9bbc8201f74bd092afb5c5c8bac093d28bd126b"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/production-settings.png",
+      "sha256": "54bb2e685cf981a073a5e070f9400eaf2ee3efe2ee1aa0569f4728dc2f19f907"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/production-settings.xml",
+      "sha256": "f07bad026fba8ba2da88585e6153b277d546671d66fbdd24d5812f4dc2e5285a"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/release-suite-summary.json",
+      "sha256": "e3153629f5c5ff6d458b87f599da79b68bae597ccac346efb45f90018de06f32"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/release-TEST-takagi.ru.monica.github.design.NativeMarkdownImagesTest.xml",
+      "sha256": "489c7c8c4cc296720c9a8fff923a84366e6a957b579b1f8bde63127668afe22f"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/release-TEST-takagi.ru.monica.github.design.NativeReleaseSafetyTest.xml",
+      "sha256": "618754c4110da2d401ab2db650c15e3f848fb001c4df3a96cf6c1288d025d420"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/release-ui-initial-red.log",
+      "sha256": "93925961da825935267fb093ccbb618ad384b5a94d26a9a182c592ad66727da5"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/source-snapshot.json",
+      "sha256": "388e7659d7af6edd7fef2b5be5e57f127404e26a63cc0993f22e077b8db9213a"
+    },
+    {
+      "path": "docs/acceptance/evidence-2026-10-24/targeted-regressions.log",
+      "sha256": "13c4453e73bd39c6fecadf3cb2d9df0696e91dd5d45428a929d6810aedb6cacf"
+    }
+  ]
+}

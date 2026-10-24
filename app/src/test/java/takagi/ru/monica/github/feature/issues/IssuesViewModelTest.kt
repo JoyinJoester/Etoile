@@ -1,5 +1,6 @@
 package takagi.ru.monica.github.feature.issues
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CompletableDeferred
 import androidx.lifecycle.SavedStateHandle
@@ -53,6 +54,100 @@ import kotlin.coroutines.suspendCoroutine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class IssuesViewModelTest {
+    @Test fun switchingAccountHidesPreviousIssueAndRestoresOnlyItsOwnDraft() = runTest(dispatcher) {
+        val vm = IssueDetailViewModel("openai", "codex", 1, FakeIssuesRepository(), TestGithubRepositoryDetailsRepository())
+        vm.onSessionChanged(signedInSession("joyins"))
+        advanceUntilIdle()
+        vm.onAction(IssueDetailAction.CommentChanged("Private account A draft"))
+        assertTrue(vm.state.value.issue != null)
+        vm.onSessionChanged(signedInSession("reader", 2))
+        assertNull(vm.state.value.issue)
+        assertTrue(vm.state.value.comments.isEmpty())
+        assertEquals("", vm.state.value.commentDraft)
+        advanceUntilIdle()
+        vm.onAction(IssueDetailAction.CommentChanged("Account B draft"))
+        vm.onSessionChanged(signedInSession("joyins"))
+        assertNull(vm.state.value.issue)
+        assertEquals("Private account A draft", vm.state.value.commentDraft)
+        advanceUntilIdle()
+        vm.onSessionChanged(GithubSession.SignedOut)
+        assertNull(vm.state.value.issue)
+        assertTrue(vm.state.value.comments.isEmpty())
+        assertEquals("", vm.state.value.commentDraft)
+        advanceUntilIdle()
+        vm.onSessionChanged(signedInSession("reader", 2))
+        assertEquals("Account B draft", vm.state.value.commentDraft)
+        advanceUntilIdle()
+    }
+
+    @Test
+    fun createIssueNeverPublishesAnotherAccountsDraftAndIgnoresItsLateSuccess() = runTest(dispatcher) {
+        val first = signedInSession("same-login", 1)
+        val second = signedInSession("same-login", 2)
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val saved = SavedStateHandle()
+        val source = FakeIssuesRepository()
+        val requests = mutableListOf<Pair<Long?, GithubIssueDraft>>()
+        lateinit var completion: Continuation<Result<GithubIssue>>
+        val repository = object : GithubIssuesRepository by source {
+            override suspend fun createIssue(owner: String, name: String, draft: GithubIssueDraft): Result<GithubIssue> {
+                requests += (sessions.value as? GithubSession.SignedIn)?.account?.id to draft
+                return suspendCoroutine { completion = it }
+            }
+        }
+        val vm = CreateIssueViewModel("o", "r", repository, emptyTemplates, saved, sessions = sessions)
+        runCurrent()
+        vm.onAction(CreateIssueAction.SelectTemplate(null))
+        vm.onAction(CreateIssueAction.TitleChanged("Private A title"))
+        vm.onAction(CreateIssueAction.BodyChanged("Private A body"))
+        vm.onAction(CreateIssueAction.Submit)
+        runCurrent()
+        assertEquals(1L, requests.single().first)
+        sessions.value = second
+        runCurrent()
+        assertEquals("", vm.state.value.title)
+        assertEquals("", vm.state.value.body)
+        vm.onAction(CreateIssueAction.Submit)
+        runCurrent()
+        assertEquals(1, requests.size)
+        vm.onAction(CreateIssueAction.SelectTemplate(null))
+        vm.onAction(CreateIssueAction.TitleChanged("B title"))
+        vm.onAction(CreateIssueAction.BodyChanged("B body"))
+        completion.resume(source.issue("o", "r", 1))
+        runCurrent()
+        assertEquals("B title", vm.state.value.title)
+        assertNull(vm.state.value.createdIssue)
+        val restoredForB = CreateIssueViewModel("o", "r", source, emptyTemplates, saved, sessions = sessions)
+        runCurrent()
+        assertEquals("B title", restoredForB.state.value.title)
+        sessions.value = first
+        runCurrent()
+        assertEquals("Private A title", vm.state.value.title)
+        assertEquals("Private A body", vm.state.value.body)
+        assertFalse(vm.state.value.isSubmitting)
+    }
+
+    @Test
+    fun privateIssueListCannotReturnFromOldAccountAfterBackstackSwitch() = runTest(dispatcher) {
+        val first = signedInSession("same", 1)
+        val sessions = MutableStateFlow<GithubSession>(first)
+        val base = FakeIssuesRepository()
+        lateinit var result: Continuation<Result<GithubPage<GithubIssue>>>
+        val repository = object : GithubIssuesRepository by base {
+            override suspend fun issues(owner: String, name: String, query: GithubIssueListQuery, page: Int, perPage: Int): Result<GithubPage<GithubIssue>> =
+                if ((sessions.value as? GithubSession.SignedIn)?.account?.id == 1L) suspendCoroutine { result = it }
+                else Result.failure(IllegalStateException("private issues denied"))
+        }
+        val vm = IssuesViewModel("o", "r", repository, sessions)
+        runCurrent()
+        sessions.value = signedInSession("same", 2)
+        runCurrent()
+        result.resume(base.issues("o", "r", GithubIssueListQuery(GithubIssueState.OPEN), 1, 30))
+        runCurrent()
+        assertEquals(2L, vm.state.value.viewerAccountId)
+        assertTrue(vm.state.value.items.isEmpty())
+    }
+
     private val emptyTemplates = GithubIssueTemplatesRepository { _, _ -> Result.success(GithubIssueTemplateCatalog()) }
     @Test
     fun issueDraftRestoresAndClearsOnlyAfterSuccessfulSubmission() = runTest(dispatcher) {
@@ -791,7 +886,9 @@ class IssuesViewModelTest {
 
         details.viewerRole = GithubCollaboratorRole.READ
         viewModel.onSessionChanged(signedInSession("reader", 2))
-        assertEquals("Old account draft", viewModel.state.value.commentDraft)
+        assertEquals("", viewModel.state.value.commentDraft)
+        assertNull(viewModel.state.value.issue)
+        assertTrue(viewModel.state.value.comments.isEmpty())
         assertFalse(viewModel.state.value.isSubmittingComment)
         viewModel.onAction(IssueDetailAction.CommentChanged("New account draft"))
         viewModel.onAction(IssueDetailAction.SubmitComment)

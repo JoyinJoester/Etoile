@@ -19,10 +19,14 @@ import takagi.ru.monica.github.domain.GithubPullRequestListQuery
 import takagi.ru.monica.github.domain.GithubPullRequestDraft
 import takagi.ru.monica.github.domain.GithubRequestedReviewersUpdate
 import takagi.ru.monica.github.domain.GithubPullRequestReviewDraft
+import takagi.ru.monica.github.domain.GithubReviewCommentReplyDraft
 import takagi.ru.monica.github.domain.GithubPullRequestState
 import takagi.ru.monica.github.domain.GithubReviewEvent
 import takagi.ru.monica.github.domain.GithubReviewState
 import takagi.ru.monica.github.domain.GithubSortDirection
+import takagi.ru.monica.github.domain.GithubDiffSide
+import takagi.ru.monica.github.domain.GithubReviewLineComment
+import takagi.ru.monica.github.domain.GithubReviewSubmissionDraft
 
 class GithubPullRequestsRepositoryImplTest {
     @Test fun comparisonResolvesTheExplicitForkBeforeComparingItsCommit() = runTest {
@@ -410,6 +414,168 @@ class GithubPullRequestsRepositoryImplTest {
 
         assertTrue(cacheStore.isEmpty())
     }
+
+    @Test fun reviewReplyPostsOnlyBodyToTheRootRepliesEndpointAndMapsTheResponse() = runTest {
+        val response = Json.parseToJsonElement(REVIEW_COMMENTS_JSON).jsonArray.single().jsonObject.toMutableMap().apply {
+            put("id", JsonPrimitive(902))
+            put("in_reply_to_id", JsonPrimitive(901))
+            put("original_line", JsonPrimitive(42))
+            put("line", JsonNull)
+            put("body", JsonPrimitive("Server reply"))
+        }
+        server.enqueue(MockResponse().setResponseCode(201).setBody(JsonObject(response).toString()))
+        val reply = repository().replyToReviewComment("openai", "codex", 7,
+            GithubReviewCommentReplyDraft.fromInput(901, "  Reply\n已修改  ").getOrThrow()).getOrThrow()
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/repos/openai/codex/pulls/7/comments/901/replies", request.path)
+        assertEquals("Bearer test_token_12345678901234567890", request.getHeader("Authorization"))
+        assertEquals(buildJsonObject { put("body", "Reply\n已修改") }, Json.parseToJsonElement(request.body.readUtf8()))
+        assertEquals(901L, reply.inReplyToId)
+        assertEquals(42, reply.originalLine)
+        assertEquals(null, reply.line)
+        assertEquals("Server reply", reply.body)
+    }
+
+    @Test fun reviewReplyInvalidatesCacheOnlyAfterAValidSuccessResponse() = runTest {
+        val cache = TestGithubCacheStore()
+        val repository = repository(cache)
+        server.enqueue(MockResponse().setHeader("ETag", "\"comments-v1\"").setBody(REVIEW_COMMENTS_JSON))
+        repository.reviewComments("openai", "codex", 7).getOrThrow()
+        server.takeRequest()
+        val draft = GithubReviewCommentReplyDraft.fromInput(901, "Reply").getOrThrow()
+        for (code in listOf(403, 422)) {
+            server.enqueue(MockResponse().setResponseCode(code))
+            assertTrue(repository.replyToReviewComment("openai", "codex", 7, draft).isFailure)
+            server.takeRequest()
+            assertFalse(cache.isEmpty())
+        }
+        server.enqueue(MockResponse().setResponseCode(201).setBody("{}"))
+        assertTrue(repository.replyToReviewComment("openai", "codex", 7, draft).isFailure)
+        server.takeRequest()
+        assertFalse(cache.isEmpty())
+        server.enqueue(MockResponse().setResponseCode(201).setBody(Json.parseToJsonElement(REVIEW_COMMENTS_JSON).jsonArray.single().toString()))
+        repository.replyToReviewComment("openai", "codex", 7, draft).getOrThrow()
+        server.takeRequest()
+        assertTrue(cache.isEmpty())
+    }
+
+    @Test fun reviewReplyRequiresAuthenticationBeforeSending() = runTest {
+        val repository = GithubPullRequestsRepositoryImpl(
+            GithubAuthenticatedRequests(object : GithubTokenStore {
+                override fun read(): String? = null
+                override fun write(token: String) = Unit
+                override fun clear() = Unit
+            }), client = OkHttpClient(), baseUrl = server.url("/").toString()
+        )
+        val result = repository.replyToReviewComment("openai", "codex", 7,
+            GithubReviewCommentReplyDraft.fromInput(901, "Reply").getOrThrow())
+        assertTrue(result.exceptionOrNull() is GithubSignedOutException)
+        assertEquals(0, server.requestCount)
+    }
+
+    @Test fun standaloneLineCommentBindsCommitAndCorrectSide() = runTest {
+        val repository = repository()
+        val line = GithubReviewLineComment("app/Main.kt", 40, GithubDiffSide.LEFT, "  Delete this\n请修改  ")
+        server.enqueue(MockResponse().setResponseCode(201).setBody(Json.parseToJsonElement(REVIEW_COMMENTS_JSON).jsonArray.single().toString()))
+        repository.createLineComment("openai", "codex", 7, "head-sha", line).getOrThrow()
+        val request = server.takeRequest()
+        assertEquals("POST", request.method)
+        assertEquals("/repos/openai/codex/pulls/7/comments", request.path)
+        assertTrue(request.getHeader("Authorization")!!.startsWith("Bearer "))
+        assertEquals(buildJsonObject { put("commit_id", "head-sha"); put("path", "app/Main.kt"); put("line", 40); put("side", "LEFT"); put("body", "Delete this\n请修改") }, Json.parseToJsonElement(request.body.readUtf8()))
+        assertTrue(repository.createLineComment("openai", "codex", 7, "head-sha", line.copy(line = 0)).isFailure)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun batchReviewPublishesAllCommentsAndDecisionInOneRequest() = runTest {
+        val repository = repository()
+        val draft = GithubReviewSubmissionDraft.fromInput("head-sha", GithubReviewEvent.REQUEST_CHANGES, " Fix these ", listOf(
+            GithubReviewLineComment("old.kt", 5, GithubDiffSide.LEFT, "Remove"),
+            GithubReviewLineComment("new.kt", 9, GithubDiffSide.RIGHT, "Change")
+        )).getOrThrow()
+        server.enqueue(MockResponse().setResponseCode(201).setBody(Json.parseToJsonElement(REVIEWS_JSON).jsonArray.single().toString()))
+        repository.submitReviewBatch("openai", "codex", 7, draft).getOrThrow()
+        val request = server.takeRequest()
+        assertEquals("/repos/openai/codex/pulls/7/reviews", request.path)
+        val payload = Json.parseToJsonElement(request.body.readUtf8()).jsonObject
+        assertEquals("head-sha", payload.getValue("commit_id").jsonPrimitive.content)
+        assertEquals("REQUEST_CHANGES", payload.getValue("event").jsonPrimitive.content)
+        assertEquals("Fix these", payload.getValue("body").jsonPrimitive.content)
+        assertEquals(listOf("LEFT", "RIGHT"), payload.getValue("comments").jsonArray.map { it.jsonObject.getValue("side").jsonPrimitive.content })
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun reviewPreflightBypassesCachedDataAndDoesNotFallbackOnServerFailure() = runTest {
+        val repository = repository(TestGithubCacheStore())
+        server.enqueue(MockResponse().setHeader("ETag", "\"old\"").setBody(PULL_REQUEST_JSON))
+        repository.pullRequest("openai", "codex", 7).getOrThrow()
+        server.takeRequest()
+        server.enqueue(MockResponse().setResponseCode(503))
+        assertTrue(repository.reviewSnapshot("openai", "codex", 7).isFailure)
+        val request = server.takeRequest()
+        assertEquals(null, request.getHeader("If-None-Match"))
+        assertTrue(request.getHeader("Authorization")!!.startsWith("Bearer "))
+    }
+
+    @Test fun reviewThreadConnectionMapsPermissionsRootIdAndCursor() = runTest {
+        val thread = threadJson(false)
+        server.enqueue(MockResponse().setBody("""{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[$thread],"pageInfo":{"hasNextPage":true,"endCursor":"opaque-next"}}}}}}"""))
+        val page = repository().reviewThreadStatuses("openai", "codex", 7, "previous").getOrThrow()
+        assertEquals("opaque-next", page.nextCursor)
+        assertEquals(901L, page.items.single().rootCommentId)
+        assertTrue(page.items.single().viewerCanResolve)
+        val request = server.takeRequest()
+        assertEquals("/graphql", request.path)
+        assertTrue(request.getHeader("Authorization")!!.startsWith("Bearer "))
+        val variables = Json.parseToJsonElement(request.body.readUtf8()).jsonObject.getValue("variables").jsonObject
+        assertEquals("previous", variables.getValue("cursor").jsonPrimitive.content)
+        assertEquals(7, variables.getValue("number").jsonPrimitive.int)
+    }
+
+    @Test fun resolveAndUnresolveUseVariablesAndOnlyTrustSuccessfulGraphqlData() = runTest {
+        val repository = repository()
+        for (resolved in listOf(true, false)) {
+            val operation = if (resolved) "resolveReviewThread" else "unresolveReviewThread"
+            server.enqueue(MockResponse().setBody("""{"data":{"$operation":{"thread":${threadJson(resolved)}}}}"""))
+            assertEquals(resolved, repository.setReviewThreadResolved("PRRT_1", resolved).getOrThrow().isResolved)
+            val payload = Json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+            assertTrue(payload.getValue("query").jsonPrimitive.content.contains(operation))
+            assertEquals("PRRT_1", payload.getValue("variables").jsonObject.getValue("input").jsonObject.getValue("threadId").jsonPrimitive.content)
+        }
+        server.enqueue(MockResponse().setBody("""{"errors":[{"message":"denied"}],"data":{"resolveReviewThread":{"thread":${threadJson(true)}}}}"""))
+        assertTrue(repository.setReviewThreadResolved("PRRT_1", true).isFailure)
+        server.takeRequest()
+        server.enqueue(MockResponse().setBody("""{"data":{"resolveReviewThread":{"thread":${threadJson(false)}}}}"""))
+        assertTrue(repository.setReviewThreadResolved("PRRT_1", true).isFailure)
+    }
+
+    @Test fun failedGraphqlMutationDoesNotInvalidateCacheButSuccessDoes() = runTest {
+        val cache = TestGithubCacheStore()
+        val repository = repository(cache)
+        server.enqueue(MockResponse().setHeader("ETag", "\"old\"").setBody(PULL_REQUEST_JSON))
+        repository.pullRequest("openai", "codex", 7).getOrThrow()
+        server.takeRequest()
+        server.enqueue(MockResponse().setBody("""{"errors":[{"message":"denied"}],"data":null}"""))
+        assertTrue(repository.setReviewThreadResolved("PRRT_1", true).isFailure)
+        server.takeRequest()
+        assertFalse(cache.isEmpty())
+        server.enqueue(MockResponse().setBody("""{"data":{"resolveReviewThread":{"thread":${threadJson(true)}}}}"""))
+        repository.setReviewThreadResolved("PRRT_1", true).getOrThrow()
+        server.takeRequest()
+        assertTrue(cache.isEmpty())
+    }
+
+    @Test fun reviewThreadRootUsesThe64BitDatabaseIdentity() = runTest {
+        val thread = threadJson(false).replace("\"fullDatabaseId\":901", "\"fullDatabaseId\":\"5000000001\"")
+        server.enqueue(MockResponse().setBody("""{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[$thread],"pageInfo":{"hasNextPage":false,"endCursor":null}}}}}}"""))
+        assertEquals(5_000_000_001L, repository().reviewThreadStatuses("openai", "codex", 7).getOrThrow().items.single().rootCommentId)
+        val query = Json.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject.getValue("query").jsonPrimitive.content
+        assertTrue(query.contains("fullDatabaseId"))
+        assertFalse(query.contains("{databaseId}"))
+    }
+
+    private fun threadJson(resolved: Boolean) = """{"id":"PRRT_1","isResolved":$resolved,"isOutdated":false,"viewerCanResolve":true,"viewerCanUnresolve":true,"comments":{"nodes":[{"fullDatabaseId":901}]}}"""
 
     private fun repository(cacheStore: GithubCacheStore = NoOpGithubCacheStore) = GithubPullRequestsRepositoryImpl(
         requests = GithubAuthenticatedRequests(FakeTokenStore()),

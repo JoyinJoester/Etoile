@@ -1,0 +1,1616 @@
+{
+  "title": "Etoile · 用户与收藏",
+  "brief": "身份、横向统计、头像横行、仓库列表形成统一的个人与项目关系视图。 基于2026-10-21当前功能优化。示例内容不是实时账户数据。",
+  "frame": "phone",
+  "platform": "android",
+  "paletteKey": "purple",
+  "theme": {
+    "dark": true,
+    "bothModes": true,
+    "contrast": "standard",
+    "shape": "rounded",
+    "font": "robotoFlex",
+    "emphasized": true,
+    "motion": "expressive"
+  },
+  "frames": [
+    {
+      "id": "public-profile",
+      "name": "开发者",
+      "x": 0,
+      "y": 0,
+      "bg": "surface",
+      "note": "头像和身份在同一区域，统计横排，关注操作在简介旁。"
+    },
+    {
+      "id": "followers",
+      "name": "关注者",
+      "x": 1420,
+      "y": 0,
+      "bg": "surface",
+      "note": "头像固定靠左，名称和身份信息从头像右侧紧贴排列并左对齐；宽屏可适配两列，不再用头像磁贴。"
+    },
+    {
+      "id": "following",
+      "name": "已关注",
+      "x": 2840,
+      "y": 0,
+      "bg": "surface",
+      "note": "头像固定靠左，名称和身份信息从头像右侧紧贴排列并左对齐；宽屏可适配两列，不再用头像磁贴。"
+    },
+    {
+      "id": "blocked",
+      "name": "已屏蔽用户",
+      "x": 4260,
+      "y": 0,
+      "bg": "surface",
+      "note": "头像固定靠左，名称和身份信息从头像右侧紧贴排列并左对齐；宽屏可适配两列，不再用头像磁贴。"
+    },
+    {
+      "id": "organizations",
+      "name": "组织",
+      "x": 0,
+      "y": 1000,
+      "bg": "surface",
+      "note": "头像固定靠左，名称和身份信息从头像右侧紧贴排列并左对齐；宽屏可适配两列，不再用头像磁贴。"
+    },
+    {
+      "id": "stars",
+      "name": "星标收藏",
+      "x": 1420,
+      "y": 1000,
+      "bg": "surface",
+      "note": "沿用当前全量分页、分类与批量标记；列表优先，标签管理独立。"
+    },
+    {
+      "id": "labels",
+      "name": "管理标签",
+      "x": 2840,
+      "y": 1000,
+      "bg": "surface",
+      "note": "标签管理不与仓库阅读混排，删除保持确认，长列表与创建表单均可到达。"
+    },
+    {
+      "id": "repositories",
+      "name": "仓库",
+      "x": 4260,
+      "y": 1000,
+      "bg": "surface",
+      "note": "共享仓库列表行，名称、描述、语言、星标顺序固定。"
+    }
+  ],
+  "groups": [
+    {
+      "id": "public-profile-1",
+      "x": 0,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-1-item",
+          "kind": "topAppBar",
+          "label": "开发者",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "public-profile-2",
+      "x": 16,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-2-item",
+          "kind": "card",
+          "label": "android-maintainer",
+          "icon": "person",
+          "variant": "filled",
+          "supporting": "@android-maintainer · Compose 与开源工具",
+          "noImage": true,
+          "size": 380,
+          "size2": 140,
+          "fill": "primaryContainer"
+        }
+      ]
+    },
+    {
+      "id": "public-profile-3",
+      "x": 16,
+      "y": 272,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-3-item-0",
+          "icon": null,
+          "variant": "tonal",
+          "kind": "button",
+          "label": "42 仓库",
+          "size": 126,
+          "action": {
+            "to": "repositories",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "public-profile-3-item-1",
+          "icon": null,
+          "variant": "tonal",
+          "kind": "button",
+          "label": "128 关注者",
+          "size": 126,
+          "action": {
+            "to": "followers",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "public-profile-3-item-2",
+          "icon": null,
+          "variant": "tonal",
+          "kind": "button",
+          "label": "32 已关注",
+          "size": 126,
+          "action": {
+            "to": "following",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "public-profile-4",
+      "x": 16,
+      "y": 352,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-4-item",
+          "kind": "button",
+          "label": "关注",
+          "icon": "person_add",
+          "variant": "tonal",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "public-profile-5",
+      "x": 16,
+      "y": 448,
+      "axis": "x",
+      "items": [
+        {
+          "id": "public-profile-5-item",
+          "kind": "text",
+          "label": "公开仓库",
+          "icon": null,
+          "variant": "filled",
+          "size": 20,
+          "bold": true
+        }
+      ]
+    },
+    {
+      "id": "public-profile-6",
+      "x": 16,
+      "y": 496,
+      "axis": "y",
+      "items": [
+        {
+          "id": "public-profile-6-item-0",
+          "icon": "folder",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile / android",
+          "supporting": "Kotlin · 128 ★",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "repositories",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-1",
+      "x": 1420,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-1-item",
+          "kind": "topAppBar",
+          "label": "关注者",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-2",
+      "x": 1436,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-2-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-3",
+      "x": 1448,
+      "y": 130,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-3-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-4",
+      "x": 1504,
+      "y": 134,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-4-item",
+          "kind": "text",
+          "label": "android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-5",
+      "x": 1504,
+      "y": 160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-5-item",
+          "kind": "text",
+          "label": "@android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-6",
+      "x": 1436,
+      "y": 204,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-6-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-7",
+      "x": 1448,
+      "y": 222,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-7-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-8",
+      "x": 1504,
+      "y": 226,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-8-item",
+          "kind": "text",
+          "label": "compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-9",
+      "x": 1504,
+      "y": 252,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-9-item",
+          "kind": "text",
+          "label": "@compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-10",
+      "x": 1436,
+      "y": 296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-10-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-11",
+      "x": 1448,
+      "y": 314,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-11-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "group",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-12",
+      "x": 1504,
+      "y": 318,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-12-item",
+          "kind": "text",
+          "label": "Etoile Community",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "followers-13",
+      "x": 1504,
+      "y": 344,
+      "axis": "x",
+      "items": [
+        {
+          "id": "followers-13-item",
+          "kind": "text",
+          "label": "开源工具与协作",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-1",
+      "x": 2840,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-1-item",
+          "kind": "topAppBar",
+          "label": "已关注",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-2",
+      "x": 2856,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-2-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-3",
+      "x": 2868,
+      "y": 130,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-3-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-4",
+      "x": 2924,
+      "y": 134,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-4-item",
+          "kind": "text",
+          "label": "android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-5",
+      "x": 2924,
+      "y": 160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-5-item",
+          "kind": "text",
+          "label": "@android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-6",
+      "x": 2856,
+      "y": 204,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-6-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-7",
+      "x": 2868,
+      "y": 222,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-7-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-8",
+      "x": 2924,
+      "y": 226,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-8-item",
+          "kind": "text",
+          "label": "compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-9",
+      "x": 2924,
+      "y": 252,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-9-item",
+          "kind": "text",
+          "label": "@compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-10",
+      "x": 2856,
+      "y": 296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-10-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-11",
+      "x": 2868,
+      "y": 314,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-11-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "group",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-12",
+      "x": 2924,
+      "y": 318,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-12-item",
+          "kind": "text",
+          "label": "Etoile Community",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "following-13",
+      "x": 2924,
+      "y": 344,
+      "axis": "x",
+      "items": [
+        {
+          "id": "following-13-item",
+          "kind": "text",
+          "label": "开源工具与协作",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-1",
+      "x": 4260,
+      "y": 0,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-1-item",
+          "kind": "topAppBar",
+          "label": "已屏蔽用户",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-2",
+      "x": 4276,
+      "y": 112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-2-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-3",
+      "x": 4288,
+      "y": 130,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-3-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-4",
+      "x": 4344,
+      "y": 134,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-4-item",
+          "kind": "text",
+          "label": "android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-5",
+      "x": 4344,
+      "y": 160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-5-item",
+          "kind": "text",
+          "label": "@android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-6",
+      "x": 4276,
+      "y": 204,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-6-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-7",
+      "x": 4288,
+      "y": 222,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-7-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-8",
+      "x": 4344,
+      "y": 226,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-8-item",
+          "kind": "text",
+          "label": "compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-9",
+      "x": 4344,
+      "y": 252,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-9-item",
+          "kind": "text",
+          "label": "@compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-10",
+      "x": 4276,
+      "y": 296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-10-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-11",
+      "x": 4288,
+      "y": 314,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-11-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "group",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-12",
+      "x": 4344,
+      "y": 318,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-12-item",
+          "kind": "text",
+          "label": "Etoile Community",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "blocked-13",
+      "x": 4344,
+      "y": 344,
+      "axis": "x",
+      "items": [
+        {
+          "id": "blocked-13-item",
+          "kind": "text",
+          "label": "开源工具与协作",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-1",
+      "x": 0,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-1-item",
+          "kind": "topAppBar",
+          "label": "组织",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-2",
+      "x": 16,
+      "y": 1112,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-2-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-3",
+      "x": 28,
+      "y": 1130,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-3-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-4",
+      "x": 84,
+      "y": 1134,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-4-item",
+          "kind": "text",
+          "label": "android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-5",
+      "x": 84,
+      "y": 1160,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-5-item",
+          "kind": "text",
+          "label": "@android-maintainer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-6",
+      "x": 16,
+      "y": 1204,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-6-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-7",
+      "x": 28,
+      "y": 1222,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-7-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "person",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-8",
+      "x": 84,
+      "y": 1226,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-8-item",
+          "kind": "text",
+          "label": "compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-9",
+      "x": 84,
+      "y": 1252,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-9-item",
+          "kind": "text",
+          "label": "@compose-developer",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-10",
+      "x": 16,
+      "y": 1296,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-10-item",
+          "kind": "card",
+          "label": "",
+          "icon": null,
+          "variant": "filled",
+          "supporting": "",
+          "noImage": true,
+          "size": 380,
+          "size2": 84,
+          "fill": "surfaceContainerLow",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-11",
+      "x": 28,
+      "y": 1314,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-11-item",
+          "kind": "iconButton",
+          "label": "",
+          "icon": "group",
+          "variant": "tonal",
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-12",
+      "x": 84,
+      "y": 1318,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-12-item",
+          "kind": "text",
+          "label": "Etoile Community",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "bold": true,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "organizations-13",
+      "x": 84,
+      "y": 1344,
+      "axis": "x",
+      "items": [
+        {
+          "id": "organizations-13-item",
+          "kind": "text",
+          "label": "开源工具与协作",
+          "icon": null,
+          "variant": "filled",
+          "size": 14,
+          "x": 84,
+          "action": {
+            "to": "public-profile",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "stars-1",
+      "x": 1420,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-1-item",
+          "kind": "topAppBar",
+          "label": "星标收藏",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": "label",
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            },
+            "icon2": {
+              "to": "labels",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "stars-2",
+      "x": 1436,
+      "y": 1104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-2-item",
+          "kind": "searchBar",
+          "label": "搜索星标仓库",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "stars-3",
+      "x": 1436,
+      "y": 1176,
+      "axis": "x",
+      "items": [
+        {
+          "id": "stars-3-item-0",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "全部",
+          "checked": true
+        },
+        {
+          "id": "stars-3-item-1",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "未分类",
+          "checked": false
+        },
+        {
+          "id": "stars-3-item-2",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "Android",
+          "checked": false
+        },
+        {
+          "id": "stars-3-item-3",
+          "icon": null,
+          "variant": "filled",
+          "kind": "chip",
+          "label": "设计",
+          "checked": false
+        }
+      ]
+    },
+    {
+      "id": "stars-4",
+      "x": 1436,
+      "y": 1244,
+      "axis": "y",
+      "items": [
+        {
+          "id": "stars-4-item-0",
+          "icon": "star",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "android / compose-samples",
+          "supporting": "Android · Kotlin · 24.8k ★",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "repositories",
+            "transition": "slide"
+          }
+        },
+        {
+          "id": "stars-4-item-1",
+          "icon": "star",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "lnkiai / m3e-canvas",
+          "supporting": "设计 · TypeScript",
+          "size": 380,
+          "icon2": "chevron_right",
+          "action": {
+            "to": "repositories",
+            "transition": "slide"
+          }
+        }
+      ]
+    },
+    {
+      "id": "labels-1",
+      "x": 2840,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "labels-1-item",
+          "kind": "topAppBar",
+          "label": "管理标签",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "labels-2",
+      "x": 2856,
+      "y": 1112,
+      "axis": "y",
+      "items": [
+        {
+          "id": "labels-2-item-0",
+          "icon": "label",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Android",
+          "supporting": "24个仓库",
+          "size": 380
+        },
+        {
+          "id": "labels-2-item-1",
+          "icon": "label",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "设计",
+          "supporting": "12个仓库",
+          "size": 380
+        },
+        {
+          "id": "labels-2-item-2",
+          "icon": "label",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "稍后阅读",
+          "supporting": "8个仓库",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "labels-3",
+      "x": 2856,
+      "y": 1388,
+      "axis": "x",
+      "items": [
+        {
+          "id": "labels-3-item",
+          "kind": "textField",
+          "label": "新标签名称",
+          "icon": null,
+          "variant": "outlined",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "labels-4",
+      "x": 2856,
+      "y": 1484,
+      "axis": "x",
+      "items": [
+        {
+          "id": "labels-4-item",
+          "kind": "button",
+          "label": "创建标签",
+          "icon": "add",
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "repositories-1",
+      "x": 4260,
+      "y": 1000,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repositories-1-item",
+          "kind": "topAppBar",
+          "label": "仓库",
+          "icon": "arrow_back",
+          "variant": "filled",
+          "icon2": null,
+          "actions": {
+            "icon": {
+              "to": "back",
+              "transition": "slide"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "repositories-2",
+      "x": 4276,
+      "y": 1104,
+      "axis": "x",
+      "items": [
+        {
+          "id": "repositories-2-item",
+          "kind": "searchBar",
+          "label": "搜索仓库",
+          "icon": null,
+          "variant": "filled",
+          "size": 380
+        }
+      ]
+    },
+    {
+      "id": "repositories-3",
+      "x": 4276,
+      "y": 1184,
+      "axis": "y",
+      "items": [
+        {
+          "id": "repositories-3-item-0",
+          "icon": "folder",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile / android",
+          "supporting": "GitHub与GitLab客户端 · Kotlin · 128 ★",
+          "size": 380
+        },
+        {
+          "id": "repositories-3-item-1",
+          "icon": "folder",
+          "variant": "filled",
+          "kind": "listItem",
+          "label": "Etoile / design",
+          "supporting": "设计资料 · 32 ★",
+          "size": 380
+        }
+      ]
+    }
+  ]
+}

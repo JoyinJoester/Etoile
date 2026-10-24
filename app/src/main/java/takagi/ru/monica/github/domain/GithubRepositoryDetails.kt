@@ -161,6 +161,11 @@ data class GithubWebhookDelivery(
     val action: String? = null
 )
 
+data class GithubWebhookDeliveriesPage(
+    val items: List<GithubWebhookDelivery>,
+    val nextCursor: String?
+)
+
 interface GithubRepositoryDetailsRepository {
     suspend fun details(owner: String, name: String): Result<GithubRepositoryDetails>
     suspend fun readme(owner: String, name: String, ref: String? = null): Result<String?>
@@ -201,9 +206,9 @@ interface GithubRepositoryDetailsRepository {
         owner: String,
         name: String,
         id: Long,
-        page: Int = 1,
+        cursor: String? = null,
         perPage: Int = 30
-    ): Result<GithubPage<GithubWebhookDelivery>>
+    ): Result<GithubWebhookDeliveriesPage>
     // A redelivery re-POSTs a past delivery; GitHub answers 202 with no body, so the caller gets Unit.
     suspend fun redeliverWebhook(
         owner: String,

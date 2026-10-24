@@ -19,6 +19,7 @@ import takagi.ru.monica.github.data.GithubApiException
 import takagi.ru.monica.github.domain.GithubCollaboratorChange
 import takagi.ru.monica.github.domain.GithubCollaboratorRole
 import takagi.ru.monica.github.domain.TestGithubRepositoryDetailsRepository
+import takagi.ru.monica.github.domain.signedInGithubSession
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class InviteCollaboratorViewModelTest {
@@ -32,7 +33,10 @@ class InviteCollaboratorViewModelTest {
     fun tearDown() = Dispatchers.resetMain()
 
     private fun viewModel(saved: SavedStateHandle = SavedStateHandle()) =
-        InviteCollaboratorViewModel("openai", "codex", repository, saved)
+        InviteCollaboratorViewModel("openai", "codex", repository, saved).also {
+            it.onSessionChanged(signedInGithubSession())
+            dispatcher.scheduler.runCurrent()
+        }
 
     @Test
     fun anUnavailableLoginNeverReachesTheRepository() = runTest(dispatcher) {
@@ -101,6 +105,7 @@ class InviteCollaboratorViewModelTest {
     fun draftLoginAndRoleComeBackFromSavedState() = runTest(dispatcher) {
         val saved = SavedStateHandle(
             mapOf(
+                "invite_collaborator_account" to 1L,
                 "invite_collaborator_login" to "octocat",
                 "invite_collaborator_role" to GithubCollaboratorRole.MAINTAIN.name
             )
